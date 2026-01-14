@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Flutter dependencies
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "07:00"
+      timezone: "Asia/Tokyo"
+    # Only create PRs for security updates and version updates
+    open-pull-requests-limit: 5
+    assignees:
+      - "eno-conan"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "flutter"
+    # Allow both minor and patch updates
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Ignore specific packages that might need manual updates
+    ignore:
+      - dependency-name: "flutter"
+        # Flutter SDK should be updated manually
+      - dependency-name: "flutter_test"
+        # Part of Flutter SDK

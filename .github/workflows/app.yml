@@ -1,0 +1,274 @@
+name: Flutter CI/CD Pipeline Starbucks Clone App
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - '.github/**'
+  #     - 'android/**'
+  #     - 'lib/**'
+  #     - 'test/**'
+  #     - 'integration_test/**'
+  #     - 'pubspec.yaml'
+  workflow_dispatch:  # 手動実行を有効化
+    inputs:
+      run_tests:
+        description: 'Run tests'
+        required: false
+        default: true
+        type: boolean
+      build_apk:
+        description: 'Build APK'
+        required: false
+        default: true
+        type: boolean
+
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04 
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Free Disk Space
+        run: |
+          echo "Before cleanup:"
+          df -h
+
+          # 不要な大容量パッケージとツールを削除（並列実行で高速化）
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /opt/ghc &
+          sudo rm -rf /opt/hostedtoolcache/CodeQL &
+          sudo rm -rf /usr/local/share/boost &
+          sudo rm -rf /usr/local/lib/android/sdk/ndk &
+          sudo rm -rf /usr/local/lib/android/sdk/build-tools/[0-9][0-9]* &
+          sudo rm -rf /usr/share/swift &
+          sudo rm -rf /usr/local/.ghcup &
+          wait
+
+          # Dockerイメージのクリーンアップ
+          docker system prune -af || true
+
+          # APTキャッシュのクリーンアップ
+          sudo apt-get clean || true
+          sudo rm -rf /var/lib/apt/lists/* || true
+
+          echo "After cleanup:"
+          df -h
+
+      # - name: Check Documentation Sync
+      #   env:
+      #     GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+      #   run: |
+      #     chmod +x .github/scripts/check_docs_sync.sh
+      #     ./.github/scripts/check_docs_sync.sh
+
+      - name: Cache Flutter and Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: flutter-gradle-${{ runner.os }}-${{ hashFiles('**/pubspec.lock', '**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            flutter-gradle-${{ runner.os }}-
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Install FVM
+        run: |
+          dart pub global activate fvm
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      - name: Setup Flutter with FVM
+        run: |
+          fvm install
+          fvm use --force
+          echo "$PWD/.fvm/flutter_sdk/bin" >> $GITHUB_PATH
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3   
+
+      # google-services.jsonの内容復元
+      - name: Load Google Service file
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+        
+      # キーストアファイルの作成
+      - name: Create Keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 -d > android/app/release.keystore
+
+      # key.propertiesファイルの作成
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=release.keystore" >> android/key.properties
+
+      # secrets.propertiesファイルの作成
+      - name: Create secrets.properties
+        run: |
+          echo "MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}" >> android/secrets.properties
+          echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> android/secrets.properties
+          echo "FIREBASE_HOSTING_DOMAIN=${{ secrets.FIREBASE_HOSTING_DOMAIN }}" >> android/secrets.properties
+
+      - name: Clean Flutter
+        run: |
+          # flutter clean
+          flutter pub get
+
+      - name: Optimize Flutter
+        run: |
+          flutter config --no-analytics
+          # flutter pub cache repair
+        
+      - name: Create and verify .env file
+        run: |
+          # ファイル作成とパーミッション確認
+          touch .env
+          chmod 644 .env
+          
+          # 環境変数の書き込み
+          echo "PUBLISHABLE_KEY=${{ secrets.PUBLISHABLE_KEY }}" >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "STARBUCKS_WEB_URL=${{ secrets.STARBUCKS_WEB_URL }}" >> .env
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+          echo "GOOGLE_WEB_SERVER_CLIENT_ID=${{ secrets.GOOGLE_WEB_SERVER_CLIENT_ID }}" >> .env
+          echo "FIREBASE_HOSTING_DOMAIN=${{ secrets.FIREBASE_HOSTING_DOMAIN }}" >> .env
+          echo "SSL_SHA256_FINGER_PRINT=${{ secrets.SSL_SHA256_FINGER_PRINT }}" >> .env
+
+      - name: Cache build runner
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/.dart_tool/build
+          key: build-runner-${{ hashFiles('**/asset_graph.json') }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            build-runner-
+
+      - name: build runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # 解析実施
+      # - name: Analyze code
+      #   run: flutter analyze --no-fatal-infos
+      #   continue-on-error: true
+
+      - name: Run tests
+        if: github.event.inputs.run_tests != 'false'
+        run: flutter test
+
+      - name: Clean Gradle Caches
+        run: |
+          echo "Cleaning Gradle caches to free up space..."
+          rm -rf ~/.gradle/caches/transforms-* || true
+          rm -rf ~/.gradle/caches/*/executionHistory || true
+          rm -rf ~/.gradle/daemon || true
+
+          echo "Disk space before build:"
+          df -h
+
+      - name: Configure Gradle for CI
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<EOF
+          org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          org.gradle.daemon=false
+          org.gradle.parallel=false
+          org.gradle.workers.max=2
+          org.gradle.configureondemand=true
+          kotlin.incremental=false
+          kotlin.compiler.execution.strategy=in-process
+          EOF
+
+      - name: Build APK
+        if: github.event.inputs.build_apk != 'false'
+        run: |
+          flutter build apk --split-per-abi --obfuscate --split-debug-info=build/app/outputs/logs/ \
+            --dart-define=flutter.inspector.structuredErrors=false
+
+      # # デバッグシンボルの保存（クラッシュ解析用）
+      # - name: Upload debug symbols
+      #   if: success() && github.ref == 'refs/heads/main'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: debug-symbols-${{ github.sha }}
+      #     path: build/app/outputs/logs/*.symbols
+      #     retention-days: 7  # 7日保持
+      #     compression-level: 9  # 最大圧縮でストレージ節約      
+
+      # ビルド後のクリーンアップ
+      - name: Clean up build artifacts
+        if: always()
+        run: |
+          echo "Cleaning up build artifacts..."
+
+          # 不要なファイルを削除してキャッシュ容量を節約
+          rm -rf .dart_tool/ || true
+          rm -rf ~/.gradle/daemon || true
+          rm -rf ~/.gradle/caches/transforms-* || true
+          rm -rf ~/.gradle/caches/*/executionHistory || true
+          rm -rf ~/.gradle/caches/*/generated-gradle-jars || true
+          rm -rf ~/.gradle/caches/jars-* || true
+          rm -rf build/app/intermediates || true
+          rm -rf android/app/build/intermediates || true
+          rm -rf android/.gradle || true
+
+          # Pub cacheの一時ファイル削除
+          rm -rf ~/.pub-cache/hosted/pub.dartlang.org/.cache || true
+
+          echo "Disk space after cleanup:"
+          df -h
+
+      # - name: Upload APK
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: release-apk
+      #     path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+      #     # path: build/app/outputs/flutter-apk/app-release.apk
+      #     retention-days: 3
+
+      # - name: Deploy to Firebase App Distribution
+      #   uses: wzieba/Firebase-Distribution-Github-Action@v1
+      #   with:
+      #     appId: ${{ secrets.FIREBASE_APP_ID }}
+      #     serviceCredentialsFileContent: ${{ secrets.CREDENTIAL_FILE_CONTENT }}
+      #     groups: testers
+      #     file: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+      #     # file: build/app/outputs/flutter-apk/app-release.apk          
+
+      
+      # - name: Check APK signature
+      # # Verified using v2 scheme (APK Signature Scheme v2): true
+      # # apksigner verify --verbose build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+      #   run: |
+      #     unzip -l build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | grep "META-INF"
+          
+      #     sudo apt-get install -y apksigner
+      #     apksigner verify --print-certs build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | grep "SHA-1"
+
+      # - name: Detailed google-services.json verification
+      #   run: |
+      #     echo "1. Checking package name:"
+      #     jq '.client[0].client_info.android_client_info.package_name' android/app/google-services.json
+          
+      #     echo "2. Checking all OAuth clients:"
+      #     jq '.client[0].oauth_client[]' android/app/google-services.json
+          
+      #     echo "3. Checking SHA-1 certificates:"
+      #     jq '.client[0].oauth_client[] | select(.client_type == 1) | .android_info.certificate_hash' android/app/google-services.json  

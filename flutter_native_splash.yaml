@@ -1,0 +1,8 @@
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/icons/app/splash-logo.png
+  ios: false
+  android_12:
+    icon_background_color: "#00ff7f"
+    image: assets/icons/app/baseball-studium.png
+  android: true

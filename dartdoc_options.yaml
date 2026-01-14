@@ -1,0 +1,5 @@
+# https://pub.dev/documentation/dartdoc/latest/
+dartdoc:
+  showUndocumentedCategories: true
+  showUndocumentedMembers: true
+  includePrivateSymbols: true

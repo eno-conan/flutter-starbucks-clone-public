@@ -1,0 +1,89 @@
+name: Safe Revert Main to Commit
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_hash:
+        description: 'Commit hash on main branch to revert to'
+        required: true
+        type: string
+      create_pr:
+        description: 'Create PR (recommended)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  revert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Validate target commit
+        run: |
+          TARGET_COMMIT="${{ github.event.inputs.commit_hash }}"
+
+          # コミット存在チェック
+          git cat-file -e "${TARGET_COMMIT}^{commit}"
+
+          # main の履歴に含まれているか
+          if ! git merge-base --is-ancestor "$TARGET_COMMIT" origin/main; then
+            echo "::error::Commit is not an ancestor of main"
+            exit 1
+          fi
+
+      - name: Create revert branch
+        id: revert
+        run: |
+          TARGET_COMMIT="${{ github.event.inputs.commit_hash }}"
+          BRANCH_NAME="revert-to-${TARGET_COMMIT:0:7}"
+
+          git checkout -b "$BRANCH_NAME" origin/main
+
+          # dry-run（競合検出）
+          if ! git revert --no-commit -m 1 --dry-run "${TARGET_COMMIT}..HEAD"; then
+            echo "::error::Revert would cause conflicts"
+            exit 1
+          fi
+
+          # 実行
+          git revert --no-commit -m 1 "${TARGET_COMMIT}..HEAD"
+          git commit -m "Revert main to commit ${TARGET_COMMIT}"
+
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Push revert branch
+        run: |
+          git push origin "${{ steps.revert.outputs.branch_name }}"
+
+      - name: Create Pull Request
+        if: github.event.inputs.create_pr == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ steps.revert.outputs.branch_name }}
+          title: "🚑 Revert main to ${{ github.event.inputs.commit_hash }}"
+          body: |
+            ## Emergency Revert
+
+            This PR safely reverts **main** to the following commit:
+
+            - Target commit: `${{ github.event.inputs.commit_hash }}`
+            - Method: `git revert -m 1`
+            - Conflicts: checked (dry-run)
+
+            Please review and merge if this recovery is correct.
+
+      - name: Directly push to main (NOT recommended)
+        if: github.event.inputs.create_pr == 'false'
+        run: |
+          git checkout main
+          git cherry-pick "${{ steps.revert.outputs.branch_name }}"
+          git push origin main

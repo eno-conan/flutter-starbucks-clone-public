@@ -1,0 +1,129 @@
+name: Documentation Sync
+on:
+  pull_request:
+    paths:
+      - 'lib/screens/**/*.dart'
+      - 'lib/services/**/*.dart'
+      
+permissions:
+  contents: write
+  pull-requests: write
+  
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+      - name: Get Changed Files
+        id: changed-files
+        run: |
+          # PRのベースブランチとの差分から変更されたファイルを取得
+          git fetch origin ${{ github.base_ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '^lib/(screens|services)/.*\.dart$' || echo "")
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No relevant files changed"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changed files:"
+            echo "$CHANGED_FILES"
+            # 改行をスペースに変換してJSON配列形式に
+            CHANGED_FILES_JSON=$(echo "$CHANGED_FILES" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Analyze Code Changes
+        id: analyze
+        if: steps.changed-files.outputs.has_changes == 'true'
+        uses: anthropics/claude-code-base-action@beta
+        with:
+          max_turns: "3"
+          allowed_tools: "View,GlobTool"
+          prompt: |
+            以下の変更されたファイルのみを分析してください：
+            ${{ steps.changed-files.outputs.changed_files }}
+            
+            各ファイルの目的を特定し、docs/配下のどのドキュメントを更新すべきか判断してください。
+            変更されていないファイルは無視してください。
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+      - name: Generate/Update Documentation
+        if: steps.changed-files.outputs.has_changes == 'true'
+        uses: anthropics/claude-code-base-action@beta
+        with:
+          max_turns: "15"
+          allowed_tools: "View,GlobTool,Write,Edit"
+          settings: |
+            {
+              "model": "claude-sonnet-4-5-20250929",
+              "env": {
+                "DOC_TEMPLATE": "概要、UI設計、認証による表示制御、エラー制御",
+                "CHANGED_FILES": ${{ toJSON(steps.changed-files.outputs.changed_files) }}
+              }
+            }
+          append_system_prompt: |
+            重要: 以下の変更されたファイルのみを処理してください：
+            ${CHANGED_FILES}
+            
+            各変更ファイルに対して、対応するdocs/配下のドキュメントを作成または更新してください。
+            4つのセクションを使用: ${DOC_TEMPLATE}
+            ディレクトリ構造を維持: lib/screens/home/main.dart → docs/screens/home/design.md
+            
+            変更されていないファイルは読み込まず、処理をスキップしてください。
+          prompt: |
+            変更されたコードに基づいて、設計ドキュメントを作成/更新してください。
+            
+            処理対象ファイル:
+            ${{ steps.changed-files.outputs.changed_files }}
+            
+            既存のdocs/構造との整合性を保ってください。
+            変更されたファイルのみを処理し、トークンを効率的に使用してください。
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+      
+      - name: Check for Documentation Changes
+        id: check-docs
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          # Add all untracked files in docs directory first
+          if [ -d "docs" ]; then
+            git add docs/
+          fi
+          
+          # Check for any changes in docs directory
+          if [ -n "$(git status --porcelain docs/)" ]; then
+            echo "Documentation files were created/modified"
+            echo "has_doc_changes=true" >> $GITHUB_OUTPUT
+            echo "Files changed:"
+            git status --porcelain docs/
+          else
+            echo "No documentation changes detected"
+            echo "has_doc_changes=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Commit Documentation
+        if: steps.changed-files.outputs.has_changes == 'true' && steps.check-docs.outputs.has_doc_changes == 'true'
+        run: |
+          git add docs/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: sync documentation with code changes
+
+            Auto-generated documentation updates for:
+            ${{ steps.changed-files.outputs.changed_files }}
+            
+            Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push origin ${{ github.head_ref }}
+            echo "Documentation committed and pushed successfully"
+          fi

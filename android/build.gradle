@@ -1,0 +1,46 @@
+buildscript {
+    // ここに buildscript ブロックを追加
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.google.gms:google-services:4.4.3'  // Google Services の追加
+        classpath 'com.android.tools.build:gradle:8.11.1' //flutter_local_notifications
+        classpath "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1" // Google Map
+    }
+}
+
+plugins {
+    id 'com.google.gms.google-services' version '4.4.3' apply false
+    id "com.android.application" version '8.12.2' apply false
+    id "org.jetbrains.kotlin.android" version "2.2.20" apply false
+    id 'com.google.firebase.firebase-perf' version '2.0.1' apply false
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+
+    if (project.name.startsWith('google_maps_flutter_android')) {
+        project.ext.set('compileSdkVersion', 36)
+    }
+    if (project.name.startsWith('geolocator')) {
+        project.ext.set('compileSdkVersion', 36)
+    }    
+    if (project.name.startsWith('app_links')) {
+        project.ext.set('compileSdkVersion', 36)
+    } 
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

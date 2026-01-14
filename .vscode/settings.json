@@ -1,0 +1,56 @@
+{
+    "nuxt.isNuxtApp": false,
+    "java.configuration.updateBuildConfiguration": "disabled",
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#305a4f",
+        "activityBar.background": "#305a4f",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#24162a",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#305a4f",
+        "statusBar.background": "#1e3932",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#305a4f",
+        "statusBarItem.remoteBackground": "#1e3932",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#1e3932",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#1e393299",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.color": "#1E3932",
+    "dart.flutterSdkPath": ".fvm/flutter_sdk",
+    "search.exclude": {
+        "**/.fvm": true
+    },
+    "files.watcherExclude": {
+        "**/.fvm": true
+    },
+    "dart.lineLength": 120,
+    "[dart]": {
+        "editor.rulers": [
+            120
+        ],
+    },
+    "todo-tree.general.tags": [
+        "TODO",
+        "FIXME",
+        "BUG",
+        "HACK",
+        "XXX",
+        "IMPORTANT",
+        "OPTIMIZE"
+    ],
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {
+            "icon": "check",
+            "iconColour": "#FFFF00"
+        },
+        "FIXME": {
+            "icon": "alert",
+            "iconColour": "#FF0000"
+        }
+    }
+}

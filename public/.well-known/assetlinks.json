@@ -1,0 +1,32 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.enoconan.testingappv2",
+            "sha256_cert_fingerprints": [
+                "43:F2:CF:97:EF:1E:30:3D:86:35:44:69:F8:CF:BD:F9:ED:15:2C:3E:BD:45:F3:34:FA:E0:58:E0:9B:76:FF:D1",
+                "DA:BA:6E:3A:06:7A:91:9D:31:F5:7A:FA:5D:77:6B:5C:79:21:A9:2C:3E:7B:E6:35:63:5E:D6:F7:4C:A0:E7:27",
+                "78:80:C0:87:AA:87:8E:08:E2:E6:15:03:BC:2C:CB:31:5C:FB:92:33:8E:9E:05:5F:EA:7C:E5:DC:16:86:EA:21"
+            ]
+        },
+        "relation_extensions": {
+            "delegate_permission/common.handle_all_urls": {
+                "dynamic_app_link_components": [
+                    {
+                        "/": "/register",
+                        "?": {
+                            "token": "*"
+                        }
+                    },
+                    {
+                        "/": "*",
+                        "exclude": true
+                    }
+                ]
+            }
+        }
+    }
+]

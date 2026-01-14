@@ -1,0 +1,54 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/statusline-command.sh"
+  },
+  "cleanupPeriodDays": 14,
+  "env": {
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000"
+  },
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Search(**)",
+      "Explore(**)",
+      "Bash(dart format .)",
+      "Bash(dart fix --apply --code=always_use_package_imports .)",
+      "Bash(dart fix --apply --code=directives_ordering .)",
+      "Bash(flutter analyze)",
+      "Bash(find :*)",
+      "Bash(mkdir :*)"
+    ],
+    "deny": [
+      "Bash(rm)",
+      "Bash(rmdir)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(./secrets/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\"); [[ -n \"$file\" && \"$file\" =~ \\.dart$ ]] && dart format \"$file\" 2>/dev/null || true'",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\"); [[ -n \"$file\" && \"$file\" =~ \\.dart$ ]] && dart fix --apply --code=always_use_package_imports \"$file\" 2>/dev/null || true'",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\"); [[ -n \"$file\" && \"$file\" =~ \\.dart$ ]] && dart fix --apply --code=directives_ordering \"$file\" 2>/dev/null || true'",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

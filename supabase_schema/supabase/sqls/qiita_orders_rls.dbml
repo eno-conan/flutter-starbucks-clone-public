@@ -1,0 +1,51 @@
+Table orders {
+  order_id varchar [primary key]
+  user_id uuid
+  eat_in_takeout int2
+  order_type int2
+  pickup_number varchar
+  price_without_tax int4
+  price_with_tax int4
+  payment_method varchar
+  id uuid
+  created_at timestamptz
+  updated_at timestamptz
+  store_number bpchar
+  provided_status varchar
+}
+
+Table stores {
+  store_number bpchar [primary key]
+  store_name varchar
+  prefecture_id int4
+  address varchar
+  opening_date date
+  closing_date date
+  created_at timestamptz
+  updated_at timestamptz
+  closing_time time
+  opening_time time
+  latitude float8
+  longitude float8
+  id int4
+}
+
+Table store_profiles {
+  id int4 [primary key]
+  store_number bpchar
+  user_id uuid
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table auth.users {
+  id uuid [primary key]
+  aud varchar
+  role varchar
+  email varchar
+}
+
+Ref: orders.user_id > auth.users.id
+Ref: orders.store_number - stores.store_number
+Ref: store_profiles.store_number - stores.store_number
+Ref: store_profiles.user_id - auth.users.id

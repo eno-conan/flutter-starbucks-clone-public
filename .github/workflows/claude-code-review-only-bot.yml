@@ -1,0 +1,156 @@
+name: Claude Code Review Run Dependabot
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  claude-review:
+    # Optional: Filter by PR author
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    if: |
+      github.event.pull_request.user.login == 'dependabot[bot]'    
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android
+          key: flutter-deps-${{ runner.os }}-${{ hashFiles('**/pubspec.lock', '**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            flutter-deps-${{ runner.os }}-
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.5'
+          cache: true
+
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.android
+          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/build.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-android-sdk-
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache pubspec dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.FLUTTER_HOME }}/.pub-cache
+            **/.packages
+            **/.flutter-plugins
+            **/.flutter-plugin-dependencies
+            **/.dart_tool/package_config.json
+          key: build-pubspec-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            build-pubspec-
+
+      # google-services.jsonの内容復元
+      - name: Load Google Service file
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+
+      # キーストアファイルの作成
+      - name: Create Keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 -d > android/app/release.keystore
+
+      # key.propertiesファイルの作成
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=release.keystore" >> android/key.properties
+
+      # secrets.propertiesファイルの作成
+      - name: Create secrets.properties
+        run: |
+          echo "MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}" >> android/secrets.properties
+          echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> android/secrets.properties
+          echo "FIREBASE_HOSTING_DOMAIN=${{ secrets.FIREBASE_HOSTING_DOMAIN }}" >> android/secrets.properties
+
+      - name: Clean Flutter
+        run: |
+          flutter pub get
+
+      - name: Optimize Flutter
+        run: |
+          flutter config --no-analytics
+
+      - name: Create and verify .env file
+        run: |
+          touch .env
+          chmod 644 .env
+          
+          echo "PUBLISHABLE_KEY=${{ secrets.PUBLISHABLE_KEY }}" >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "STARBUCKS_WEB_URL=${{ secrets.STARBUCKS_WEB_URL }}" >> .env
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+          echo "GOOGLE_WEB_SERVER_CLIENT_ID=${{ secrets.GOOGLE_WEB_SERVER_CLIENT_ID }}" >> .env
+
+      - name: Cache build runner
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/.dart_tool/build
+          key: build-runner-${{ hashFiles('**/asset_graph.json') }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            build-runner-
+
+      - name: Build runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run tests
+        run: flutter test
+
+      # - name: Build APK
+      #   run: flutter build apk --split-per-abi
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          additional_permissions: |
+            actions: read
+          # Optional: allow bot users to trigger the action
+          allowed_bots: "dependabot[bot],renovate[bot]"
+          prompt: |
+            Please check if this PR is allowed to merge into the main branch.
+            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://docs.claude.com/en/docs/claude-code/sdk#command-line for available options
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+
+      # ビルド後のクリーンアップ
+      - name: Clean up build artifacts
+        if: always()
+        run: |
+          rm -rf .dart_tool/
+          rm -rf ~/.gradle/daemon
+          echo "Disk space after cleanup:"
+          df -h
