@@ -12,12 +12,8 @@
       "Read(**)",
       "Search(**)",
       "Explore(**)",
-      "Bash(dart format .)",
-      "Bash(dart fix --apply --code=always_use_package_imports .)",
-      "Bash(dart fix --apply --code=directives_ordering .)",
-      "Bash(flutter analyze)",
-      "Bash(find :*)",
-      "Bash(mkdir :*)"
+      "Skill(*)",
+      "Bash"
     ],
     "deny": [
       "Bash(rm)",
@@ -27,25 +23,41 @@
       "Read(./secrets/**)"
     ]
   },
+  "plansDirectory": "./plans",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'cmd=$(cat | jq -r \".tool_input.command // empty\" 2>/dev/null || true); if echo \"$cmd\" | grep -qE \"git\\s+(push\\s+.*--force|push\\s+.*-f[^i]|reset\\s+--hard|clean\\s+-f)\"; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"deny\\\",\\\"permissionDecisionReason\\\":\\\"破壊的gitコマンドはHookでブロックされました\\\"}}\" && exit 0; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\" 2>/dev/null || true); if [[ \"$file\" =~ analysis_options\\.yaml$ ]]; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"deny\\\",\\\"permissionDecisionReason\\\":\\\"analysis_options.yamlの変更は禁止されています\\\"}}\" && exit 0; fi'"
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\" 2>/dev/null || true); if [[ \"$file\" =~ pubspec\\.yaml$ ]]; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"ask\\\",\\\"permissionDecisionReason\\\":\\\"pubspec.yamlへの変更です。依存関係の変更を確認してください\\\"}}\" && exit 0; fi'"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\"); [[ -n \"$file\" && \"$file\" =~ \\.dart$ ]] && dart format \"$file\" 2>/dev/null || true'",
-            "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\"); [[ -n \"$file\" && \"$file\" =~ \\.dart$ ]] && dart fix --apply --code=always_use_package_imports \"$file\" 2>/dev/null || true'",
-            "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\"); [[ -n \"$file\" && \"$file\" =~ \\.dart$ ]] && dart fix --apply --code=directives_ordering \"$file\" 2>/dev/null || true'",
-            "timeout": 15
+            "command": "bash .claude/hooks/post-tool-use-lint.sh",
+            "timeout": 120,
+            "statusMessage": "Running lint check..."
           }
         ]
       }

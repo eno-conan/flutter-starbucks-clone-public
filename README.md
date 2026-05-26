@@ -1,7 +1,7 @@
 # スターバックス公式アプリ クローン
 
 <p align="center">
-  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.38.5-blue?style=for-the-badge&logo=flutter"/>
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.44.0-blue?style=for-the-badge&logo=flutter"/>
   <img alt="Dart" src="https://img.shields.io/badge/Dart-%3E%3D3.10.0-blue?style=for-the-badge&logo=dart"/>
   <img alt="Supabase" src="https://img.shields.io/badge/Supabase-BaaS-green?style=for-the-badge&logo=supabase"/>
   <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Analytics%20%26%20Push-orange?style=for-the-badge&logo=firebase"/>
@@ -53,7 +53,7 @@
 ### フレームワーク・言語
 | 技術 | バージョン | 用途 |
 |------|----------|------|
-| **Flutter** | 3.38.5 | UIフレームワーク |
+| **Flutter** | 3.44.0 | UIフレームワーク |
 | **Dart** | >=3.10.0 | プログラミング言語 |
 | **FVM** | Latest | Flutterバージョン管理 |
 
@@ -129,13 +129,12 @@ class LoginScreen extends ConsumerWidget {
       ? HomeScreen() 
       : SignInForm();
   }
-}
 ```
 
 ## 🚀 開発環境セットアップ
 
 ### 必須要件
-- Flutter 3.38.5 (FVMでの管理推奨)
+- Flutter 3.44.0 (FVMでの管理推奨)
 - Dart >=3.10.0
 - Android Studio / Xcode
 - Firebase プロジェクト
@@ -224,16 +223,28 @@ fvm flutter test --coverage
 
 ## 📚 ドキュメント
 
-詳細な開発ドキュメントは以下を参照:
+> [!NOTE]
+> ドキュメントは [Zensical](https://zensical.org/) による静的サイトへ移行中です。
+> 現在は `docs/project/` 配下のファイルを `docs/zensical-docs/` で管理しています。
+
+### ローカルでドキュメントサイトを確認する
+
+```bash
+cd docs/zensical-docs
+uv run zensical serve
+# → http://localhost:8000
+```
+
+### ドキュメント一覧
 
 | ドキュメント | 内容 |
 |------------|------|
-| [開発環境セットアップ](docs/project/setup.md) | FVM、依存関係管理、環境変数、シークレット設定 |
-| [テスト](docs/project/testing.md) | テスト実行、カバレッジ、Golden test |
-| [CI/CD](docs/project/cicd.md) | GitHub Actionsワークフローの詳細 |
-| [Firebase](docs/project/firebase.md) | App Distribution、App Links |
-| [Supabase](docs/project/supabase.md) | ローカル開発、Edge Function、Google認証 |
-| [セキュリティ](docs/project/security.md) | MobSF、セキュリティベストプラクティス |
+| [開発環境セットアップ](docs/zensical-docs/docs/project/setup.md) | FVM、依存関係管理、環境変数、シークレット設定 |
+| [テスト](docs/zensical-docs/docs/project/testing.md) | テスト実行、カバレッジ、Golden test |
+| [CI/CD](docs/zensical-docs/docs/project/cicd.md) | GitHub Actionsワークフローの詳細 |
+| [Firebase](docs/zensical-docs/docs/project/firebase.md) | App Distribution、App Links |
+| [Supabase](docs/zensical-docs/docs/project/supabase.md) | ローカル開発、Edge Function、Google認証 |
+| [セキュリティ](docs/zensical-docs/docs/project/security.md) | MobSF、セキュリティベストプラクティス |
 
 ## 🎯 技術的ハイライト
 

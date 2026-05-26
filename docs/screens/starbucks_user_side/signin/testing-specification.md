@@ -156,67 +156,85 @@ group('Email Password Authentication Tests', () {
 
 #### 3.2.2 Google認証テスト
 
+`signInWithGoogleOAuth()` はブラウザを起動する外部呼び出しであるため、
+ユニットテストでは `supabase.auth.signInWithOAuth()` の呼び出しを検証します。
+
 ```dart
-group('Google Authentication Tests', () {
-  late MockGoogleSignIn mockGoogleSignIn;
-
-  setUp(() {
-    mockGoogleSignIn = MockGoogleSignIn();
-  });
-
-  test('signInWithGoogle completes successfully', () async {
+group('Google OAuth Authentication Tests', () {
+  test('signInWithGoogleOAuth calls supabase signInWithOAuth', () async {
     // Arrange
-    final mockGoogleUser = MockGoogleSignInAccount();
-    final mockAuth = MockGoogleSignInAuthentication();
-    
-    when(mockGoogleSignIn.supportsAuthenticate()).thenReturn(true);
-    when(mockGoogleSignIn.authenticate()).thenAnswer((_) async => mockGoogleUser);
-    when(mockGoogleUser.authentication).thenReturn(mockAuth);
-    when(mockAuth.idToken).thenReturn('mock_id_token');
-    
+    when(mockSupabaseClient.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: anyNamed('redirectTo'),
+    )).thenAnswer((_) async => true);
+
     // Act
-    await authService.signInWithGoogle();
-    
+    await authService.signInWithGoogleOAuth();
+
     // Assert
-    verify(mockSupabase.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: 'mock_id_token',
-      accessToken: any
+    verify(mockSupabaseClient.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: anyNamed('redirectTo'),
     )).called(1);
   });
 
-  test('signInWithGoogle throws exception when not supported', () async {
-    // Arrange
-    when(mockGoogleSignIn.supportsAuthenticate()).thenReturn(false);
-    
-    // Act & Assert
-    expect(() => authService.signInWithGoogle(),
-           throwsA(isA<Exception>()));
+  test('signInWithGoogleOAuth uses testingapp scheme in debug mode', () async {
+    // DebugModeでは 'testingapp://callback' が redirectTo に使われることを確認
+    // (kDebugMode が true の場合の動作確認はモックで検証)
+    // Note: 実際のブラウザ起動はE2Eテストで検証する
   });
 });
 ```
+
+**方針**: ブラウザ起動後の実際のOAuth認証フローは外部ブラウザを伴うため、
+ウィジェットテストでの自動検証が困難です。
+OAuth認証後のコールバック処理（`_handleOAuthCallback`）はE2Eテストで検証してください。
 
 ### 3.3 FCMトークン管理テスト
 
 ```dart
 group('FCM Token Management Tests', () {
-  test('setFcmTokenAndNotifySetting inserts token correctly', () async {
+  test('setFcmTokenAndNotifySetting inserts token with deviceId correctly', () async {
     // Arrange
     const fcmToken = 'mock_fcm_token';
     const isNotify = true;
     const userId = 'user123';
-    
+    const deviceId = 'device-uuid-123';
+    const deviceName = 'iPhone 15';
+
     when(mockSupabase.auth.currentUser?.id).thenReturn(userId);
-    
+
     // Act
-    await authService.setFcmTokenAndNotifySetting(fcmToken, isNotify);
-    
+    await authService.setFcmTokenAndNotifySetting(
+      fcmToken,
+      isNotify,
+      deviceId: deviceId,
+      deviceName: deviceName,
+    );
+
     // Assert
     verify(mockSupabase.from(Tables.userFcmTokens).upsert({
       'user_id': userId,
+      'device_id': deviceId,
+      'device_name': deviceName,
       'fcm_token': fcmToken,
       'is_notify': 1,
-    })).called(1);
+    }, onConflict: 'user_id,device_id')).called(1);
+  });
+
+  test('setFcmTokenAndNotifySetting skips when user not logged in', () async {
+    // Arrange
+    when(mockSupabase.auth.currentUser).thenReturn(null);
+
+    // Act
+    await authService.setFcmTokenAndNotifySetting(
+      'token',
+      true,
+      deviceId: 'device-id',
+    );
+
+    // Assert
+    verifyNever(mockSupabase.from(Tables.userFcmTokens).upsert(any));
   });
 });
 ```
@@ -478,25 +496,46 @@ group('Email Password Authentication Integration Tests', () {
 });
 ```
 
-### 5.2 Google認証フロー統合テスト
+### 5.2 Google OAuthフロー統合テスト
 
+Google OAuthはブラウザを起動して外部サービスと通信するため、
+ウィジェットテストでのエンドツーエンド検証は困難です。
+以下の観点で分割してテストします。
+
+**ウィジェットテストで検証可能な範囲**:
 ```dart
-group('Google Authentication Integration Tests', () {
-  testWidgets('complete Google login flow', (tester) async {
+group('GoogleLoginButton OAuth Tests', () {
+  testWidgets('Googleログインボタンタップ後にローディングが開始・解除される', (tester) async {
     // Arrange
-    await tester.pumpWidget(MyApp());
-    
-    // Mock Google Sign-In service
-    
+    final mockAuthService = MockAuthService();
+    when(mockAuthService.signInWithGoogleOAuth())
+        .thenAnswer((_) async {}); // ブラウザ起動をモック
+
+    await tester.pumpWidget(createTestWidget(
+      child: GoogleLoginButton(
+        authService: mockAuthService,
+        isLoading: false,
+        email: null,
+        onLoginSuccess: () async {},
+        onLoadingStateChanged: (_) {},
+        showSnackBar: (_) {},
+      ),
+    ));
+
     // Act
     await tester.tap(find.text('Googleログイン'));
-    await tester.pumpAndSettle();
-    
-    // Assert
-    expect(find.byType(Home), findsOneWidget);
+    await tester.pump();
+
+    // Assert: signInWithGoogleOAuth が呼ばれたことを確認
+    verify(mockAuthService.signInWithGoogleOAuth()).called(1);
   });
 });
 ```
+
+**E2Eテストで検証する範囲**:
+- 実際のブラウザでのGoogle認証
+- OAuthコールバックURIのディープリンク受信
+- `_handleOAuthCallback()` によるセッション確立とHome画面遷移
 
 ### 5.3 自動認証テスト
 
@@ -529,14 +568,14 @@ class MockSupabaseClient extends Mock implements SupabaseClient {}
 class MockGoTrueClient extends Mock implements GoTrueClient {}
 class MockUser extends Mock implements User {}
 
-// Google Sign-In モック
-class MockGoogleSignIn extends Mock implements GoogleSignIn {}
-class MockGoogleSignInAccount extends Mock implements GoogleSignInAccount {}
-class MockGoogleSignInAuthentication extends Mock implements GoogleSignInAuthentication {}
-
 // Firebase Messaging モック
 class MockFirebaseMessaging extends Mock implements FirebaseMessaging {}
 ```
+
+**注**: `google_sign_in` パッケージは使用していないため、
+`MockGoogleSignIn`, `MockGoogleSignInAccount`, `MockGoogleSignInAuthentication` は不要です。
+Google認証は Supabase OAuth 経由でブラウザを起動するため、
+`MockAuthService` の `signInWithGoogleOAuth()` のみをモックします。
 
 ### 6.2 テスト用ウィジェット
 

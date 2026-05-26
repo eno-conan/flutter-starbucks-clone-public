@@ -5,13 +5,14 @@
 ### 1.1 サポートする認証方式
 
 1. **メールアドレス・パスワード認証** (Supabase)
-2. **Googleアカウント認証** (Google Sign-In + Supabase)
-3. **生体認証** (実装準備済み、コメントアウト状態)
+2. **Googleアカウント認証** (Supabase OAuth)
+3. **生体認証** (実装済み)
 
 ### 1.2 認証プロバイダー
 
 - **プライマリ**: Supabase Auth
-- **OAuth**: Google Sign-In
+- **OAuth**: Supabase OAuth（ブラウザ経由）
+- **ディープリンク**: app_links
 - **依存性注入**: GetIt
 
 ## 2. 認証状態管理
@@ -125,79 +126,114 @@ sequenceDiagram
     participant U as User
     participant UI as LoginPage
     participant AS as AuthService
-    participant GS as GoogleSignIn
+    participant Browser as ブラウザ
+    participant AppLink as app_links
+    participant App as app.dart
     participant SB as Supabase
 
     U->>UI: Googleログインボタンタップ
     UI->>UI: ローディング開始
-    UI->>AS: signInWithGoogle()
-    AS->>GS: authenticate()
-    GS-->>AS: GoogleUser
-    AS->>GS: authorizationForScopes()
-    GS-->>AS: Authorization
-    AS->>GS: authentication (IDToken)
-    GS-->>AS: IDToken + AccessToken
-    AS->>SB: signInWithIdToken()
-    SB-->>AS: 認証結果
-    AS-->>UI: 認証結果
-    UI->>UI: ローディング終了
-    alt 成功
-        UI->>UI: ホーム画面に遷移
-    else 失敗
-        UI->>U: エラーメッセージ表示
+    UI->>AS: signInWithGoogleOAuth()
+    AS->>SB: signInWithOAuth(google, redirectTo)
+    SB-->>Browser: ブラウザ起動（Google認証画面）
+    UI->>UI: ローディング解除（ブラウザへ移行）
+    U->>Browser: Googleアカウントで認証
+    Browser-->>AppLink: コールバックURL受信
+    note over AppLink: testingapp://callback (開発)<br/>https://[domain]/callback (本番)
+    AppLink->>App: openAppLink(uri)
+    App->>App: _handleOAuthCallback(uri)
+    App->>SB: getSessionFromUrl(uri)
+    SB-->>App: セッション確立
+    alt セッション即時確立
+        App->>App: _navigateToHome()
+    else onAuthStateChange待機
+        SB-->>App: signedIn イベント（5秒タイムアウト）
+        App->>App: _navigateToHome()
     end
 ```
 
 ### 4.2 Google認証の実装詳細
 
-#### 4.2.1 スコープ設定
+#### 4.2.1 サインイン処理（AuthService）
 
 ```dart
-const List<String> scopes = <String>[
-  'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/userinfo.profile',
-  'openid',
-];
-```
-
-#### 4.2.2 認証処理
-
-```dart
-Future<void> signInWithGoogle() async {
-  // Step 1: ユーザー認証
-  final googleUser = await _googleSignIn.authenticate();
-  
-  // Step 2: スコープ認可
-  var authorization = await googleUser.authorizationClient.authorizationForScopes(scopes);
-  
-  if (authorization == null) {
-    final authorizeResult = await googleUser.authorizationClient.authorizeScopes(scopes);
-    authorization = authorizeResult;
-  }
-  
-  // Step 3: トークン取得
-  final googleAuth = googleUser.authentication;
-  final idToken = googleAuth.idToken;
-  final accessToken = authorization.accessToken;
-  
-  // Step 4: Supabaseでサインイン
-  await supabase.auth.signInWithIdToken(
-    provider: OAuthProvider.google,
-    idToken: idToken,
-    accessToken: accessToken,
-  );
+/// Google OAuth でサインイン（Supabase Auth 経由）
+Future<void> signInWithGoogleOAuth() async {
+  final redirectTo = kDebugMode
+      ? 'testingapp://callback'
+      : 'https://${AppConstants.firebaseHostingDomain}/callback';
+  await supabase.auth.signInWithOAuth(OAuthProvider.google, redirectTo: redirectTo);
 }
 ```
 
-### 4.3 軽量認証（初期化時）
+#### 4.2.2 GoogleLoginButton でのハンドリング
 
 ```dart
-Future<void> initializeGoogleSignIn() async {
-  if (isAuthenticated()) return;
-  
-  final googleUser = await _googleSignIn.attemptLightweightAuthentication();
-  if (googleUser != null) {
-    await _performAuthentication();
+Future<void> _handleAuthenticationByGoogle(BuildContext context) async {
+  onLoadingStateChanged(true);
+  try {
+    if (email != null) {
+      await authService.signOutWithEmailAndPassword();
+      showSnackBar('サインアウトしました。');
+    } else {
+      // ブラウザを開いて Google OAuth 認証（コールバックは app.dart で処理）
+      await authService.signInWithGoogleOAuth();
+      // ブラウザが開いたのでローディングを解除（認証完了はディープリンクで処理）
+      if (context.mounted) {
+        onLoadingStateChanged(false);
+      }
+      return;
+    }
+  } on PlatformException catch (e) {
+    if (context.mounted) {
+      onLoadingStateChanged(false);
+    }
+    showSnackBar('認証処理に失敗しました(PlatformException)');
+  } catch (err) {
+    if (context.mounted) {
+      onLoadingStateChanged(false);
+    }
+    showSnackBar('$err:認証処理に失敗しました(OtherException)');
+  }
+}
+```
+
+#### 4.2.3 OAuthコールバック処理（app.dart）
+
+```dart
+/// OAuth コールバックを処理してHome画面へ遷移
+Future<void> _handleOAuthCallback(Uri uri) async {
+  try {
+    // supabase_flutter の内部リスナーが先に処理している場合は例外が出るが無視する
+    await Supabase.instance.client.auth.getSessionFromUrl(uri);
+  } catch (e) {
+    // エラーは無視（内部リスナーが処理済みの場合）
+  }
+
+  // セッションが即時確立された場合はホームへ遷移
+  final session = Supabase.instance.client.auth.currentSession;
+  if (session != null) {
+    _navigateToHome();
+  } else {
+    // セッションがまだ反映されていない場合は onAuthStateChange を一度だけ待つ
+    final completer = Completer<bool>();
+    final subscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (!completer.isCompleted &&
+          (data.event == AuthChangeEvent.signedIn ||
+              data.event == AuthChangeEvent.tokenRefreshed)) {
+        completer.complete(true);
+      }
+    });
+    final signedIn = await completer.future.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => false,
+    );
+    await subscription.cancel();
+    if (signedIn) {
+      _navigateToHome();
+    } else {
+      LoggerService.warn('OAuth session が存在しません');
+    }
   }
 }
 ```
@@ -282,15 +318,25 @@ String getUserId() {
 ### 7.1 FCMトークン設定
 
 ```dart
-Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify) async {
-  final userId = supabase.auth.currentUser!.id;
+Future<void> setFcmTokenAndNotifySetting(
+  String fcmToken,
+  bool isNotify, {
+  required String deviceId,
+  String? deviceName,
+}) async {
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) {
+    LoggerService.warn('FCMトークン登録: ユーザーが未ログインのためスキップ');
+    return;
+  }
   final status = isNotify ? 1 : 0;
-  
   await supabase.from(Tables.userFcmTokens).upsert({
     'user_id': userId,
+    'device_id': deviceId,
+    'device_name': deviceName,
     'fcm_token': fcmToken,
     'is_notify': status,
-  });
+  }, onConflict: 'user_id,device_id');
 }
 ```
 
@@ -298,17 +344,29 @@ Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify) async {
 
 ```dart
 FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
-  await _authService.setFcmTokenAndNotifySetting(fcmToken, true);
+  final deviceId = await DeviceIdService().getDeviceId();
+  final deviceName = await DeviceIdService().getDeviceName();
+  await _authService.setFcmTokenAndNotifySetting(
+    fcmToken,
+    true,
+    deviceId: deviceId,
+    deviceName: deviceName,
+  );
 });
 ```
 
 ## 8. ログアウトフロー
 
-### 8.1 メール・パスワード認証のログアウト
+### 8.1 ログアウト処理（統一）
+
+メール・パスワード認証とGoogle認証のログアウトは `signOutWithEmailAndPassword()` に統一されています。
 
 ```dart
 Future<void> signOutWithEmailAndPassword() async {
   try {
+    // サインアウト前にCrashlyticsのユーザー識別子をクリア
+    await _clearCrashlyticsUser();
+
     await supabase.auth.signOut();
   } catch (error) {
     rethrow;
@@ -316,16 +374,12 @@ Future<void> signOutWithEmailAndPassword() async {
 }
 ```
 
-### 8.2 Google認証のログアウト
+### 8.2 デバイスFCMトークン付きログアウト
 
 ```dart
-Future<void> signOutWithGoogle() async {
-  try {
-    await supabase.auth.signOut();  // Supabaseからログアウト
-    await _googleSignIn.signOut();  // Googleからログアウト
-  } catch (error) {
-    rethrow;
-  }
+Future<void> signOutWithEmailAndPasswordAndDevice(String deviceId) async {
+  await removeFcmToken(deviceId);
+  await signOutWithEmailAndPassword();
 }
 ```
 
@@ -338,25 +392,32 @@ Future<void> signOutWithGoogle() async {
 void initState() {
   super.initState();
   _setupAuthStateListener();      // 認証状態監視開始
-  _getAvailableBiometrics();      // 生体認証チェック
-  _initializeAndNavigate();       // 初期化と自動ナビゲーション
+  _initializeBiometricAuth();     // 生体認証の初期化と自動ログイン判定
 }
 ```
 
 ### 9.2 自動認証チェック
 
 ```dart
-Future<void> _initializeAndNavigate() async {
-  try {
-    await _authService.initializeGoogleSignIn();
-    if (_authService.isAuthenticated()) {
-      _navigateToHome();  // 既に認証済みの場合は自動遷移
-    }
-  } catch (e) {
-    // エラー処理（ログイン画面に留まる）
+Future<void> _initializeBiometricAuth() async {
+  // 生体認証の可用性を確認
+  bool canCheckBiometrics = await auth.canCheckBiometrics;
+  final isDeviceSupported = await auth.isDeviceSupported();
+  canCheckBiometrics = canCheckBiometrics && isDeviceSupported;
+
+  // 生体認証が利用可能かつ有効化・認証情報が保存済みの場合は自動ログイン
+  final biometricEnabled = await _isBiometricEnabled();
+  final hasStoredCredentials = await _hasStoredCredentials();
+
+  if (canCheckBiometrics && biometricEnabled && hasStoredCredentials) {
+    await _authenticateWithBiometrics();
   }
 }
 ```
+
+なお、Google OAuth認証のコールバックは `app.dart` の `_handleOAuthCallback()` で処理され、
+ログイン画面は `isAuthenticated()` のポーリングを行いません。
+Supabaseセッションは `onAuthStateChange` イベントで自動的に管理されます。
 
 ## 10. エラーハンドリング
 
@@ -394,9 +455,10 @@ void _navigateToHome() {
 - 自動リフレッシュ機能
 
 ### 11.2 プラットフォームセキュリティ
-- Google Sign-InのOAuth 2.0準拠
+- Supabase OAuth 2.0準拠のGoogle認証
 - Supabaseによるセキュアな認証基盤
-- 生体認証の準備（将来的な実装）
+- 生体認証（local_auth）による自動ログイン
+- OAuthコールバックURI検証（スキーム・ホスト）
 
 ### 11.3 エラー情報の適切な処理
 - デバッグモード時のみエラー詳細出力

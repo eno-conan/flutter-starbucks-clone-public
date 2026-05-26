@@ -73,3 +73,13 @@ pubspec_overrides.yaml
 # claude code session
 .claude/sessions/*
 !.claude/sessions/.gitkeep
+
+plans/
+
+# Integration test credentials
+integration_test/test_config.dart
+
+# Zensical docs
+docs/zensical-docs/.venv/
+docs/zensical-docs/site/
+docs/zensical-docs/.cache/

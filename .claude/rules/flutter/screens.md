@@ -1,12 +1,13 @@
 ---
-description: 画面・Widget実装ガイドライン（screens、widgets配下）
+description: 画面・Widget実装ガイドライン(screens、widgets配下)
+paths:
+  - "lib/screens/**/*.dart"
+  - "lib/shared/widgets/**/*.dart"
 ---
 
 # 画面・Widget実装ガイドライン
 
 ## スクリーンおよびWidgetファイル専用ルール
-
-このルールは `lib/screens/` および `lib/shared/widgets/` 配下のDartファイル作業時に適用されます。
 
 ### 画面設計の基本原則
 

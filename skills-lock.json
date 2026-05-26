@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "flutter-animating-apps": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "fcec8d5e69f914e94ad8ac999b42793fd616af044665feb4af5daa21ca7988d7"
+    },
+    "flutter-caching-data": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "bc9d63c2000ea783643e36ec5f56151d93407ef3b8758a352e164b139a4d97c3"
+    },
+    "flutter-implementing-navigation-and-routing": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "d599cf2bb7fe94d164fb3ce856dcd2701e66674e8f750b72c9c22c4af52fd57b"
+    },
+    "flutter-testing-apps": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "c3bc3a540534e97cf391710fb8dcdb49b9f4c8a5385597cb56ef9094e56af776"
+    }
+  }
+}

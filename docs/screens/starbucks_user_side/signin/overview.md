@@ -44,8 +44,8 @@ lib/constants/
    - リアルタイムバリデーション機能
 
 2. **Googleアカウント認証**
-   - Google Sign-InとSupabaseの連携
-   - OAuthトークンを使用した認証
+   - Supabase OAuth経由でブラウザを起動して認証
+   - ディープリンクでアプリに戻り、セッションを確立
 
 3. **生体認証（実装済み）**
    - 指紋認証機能（local_auth使用）
@@ -62,18 +62,18 @@ lib/constants/
 
 | 技術 | 用途 |
 |------|------|
-| Supabase | バックエンド認証サービス |
-| Google Sign-In | Google OAuth認証 |
+| Supabase | バックエンド認証サービス・Google OAuth |
+| app_links | OAuthコールバックのディープリンク処理 |
 | Firebase Messaging | プッシュ通知用トークン管理 |
 | GetIt | 依存性注入 |
 | Go Router | ナビゲーション |
 
 ## 5. セキュリティ
 
-- OAuth 2.0準拠のGoogle認証
+- OAuth 2.0準拠のGoogle認証（Supabase OAuth経由）
 - Supabaseによるセキュアな認証管理
 - トークンの適切なライフサイクル管理
-- プラットフォーム固有の例外処理
+- OAuthコールバックのホスト・スキーム検証
 
 ## 6. ユーザビリティ
 

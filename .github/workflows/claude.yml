@@ -36,5 +36,5 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: |
             --max-turns 8
-            --model claude-4-0-sonnet-20250805
-          allowed_tools: "Bash"
+            --model claude-sonnet-4-5-20250929
+            --allowed-tools Bash,WebFetch(https://www.anthropic.com/**,https://code.claude.com/**,https://github.com/**,https://ja.stackoverflow.com/**,https://pub.dev/**,https://developer.android.com/**),WebSearch

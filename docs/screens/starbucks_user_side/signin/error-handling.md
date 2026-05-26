@@ -60,79 +60,76 @@ Future<void> _handleAuthenticationByEmailAndPassword() async {
 #### 2.2.2 Google認証エラー
 
 ```dart
-Future<void> _handleAuthenticationByGoogle() async {
+Future<void> _handleAuthenticationByGoogle(BuildContext context) async {
+  onLoadingStateChanged(true);
   try {
     if (email != null) {
-      await authService.signOutWithGoogle();
+      await authService.signOutWithEmailAndPassword();
       showSnackBar('サインアウトしました。');
     } else {
-      await authService.signInWithGoogle();
-      onLoginSuccess();
+      // ブラウザを開いて Google OAuth 認証（コールバックは app.dart で処理）
+      await authService.signInWithGoogleOAuth();
+      // ブラウザが開いたのでローディングを解除（認証完了はディープリンクで処理）
+      if (context.mounted) {
+        onLoadingStateChanged(false);
+      }
+      return;
     }
   } on PlatformException catch (e) {
-    onLoadingStateChanged(false);
+    if (context.mounted) {
+      onLoadingStateChanged(false);
+    }
     if (kDebugMode) {
-      print(email != null ? 'ログアウト処理でエラー発生: $e' : 'ログイン処理でエラー発生: $e');
+      LoggerService.warn(email != null ? 'ログアウト処理でエラー発生: $e' : 'ログイン処理でエラー発生: $e');
     }
     showSnackBar('認証処理に失敗しました(PlatformException)');
   } catch (err) {
-    onLoadingStateChanged(false);
+    if (context.mounted) {
+      onLoadingStateChanged(false);
+    }
     showSnackBar('$err:認証処理に失敗しました(OtherException)');
   }
 }
 ```
 
-## 3. Google Sign-In 固有エラー
+## 3. Google OAuth 固有エラー
 
-### 3.1 プラットフォームサポートエラー
+### 3.1 ブラウザ起動エラー
+
+`signInWithGoogleOAuth()` は `supabase.auth.signInWithOAuth()` を呼び出してブラウザを起動します。
+ブラウザが起動できない場合（PlatformException）は呼び出し元でキャッチされます。
 
 ```dart
-Future<void> signInWithGoogle() async {
-  try {
-    if (!_googleSignIn.supportsAuthenticate()) {
-      throw Exception('Authenticate not supported on this platform');
-    }
-    // 認証処理続行
-  } catch (error) {
-    rethrow;
-  }
+Future<void> signInWithGoogleOAuth() async {
+  final redirectTo = kDebugMode
+      ? 'testingapp://callback'
+      : 'https://${AppConstants.firebaseHostingDomain}/callback';
+  // ブラウザが起動できない場合は例外が発生し、呼び出し元でキャッチ
+  await supabase.auth.signInWithOAuth(OAuthProvider.google, redirectTo: redirectTo);
 }
 ```
 
-### 3.2 認証失敗エラー
+### 3.2 OAuthコールバックタイムアウトエラー
+
+ブラウザでの認証後、アプリへのコールバックが5秒以内に完了しない場合：
 
 ```dart
-Future<void> _performAuthentication() async {
-  final googleUser = await _googleSignIn.attemptLightweightAuthentication();
-  
-  if (googleUser == null) {
-    throw Exception('attemptLightweightAuthentication failed');
-  }
-  // 処理続行
+final signedIn = await completer.future.timeout(
+  const Duration(seconds: 5),
+  onTimeout: () => false,
+);
+if (!signedIn) {
+  LoggerService.warn('OAuth session が存在しません');
+  // ホーム画面への遷移は行われない
 }
 ```
 
-### 3.3 スコープ認可エラー
+### 3.3 セッション未確立エラー
 
-```dart
-if (authorization == null) {
-  final authorizeResult = await googleUser.authorizationClient.authorizeScopes(scopes);
-  
-  if (authorizeResult.accessToken.isEmpty) {
-    throw Exception('Failed to get authorization after user granted it');
-  }
-  authorization = authorizeResult;
-}
-```
-
-### 3.4 IDトークンエラー
-
-```dart
-final idToken = googleAuth.idToken;
-if (idToken == null) {
-  throw Exception('No ID Token found.');
-}
-```
+`getSessionFromUrl()` の処理後もセッションが確立されない場合：
+- `onAuthStateChange` で `signedIn` または `tokenRefreshed` イベントを待機
+- 5秒タイムアウト後にセッションが未確立であればWarningログを出力
+- ユーザーは再度ログインを試みる必要がある
 
 ## 4. 生体認証エラー（準備済み）
 
@@ -219,23 +216,25 @@ Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify) async {
 
 ## 6. 初期化エラー
 
-### 6.1 Google Sign-In初期化エラー
+### 6.1 生体認証初期化エラー
 
 ```dart
-Future<void> _initializeAndNavigate() async {
+Future<void> _initializeBiometricAuth() async {
+  bool canCheckBiometrics = false;
   try {
-    await _authService.initializeGoogleSignIn();
-    if (_authService.isAuthenticated()) {
-      _navigateToHome();
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print('Google Sign-In initialization/authentication error: $e');
-    }
-    // エラー処理（ログイン画面への遷移など）
+    canCheckBiometrics = await auth.canCheckBiometrics;
+    final isDeviceSupported = await auth.isDeviceSupported();
+    canCheckBiometrics = canCheckBiometrics && isDeviceSupported;
+  } on PlatformException catch (e) {
+    canCheckBiometrics = false;
+    LoggerService.warn('生体認証チェックエラー: $e');
   }
+  // エラー時は通常のログイン画面を表示（スキップして続行）
 }
 ```
+
+Supabaseセッションのチェックは `onAuthStateChange` で自動的に行われるため、
+`initializeGoogleSignIn()` のような明示的な初期化処理は不要です。
 
 ## 7. ユーザー状態関連エラー
 
@@ -318,8 +317,8 @@ void _showSnackBar(String message) {
 | バリデーション | "メールアドレスを入力してください" | メールフィールド未入力時 |
 | バリデーション | "パスワードを入力してください" | パスワードフィールド未入力時 |
 | メール認証 | "認証処理に失敗しました(メールアドレス)" | メール認証失敗時 |
-| Google認証 | "認証処理に失敗しました(PlatformException)" | Google認証PlatformException |
-| Google認証 | "認証処理に失敗しました(OtherException)" | Google認証その他例外 |
+| Google OAuth | "認証処理に失敗しました(PlatformException)" | ブラウザ起動失敗時 |
+| Google OAuth | "認証処理に失敗しました(OtherException)" | OAuth認証その他例外 |
 | ログアウト | "サインアウトしました。" | ログアウト成功時 |
 
 ## 10. デバッグモード対応

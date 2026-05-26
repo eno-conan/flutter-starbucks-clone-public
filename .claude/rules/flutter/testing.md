@@ -1,15 +1,14 @@
 ---
-description: テスト実装ガイドライン（単体・Widget・統合テスト）
+description: テスト実装ガイドライン(単体・Widget・統合テスト)
+paths:
+  - "test/**/*_test.dart"
+  - "integration_test/**/*_test.dart"
+  - "**/test/**/*_test.dart"
 ---
 
 # テスト実装ガイドライン
 
 ## 単体テスト・統合テスト専用ルール
-
-このルールは以下のディレクトリのテストファイル作業時に適用されます:
-- `test/`
-- `integration_test/`
-- 任意のディレクトリ下の`test/`
 
 ### テスト構成原則
 

@@ -367,6 +367,66 @@ SliverList(
 - SliverウィジェットはScrollableなWidget（CustomScrollView、NestedScrollView等）内でのみ使用可能
 - RepaintBoundaryやKeepAlive等の一般的なWidgetでSliverを直接ラップするとエラーが発生
 
+### 6. go_router (ShellRoute) + showDialog でのNavigatorアンチパターン
+
+**ShellRoute環境での Navigator.of(context).pop() の誤用**
+
+```dart
+// ❌ 悪い例：showDialogで表示したダイアログをShell Navigator でpopしようとする
+Future<void> _handleSettlement() async {
+  // showDialog はデフォルトで useRootNavigator: true → ルートNavigatorへpush
+  showDialog(
+    context: context,
+    builder: (_) => CircularProgressIndicator(),
+  );
+
+  await processSettlement();
+
+  if (context.mounted) {
+    Navigator.of(context).pop(); // ❌ Shell Navigator をpopしてしまう
+    // go_router の assertion エラー:
+    // 'currentConfiguration.isNotEmpty':
+    // You have popped the last page off of the stack, there are no pages left to show
+  }
+}
+```
+
+**なぜ問題か？**
+
+| 操作 | 使用するNavigator |
+|------|-----------------|
+| `showDialog(context: context, ...)` | **ルートNavigator** (`useRootNavigator: true` がデフォルト) |
+| `Navigator.of(context).pop()` | **Shell Navigator** (go_router の ShellRoute に関連付けられた近傍Navigator) |
+
+go_router が ShellRoute を使っている場合、Widget内の `context` は Shell Navigator に関連付けられる。
+`showDialog` がルートNavigatorにダイアログをpushしているのに、`Navigator.of(context).pop()` が
+Shell Navigator の最上位（= 画面そのもの）をpopしてしまい、スタックが空になる。
+
+**正しい実装**：
+
+```dart
+// ✅ 良い例：showDialogと同じルートNavigatorをpopする
+Future<void> _handleSettlement() async {
+  showDialog(
+    context: context,
+    builder: (_) => CircularProgressIndicator(),
+  );
+
+  await processSettlement();
+
+  if (context.mounted) {
+    // rootNavigator: true でルートNavigatorをpopする（showDialogと一致）
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+}
+```
+
+**原則**: `showDialog` でダイアログを表示した場合、`pop()` も必ず同じNavigatorから行う。
+- `showDialog(useRootNavigator: true)` のとき → `Navigator.of(context, rootNavigator: true).pop()`
+- `showDialog(useRootNavigator: false)` のとき → `Navigator.of(context).pop()`
+
+**ShellRoute を使っているプロジェクトでは特に注意が必要。**
+
 ### 理由と背景
 
 これらのアンチパターンを避ける理由：

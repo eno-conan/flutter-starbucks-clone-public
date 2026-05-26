@@ -5,11 +5,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "saturday"
+      day: "wednesday"
       time: "07:00"
       timezone: "Asia/Tokyo"
     # Only create PRs for security updates and version updates
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     assignees:
       - "eno-conan"
     commit-message:
@@ -28,3 +28,35 @@ updates:
         # Flutter SDK should be updated manually
       - dependency-name: "flutter_test"
         # Part of Flutter SDK
+    groups:
+      firebase:
+        patterns:
+          - "firebase_*"
+
+  # npm dependencies (supabase_schema)
+  - package-ecosystem: "npm"
+    directory: "/supabase_schema"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "07:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    assignees:
+      - "eno-conan"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    groups:
+      aws-sdk:
+        patterns:
+          - "@aws-sdk/*"
+      smithy:
+        patterns:
+          - "@smithy/*"

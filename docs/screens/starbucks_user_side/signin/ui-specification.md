@@ -183,6 +183,13 @@ ElevatedButton(
 - **アイコン**: Googleロゴ（24px）
 - **テキスト**: "Googleログイン" (16px)
 
+### 3.2 タップ時の動作
+
+ボタンをタップすると、`signInWithGoogleOAuth()` が呼び出されてブラウザが起動し、
+Google OAuth認証画面が表示されます。ブラウザが起動した時点でローディング表示は解除されます。
+認証完了後はアプリがディープリンク（`testingapp://callback` または `https://[domain]/callback`）を受信し、
+`app.dart` の `_handleOAuthCallback()` でセッションを確立してHome画面へ遷移します。
+
 ## 4. ローディング状態
 
 ### 4.1 全画面ローディング

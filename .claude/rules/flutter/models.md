@@ -1,15 +1,14 @@
 ---
-description: データモデル実装ガイドライン（Equatable、JSON処理）
+description: データモデル実装ガイドライン(Equatable、JSON処理)
+paths:
+  - "lib/core/models/**/*.dart"
+  - "lib/*/model/**/*.dart"
+  - "lib/*/models/**/*.dart"
 ---
 
 # データモデル実装ガイドライン
 
 ## データクラス・モデル専用ルール
-
-このルールは以下のディレクトリのDartファイル作業時に適用されます:
-- `lib/core/models/`
-- `lib/*/model/` (任意のディレクトリ下のmodel)
-- `lib/*/models/` (任意のディレクトリ下のmodels)
 
 ### モデルクラス設計原則
 
