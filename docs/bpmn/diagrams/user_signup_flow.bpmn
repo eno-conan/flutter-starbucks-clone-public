@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="definitions_1"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <!-- ===== コラボレーション (Pool) ===== -->
+  <bpmn:collaboration id="collab_1">
+    <bpmn:participant
+      id="pool_signup"
+      name="My Starbucks 会員登録"
+      processRef="process_signup" />
+  </bpmn:collaboration>
+
+  <!-- ===== プロセス定義 ===== -->
+  <bpmn:process id="process_signup" isExecutable="false">
+
+    <!-- レーン定義 -->
+    <bpmn:laneSet id="laneSet_1">
+
+      <bpmn:lane id="lane_user" name="ユーザー（モバイルアプリ）">
+        <bpmn:flowNodeRef>startEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_inputEmail</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_tapSend</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_showError</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_showPreComplete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>intermediateCatch_deeplink</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_showSignupError</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>endEvent_error</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_inputProfile</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_showComplete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>endEvent_success</bpmn:flowNodeRef>
+      </bpmn:lane>
+
+      <bpmn:lane id="lane_edge" name="Supabase Edge Function">
+        <bpmn:flowNodeRef>task_checkEmail</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gw_emailUnique</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_supabaseSignUp</bpmn:flowNodeRef>
+      </bpmn:lane>
+
+      <bpmn:lane id="lane_db" name="Supabase Database">
+        <bpmn:flowNodeRef>task_insertPreSignup</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_getToken</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gw_tokenValid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_insertProfile</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_insertMailSettings</bpmn:flowNodeRef>
+      </bpmn:lane>
+
+      <bpmn:lane id="lane_mail" name="メールシステム">
+        <bpmn:flowNodeRef>task_sendEmail</bpmn:flowNodeRef>
+      </bpmn:lane>
+
+    </bpmn:laneSet>
+
+    <!-- ===== Phase 1: 仮登録 ===== -->
+
+    <bpmn:startEvent id="startEvent_1" name="会員登録画面を開く">
+      <bpmn:outgoing>sf_1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="task_inputEmail" name="メールアドレス入力&#10;利用規約同意">
+      <bpmn:incoming>sf_1</bpmn:incoming>
+      <bpmn:incoming>sf_7</bpmn:incoming>
+      <bpmn:outgoing>sf_2</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="task_tapSend" name="「送信する」&#10;ボタンタップ">
+      <bpmn:incoming>sf_2</bpmn:incoming>
+      <bpmn:outgoing>sf_3</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Edge Function: メール重複チェック -->
+    <bpmn:serviceTask id="task_checkEmail" name="checkEmailExists&#10;（Edge Function）">
+      <bpmn:incoming>sf_3</bpmn:incoming>
+      <bpmn:outgoing>sf_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="gw_emailUnique" name="メール重複&#10;チェック">
+      <bpmn:incoming>sf_4</bpmn:incoming>
+      <bpmn:outgoing>sf_5</bpmn:outgoing>
+      <bpmn:outgoing>sf_6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- エラーダイアログ（重複 / サーバーエラー） -->
+    <bpmn:userTask id="task_showError" name="エラーダイアログ表示&#10;（重複 / サーバーエラー）">
+      <bpmn:incoming>sf_5</bpmn:incoming>
+      <bpmn:outgoing>sf_7</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- DB: pre_signup_users 挿入 -->
+    <bpmn:serviceTask id="task_insertPreSignup" name="pre_signup_users&#10;テーブルへ挿入">
+      <bpmn:incoming>sf_6</bpmn:incoming>
+      <bpmn:outgoing>sf_8</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- 確認メール送信（DBトリガー経由） -->
+    <bpmn:sendTask id="task_sendEmail" name="確認メール送信&#10;（DBトリガー）">
+      <bpmn:incoming>sf_8</bpmn:incoming>
+      <bpmn:outgoing>sf_9</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:userTask id="task_showPreComplete" name="仮登録完了&#10;画面表示">
+      <bpmn:incoming>sf_9</bpmn:incoming>
+      <bpmn:outgoing>sf_10</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- ===== Phase 2: 本登録 ===== -->
+
+    <!-- ディープリンク受信（確認メールのリンクタップ） -->
+    <bpmn:intermediateCatchEvent id="intermediateCatch_deeplink"
+      name="確認メールの&#10;リンクをタップ">
+      <bpmn:incoming>sf_10</bpmn:incoming>
+      <bpmn:outgoing>sf_11</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="msgDef_1" />
+    </bpmn:intermediateCatchEvent>
+
+    <!-- DB: トークンから仮会員情報を取得 -->
+    <bpmn:serviceTask id="task_getToken" name="トークンから&#10;仮会員情報を取得">
+      <bpmn:incoming>sf_11</bpmn:incoming>
+      <bpmn:outgoing>sf_12</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="gw_tokenValid" name="トークン&#10;有効チェック">
+      <bpmn:incoming>sf_12</bpmn:incoming>
+      <bpmn:outgoing>sf_13</bpmn:outgoing>
+      <bpmn:outgoing>sf_14</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- 無効トークン → SignUpError -->
+    <bpmn:userTask id="task_showSignupError" name="SignUpError&#10;画面表示">
+      <bpmn:incoming>sf_13</bpmn:incoming>
+      <bpmn:outgoing>sf_15</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="endEvent_error" name="登録失敗">
+      <bpmn:incoming>sf_15</bpmn:incoming>
+      <bpmn:errorEventDefinition id="errDef_1" />
+    </bpmn:endEvent>
+
+    <!-- 有効トークン → 会員情報入力 -->
+    <bpmn:userTask id="task_inputProfile"
+      name="会員情報入力&#10;（パスワード・氏名・&#10;生年月日・性別・電話・住所）">
+      <bpmn:incoming>sf_14</bpmn:incoming>
+      <bpmn:outgoing>sf_16</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Edge Function: Supabase Auth signUp() -->
+    <bpmn:serviceTask id="task_supabaseSignUp" name="Supabase Auth&#10;signUp()">
+      <bpmn:incoming>sf_16</bpmn:incoming>
+      <bpmn:outgoing>sf_17</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- DB: user_profile_details 挿入 -->
+    <bpmn:serviceTask id="task_insertProfile" name="user_profile_details&#10;テーブルへ挿入">
+      <bpmn:incoming>sf_17</bpmn:incoming>
+      <bpmn:outgoing>sf_18</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- DB: user_mail_settings 挿入 -->
+    <bpmn:serviceTask id="task_insertMailSettings" name="user_mail_settings&#10;テーブルへ挿入">
+      <bpmn:incoming>sf_18</bpmn:incoming>
+      <bpmn:outgoing>sf_19</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:userTask id="task_showComplete" name="登録完了&#10;画面表示">
+      <bpmn:incoming>sf_19</bpmn:incoming>
+      <bpmn:outgoing>sf_20</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="endEvent_success" name="登録完了">
+      <bpmn:incoming>sf_20</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- ===== シーケンスフロー ===== -->
+    <bpmn:sequenceFlow id="sf_1"  sourceRef="startEvent_1"           targetRef="task_inputEmail" />
+    <bpmn:sequenceFlow id="sf_2"  sourceRef="task_inputEmail"         targetRef="task_tapSend" />
+    <bpmn:sequenceFlow id="sf_3"  sourceRef="task_tapSend"            targetRef="task_checkEmail" />
+    <bpmn:sequenceFlow id="sf_4"  sourceRef="task_checkEmail"         targetRef="gw_emailUnique" />
+    <bpmn:sequenceFlow id="sf_5"  name="重複 / エラー"               sourceRef="gw_emailUnique"    targetRef="task_showError" />
+    <bpmn:sequenceFlow id="sf_6"  name="ユニーク"                     sourceRef="gw_emailUnique"    targetRef="task_insertPreSignup" />
+    <bpmn:sequenceFlow id="sf_7"  sourceRef="task_showError"          targetRef="task_inputEmail" />
+    <bpmn:sequenceFlow id="sf_8"  sourceRef="task_insertPreSignup"    targetRef="task_sendEmail" />
+    <bpmn:sequenceFlow id="sf_9"  sourceRef="task_sendEmail"          targetRef="task_showPreComplete" />
+    <bpmn:sequenceFlow id="sf_10" sourceRef="task_showPreComplete"    targetRef="intermediateCatch_deeplink" />
+    <bpmn:sequenceFlow id="sf_11" sourceRef="intermediateCatch_deeplink" targetRef="task_getToken" />
+    <bpmn:sequenceFlow id="sf_12" sourceRef="task_getToken"           targetRef="gw_tokenValid" />
+    <bpmn:sequenceFlow id="sf_13" name="無効"                         sourceRef="gw_tokenValid"     targetRef="task_showSignupError" />
+    <bpmn:sequenceFlow id="sf_14" name="有効"                         sourceRef="gw_tokenValid"     targetRef="task_inputProfile" />
+    <bpmn:sequenceFlow id="sf_15" sourceRef="task_showSignupError"    targetRef="endEvent_error" />
+    <bpmn:sequenceFlow id="sf_16" sourceRef="task_inputProfile"       targetRef="task_supabaseSignUp" />
+    <bpmn:sequenceFlow id="sf_17" sourceRef="task_supabaseSignUp"     targetRef="task_insertProfile" />
+    <bpmn:sequenceFlow id="sf_18" sourceRef="task_insertProfile"      targetRef="task_insertMailSettings" />
+    <bpmn:sequenceFlow id="sf_19" sourceRef="task_insertMailSettings" targetRef="task_showComplete" />
+    <bpmn:sequenceFlow id="sf_20" sourceRef="task_showComplete"       targetRef="endEvent_success" />
+
+  </bpmn:process>
+
+  <!-- ===== 図形情報 (BPMNDI) ===== -->
+  <!--
+    Pool:  x=120, y=80, width=2200, height=740
+    Lane heights: 185 each (4 lanes)
+      Lane 1 User:  y=80  → 265  center-y=172
+      Lane 2 Edge:  y=265 → 450  center-y=357
+      Lane 3 DB:    y=450 → 635  center-y=542
+      Lane 4 Mail:  y=635 → 820  center-y=727
+  -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="collab_1">
+
+      <!-- Pool -->
+      <bpmndi:BPMNShape id="shape_pool" bpmnElement="pool_signup" isHorizontal="true">
+        <dc:Bounds x="120" y="80" width="2200" height="740" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Lane 1: ユーザー -->
+      <bpmndi:BPMNShape id="shape_lane_user" bpmnElement="lane_user" isHorizontal="true">
+        <dc:Bounds x="150" y="80" width="2170" height="185" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Lane 2: Edge Function -->
+      <bpmndi:BPMNShape id="shape_lane_edge" bpmnElement="lane_edge" isHorizontal="true">
+        <dc:Bounds x="150" y="265" width="2170" height="185" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Lane 3: Database -->
+      <bpmndi:BPMNShape id="shape_lane_db" bpmnElement="lane_db" isHorizontal="true">
+        <dc:Bounds x="150" y="450" width="2170" height="185" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Lane 4: Mail -->
+      <bpmndi:BPMNShape id="shape_lane_mail" bpmnElement="lane_mail" isHorizontal="true">
+        <dc:Bounds x="150" y="635" width="2170" height="185" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- ===== Lane 1: ユーザー (center-y=172) ===== -->
+
+      <!-- startEvent_1 -->
+      <bpmndi:BPMNShape id="shape_startEvent_1" bpmnElement="startEvent_1">
+        <dc:Bounds x="228" y="154" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="202" y="196" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- task_inputEmail -->
+      <bpmndi:BPMNShape id="shape_task_inputEmail" bpmnElement="task_inputEmail">
+        <dc:Bounds x="295" y="132" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- task_tapSend -->
+      <bpmndi:BPMNShape id="shape_task_tapSend" bpmnElement="task_tapSend">
+        <dc:Bounds x="465" y="132" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- task_showError (upper Lane1, y=88-168) -->
+      <bpmndi:BPMNShape id="shape_task_showError" bpmnElement="task_showError">
+        <dc:Bounds x="835" y="88" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- task_showPreComplete (center Lane1) -->
+      <bpmndi:BPMNShape id="shape_task_showPreComplete" bpmnElement="task_showPreComplete">
+        <dc:Bounds x="1080" y="132" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- intermediateCatch_deeplink -->
+      <bpmndi:BPMNShape id="shape_intermediateCatch" bpmnElement="intermediateCatch_deeplink">
+        <dc:Bounds x="1262" y="154" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1238" y="196" width="86" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- task_showSignupError (upper Lane1, y=88-168) -->
+      <bpmndi:BPMNShape id="shape_task_showSignupError" bpmnElement="task_showSignupError">
+        <dc:Bounds x="1620" y="88" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- endEvent_error -->
+      <bpmndi:BPMNShape id="shape_endEvent_error" bpmnElement="endEvent_error">
+        <dc:Bounds x="1762" y="154" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1748" y="196" width="56" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- task_inputProfile (lower Lane1, y=170-250) -->
+      <bpmndi:BPMNShape id="shape_task_inputProfile" bpmnElement="task_inputProfile">
+        <dc:Bounds x="1620" y="170" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- task_showComplete -->
+      <bpmndi:BPMNShape id="shape_task_showComplete" bpmnElement="task_showComplete">
+        <dc:Bounds x="2060" y="132" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- endEvent_success -->
+      <bpmndi:BPMNShape id="shape_endEvent_success" bpmnElement="endEvent_success">
+        <dc:Bounds x="2232" y="154" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2218" y="196" width="56" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- ===== Lane 2: Edge Function (center-y=357) ===== -->
+
+      <!-- task_checkEmail -->
+      <bpmndi:BPMNShape id="shape_task_checkEmail" bpmnElement="task_checkEmail">
+        <dc:Bounds x="640" y="317" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- gw_emailUnique -->
+      <bpmndi:BPMNShape id="shape_gw_emailUnique" bpmnElement="gw_emailUnique" isMarkerVisible="true">
+        <dc:Bounds x="815" y="332" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="872" y="338" width="72" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- task_supabaseSignUp -->
+      <bpmndi:BPMNShape id="shape_task_supabaseSignUp" bpmnElement="task_supabaseSignUp">
+        <dc:Bounds x="1762" y="317" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- ===== Lane 3: Database (center-y=542) ===== -->
+
+      <!-- task_insertPreSignup -->
+      <bpmndi:BPMNShape id="shape_task_insertPreSignup" bpmnElement="task_insertPreSignup">
+        <dc:Bounds x="910" y="502" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- task_getToken -->
+      <bpmndi:BPMNShape id="shape_task_getToken" bpmnElement="task_getToken">
+        <dc:Bounds x="1350" y="502" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- gw_tokenValid -->
+      <bpmndi:BPMNShape id="shape_gw_tokenValid" bpmnElement="gw_tokenValid" isMarkerVisible="true">
+        <dc:Bounds x="1535" y="517" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1520" y="572" width="80" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- task_insertProfile -->
+      <bpmndi:BPMNShape id="shape_task_insertProfile" bpmnElement="task_insertProfile">
+        <dc:Bounds x="1920" y="502" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- task_insertMailSettings -->
+      <bpmndi:BPMNShape id="shape_task_insertMailSettings" bpmnElement="task_insertMailSettings">
+        <dc:Bounds x="2060" y="502" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- ===== Lane 4: Mail (center-y=727) ===== -->
+
+      <!-- task_sendEmail -->
+      <bpmndi:BPMNShape id="shape_task_sendEmail" bpmnElement="task_sendEmail">
+        <dc:Bounds x="1080" y="687" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- ===== シーケンスフロー (エッジ) ===== -->
+
+      <!-- sf_1: startEvent → inputEmail (L1 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_1" bpmnElement="sf_1">
+        <di:waypoint x="264" y="172" />
+        <di:waypoint x="295" y="172" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_2: inputEmail → tapSend (L1 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_2" bpmnElement="sf_2">
+        <di:waypoint x="415" y="172" />
+        <di:waypoint x="465" y="172" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_3: tapSend → checkEmail (L1→L2 下降) -->
+      <bpmndi:BPMNEdge id="edge_sf_3" bpmnElement="sf_3">
+        <di:waypoint x="525" y="212" />
+        <di:waypoint x="525" y="357" />
+        <di:waypoint x="640" y="357" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_4: checkEmail → gw_emailUnique (L2 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_4" bpmnElement="sf_4">
+        <di:waypoint x="760" y="357" />
+        <di:waypoint x="815" y="357" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_5: gw_emailUnique → showError (L2→L1 上昇, 重複/エラー) -->
+      <bpmndi:BPMNEdge id="edge_sf_5" bpmnElement="sf_5">
+        <di:waypoint x="840" y="332" />
+        <di:waypoint x="840" y="265" />
+        <di:waypoint x="895" y="265" />
+        <di:waypoint x="895" y="168" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="848" y="290" width="72" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_6: gw_emailUnique → insertPreSignup (L2→L3 下降, ユニーク) -->
+      <bpmndi:BPMNEdge id="edge_sf_6" bpmnElement="sf_6">
+        <di:waypoint x="840" y="382" />
+        <di:waypoint x="840" y="450" />
+        <di:waypoint x="970" y="450" />
+        <di:waypoint x="970" y="502" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="848" y="413" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_7: showError → inputEmail (L1 ループバック) -->
+      <bpmndi:BPMNEdge id="edge_sf_7" bpmnElement="sf_7">
+        <di:waypoint x="895" y="88" />
+        <di:waypoint x="895" y="82" />
+        <di:waypoint x="355" y="82" />
+        <di:waypoint x="355" y="132" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_8: insertPreSignup → sendEmail (L3→L4 下降) -->
+      <bpmndi:BPMNEdge id="edge_sf_8" bpmnElement="sf_8">
+        <di:waypoint x="970" y="582" />
+        <di:waypoint x="970" y="635" />
+        <di:waypoint x="1140" y="635" />
+        <di:waypoint x="1140" y="687" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_9: sendEmail → showPreComplete (L4→L1 上昇) -->
+      <bpmndi:BPMNEdge id="edge_sf_9" bpmnElement="sf_9">
+        <di:waypoint x="1140" y="687" />
+        <di:waypoint x="1140" y="212" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_10: showPreComplete → intermediateCatch (L1 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_10" bpmnElement="sf_10">
+        <di:waypoint x="1200" y="172" />
+        <di:waypoint x="1262" y="172" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_11: intermediateCatch → getToken (L1→L3 下降) -->
+      <bpmndi:BPMNEdge id="edge_sf_11" bpmnElement="sf_11">
+        <di:waypoint x="1280" y="190" />
+        <di:waypoint x="1280" y="542" />
+        <di:waypoint x="1350" y="542" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_12: getToken → gw_tokenValid (L3 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_12" bpmnElement="sf_12">
+        <di:waypoint x="1470" y="542" />
+        <di:waypoint x="1535" y="542" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_13: gw_tokenValid → showSignupError (L3→L1 上昇, 無効) -->
+      <bpmndi:BPMNEdge id="edge_sf_13" bpmnElement="sf_13">
+        <di:waypoint x="1545" y="517" />
+        <di:waypoint x="1545" y="265" />
+        <di:waypoint x="1680" y="265" />
+        <di:waypoint x="1680" y="168" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1553" y="382" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_14: gw_tokenValid → inputProfile (L3→L1 上昇, 有効) -->
+      <bpmndi:BPMNEdge id="edge_sf_14" bpmnElement="sf_14">
+        <di:waypoint x="1560" y="517" />
+        <di:waypoint x="1560" y="450" />
+        <di:waypoint x="1560" y="265" />
+        <di:waypoint x="1620" y="265" />
+        <di:waypoint x="1620" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1568" y="470" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_15: showSignupError → endEvent_error (L1 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_15" bpmnElement="sf_15">
+        <di:waypoint x="1740" y="128" />
+        <di:waypoint x="1780" y="128" />
+        <di:waypoint x="1780" y="154" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_16: inputProfile → supabaseSignUp (L1→L2 下降) -->
+      <bpmndi:BPMNEdge id="edge_sf_16" bpmnElement="sf_16">
+        <di:waypoint x="1740" y="210" />
+        <di:waypoint x="1762" y="210" />
+        <di:waypoint x="1762" y="317" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_17: supabaseSignUp → insertProfile (L2→L3 下降) -->
+      <bpmndi:BPMNEdge id="edge_sf_17" bpmnElement="sf_17">
+        <di:waypoint x="1822" y="397" />
+        <di:waypoint x="1822" y="450" />
+        <di:waypoint x="1980" y="450" />
+        <di:waypoint x="1980" y="502" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_18: insertProfile → insertMailSettings (L3 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_18" bpmnElement="sf_18">
+        <di:waypoint x="2040" y="542" />
+        <di:waypoint x="2060" y="542" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_19: insertMailSettings → showComplete (L3→L1 上昇) -->
+      <bpmndi:BPMNEdge id="edge_sf_19" bpmnElement="sf_19">
+        <di:waypoint x="2120" y="502" />
+        <di:waypoint x="2120" y="212" />
+      </bpmndi:BPMNEdge>
+
+      <!-- sf_20: showComplete → endEvent_success (L1 直線) -->
+      <bpmndi:BPMNEdge id="edge_sf_20" bpmnElement="sf_20">
+        <di:waypoint x="2180" y="172" />
+        <di:waypoint x="2232" y="172" />
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</bpmn:definitions>

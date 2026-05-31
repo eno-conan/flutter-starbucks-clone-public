@@ -1,0 +1,26 @@
+{
+  "name": "bpmn",
+  "version": "1.0.0",
+  "description": "BPMN diagram viewer for flutter-starbucks-clone",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack serve --mode development --open",
+    "build": "webpack --mode production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bpmn-js": "^18.16.1"
+  },
+  "devDependencies": {
+    "webpack": "^5",
+    "webpack-cli": "^5",
+    "webpack-dev-server": "^5",
+    "html-webpack-plugin": "^5",
+    "css-loader": "^7",
+    "style-loader": "^4",
+    "copy-webpack-plugin": "^12"
+  }
+}
