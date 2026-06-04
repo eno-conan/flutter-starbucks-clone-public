@@ -45,7 +45,7 @@ dependencies:
   package_info_plus: ^9.0.0
   qr_flutter: ^4.1.0
   riverpod_annotation: ^4.0.2
-  screen_brightness: ^2.1.8
+  screen_brightness: ^2.1.9
   shared_preferences: ^2.5.5
   supabase_flutter: ^2.12.2
   url_launcher: ^6.3.1
