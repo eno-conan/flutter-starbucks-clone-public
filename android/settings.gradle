@@ -22,7 +22,9 @@ plugins {
     id "org.jetbrains.kotlin.android" version "2.2.20" apply false
     // START: FlutterFire Configuration
     id "com.google.gms.google-services" version "4.4.3" apply false
+    id 'com.google.firebase.firebase-perf' version '2.0.1' apply false
     // END: FlutterFire Configuration
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin' version '2.0.1' apply false
 }
 
 include ":app"
