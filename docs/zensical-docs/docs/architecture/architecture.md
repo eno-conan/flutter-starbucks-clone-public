@@ -1,5 +1,53 @@
 # アーキテクチャ詳細
 
+## プロジェクト構成
+
+```
+lib/
+├── app/                    # アプリケーション初期化
+├── config/                 # 設定・ルーティング
+├── constants/              # 定数定義
+├── core/                   # コアモデル・サービス
+│   ├── models/             # データモデル
+│   └── services/           # コアサービス
+├── data/repository/        # データアクセス層
+├── provider/               # Riverpod Provider定義
+├── screens/                # 画面実装
+│   ├── starbucks_user_side/    # ユーザー向け画面
+│   └── starbucks_store_side/   # 店舗側画面（QRスキャナ等）
+├── services/               # ビジネスロジック
+└── shared/                 # 共通ウィジェット・ユーティリティ
+```
+
+### Riverpod 3.0 実装例
+
+```dart
+@riverpod
+class AuthState extends _$AuthState {
+  @override
+  User? build() {
+    return null;
+  }
+
+  Future<void> signIn(String email, String password) async {
+    state = await authRepository.signIn(email, password);
+  }
+}
+
+// 使用例
+class LoginScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    return authState != null
+      ? HomeScreen()
+      : SignInForm();
+  }
+}
+```
+
+---
+
 ## Provider 詳細
 
 ### 認証系

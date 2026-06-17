@@ -1,5 +1,55 @@
 # 開発環境セットアップ
 
+## クイックスタート
+
+### 必須要件
+- Flutter 3.44.0 (FVMでの管理推奨)
+- Dart >=3.10.0
+- Android Studio / Xcode
+- Firebase プロジェクト
+- Supabase プロジェクト
+
+### セットアップ手順
+
+1. **リポジトリクローン**
+```bash
+git clone https://github.com/eno-conan/flutter-starbucks-clone.git
+cd flutter-starbucks-clone
+```
+
+2. **FVMセットアップ**
+```bash
+dart pub global activate fvm
+fvm install
+fvm use --force
+```
+
+3. **依存関係インストール**
+```bash
+fvm flutter pub get
+```
+
+4. **環境設定**
+```bash
+# Firebase設定
+flutterfire configure
+
+# Supabase設定（環境変数）
+cp .env.example .env
+# .envファイルを編集してSupabase認証情報を追加
+```
+
+5. **アプリ実行**
+```bash
+# デバッグ実行
+fvm flutter run
+
+# リリースビルド
+fvm flutter build apk --release
+```
+
+---
+
 ## Flutter SDKバージョン管理（FVM）
 
 このプロジェクトでは[FVM (Flutter Version Management)](https://fvm.app/)を使用してFlutter SDKバージョンを管理しています。

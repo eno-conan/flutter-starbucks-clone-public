@@ -6,6 +6,17 @@
 docker run -it --rm -p 8000:8000 opensecurity/mobile-security-framework-mobsf:latest
 ```
 
+## セキュリティ対策
+
+- **SSL Certificate Pinning** - 中間者攻撃防止
+- **暗号化ストレージ** - 機密データの安全な保存
+- **API認証** - JWT トークンベース認証
+- **入力バリデーション** - SQLインジェクション等の防止
+- **OWASP Mobile Top 10** 準拠
+- **MobSF セキュリティスキャン** 定期実行
+
+---
+
 ## 未使用ファイルの検出
 [Flutter: Find Unused Dart Files & Assets](https://medium.com/@Saurabh7973/easiest-way-to-reduce-app-size-in-flutter-apps-cb3da18a089a)
 

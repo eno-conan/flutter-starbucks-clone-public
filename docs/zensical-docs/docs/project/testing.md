@@ -1,5 +1,30 @@
 # テスト
 
+## テスト戦略
+
+- **単体テスト** - ビジネスロジック、ユーティリティ関数
+- **ウィジェットテスト** - UI コンポーネント
+- **結合テスト** - 画面フロー、API連携
+- **Golden テスト** - UI回帰テスト
+
+### コード品質コマンド
+
+```bash
+# 静的解析
+fvm flutter analyze
+
+# フォーマット
+fvm flutter format .
+
+# テスト実行
+fvm flutter test
+
+# カバレッジ測定
+fvm flutter test --coverage
+```
+
+---
+
 https://codelabs.developers.google.com/codelabs/flutter-app-testing?hl=ja
 
 上記リンクの内容にのっとり、以下テストの基本的な書き方を学習予定
