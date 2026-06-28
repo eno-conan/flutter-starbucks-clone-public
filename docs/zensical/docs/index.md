@@ -1,6 +1,6 @@
 # Starbucks Clone - 開発ドキュメント
 
-Starbucks 公式アプリを模倣した Flutter アプリの開発ドキュメント。
+Starbucks 公式アプリを模倣した Flutter アプリの開発ドキュメントです。
 
 ## 技術スタック
 

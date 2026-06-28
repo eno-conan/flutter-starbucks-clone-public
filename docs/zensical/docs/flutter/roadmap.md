@@ -4,7 +4,7 @@ In the interest of transparency, we want to share high-level details of our road
 
 Our plans will evolve over time based on customer feedback and new market opportunities. We will use our surveys and feedback on GitHub issues to prioritize work. The list here shouldn't be viewed either as exhaustive nor a promise that we will complete all this work. If you have feedback about what you think we should work on, we encourage you to get in touch by [filing an issue](https://github.com/flutter/flutter/issues/new/choose), or using the "thumbs-up" emoji reaction on an issue's first comment. Because Flutter is an open source project, we invite contributions both towards the themes presented below and in other areas.
 
-*If you are a contributor or team of contributors with long-term plans for [contributing to Flutter](../../CONTRIBUTING.md), and would like your planned efforts reflected in the roadmap, please reach via email to roadmap-input@flutter.dev.*
+*If you are a contributor or team of contributors with long-term plans for [contributing to Flutter](https://github.com/flutter/flutter/blob/master/CONTRIBUTING.md), and would like your planned efforts reflected in the roadmap, please reach via email to roadmap-input@flutter.dev.*
 
 # **2026**
 
@@ -44,4 +44,4 @@ Our recently completed new [Dart and Flutter learning pathway](https://docs.flut
 
 We plan a minimum of **four stable releases** for both Dart and Flutter and 12 beta releases in 2026. We are investing in further test automation to reduce release coordination failures and ensure that every release meets our high standards for stability and performance.
 
-_We maintain an [archive of roadmaps from previous years]([Archive]-Old-Roadmaps.md) in a separate page._
+_We maintain an archive of roadmaps from previous years in a separate page._

@@ -363,7 +363,6 @@ class Logger {
 
 ## 14. 関連ドキュメント
 
+- [フロー図（BPMN）](./flow.md)
 - [概要仕様書](./overview.md)
 - [UI仕様書](./ui-specification.md)
-- [コード品質・ドキュメント仕様書](./code-quality-specification.md)
-- [変更履歴](./changelog.md)
