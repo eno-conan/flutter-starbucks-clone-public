@@ -1,21 +1,16 @@
-name: Deploy Documentation to GitHub Pages
-
+name: Documentation
 on:
   push:
     branches:
       - main
     paths:
-      - 'docs/zensical-docs/**'
+      - 'docs/zensical/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
   deploy:
     environment:
@@ -23,24 +18,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-
       - uses: actions/configure-pages@v6
-
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
-
-      - name: Install zensical
-        run: pip install zensical
-
-      - name: Build documentation
-        working-directory: docs/zensical-docs
-        run: zensical build --clean
-
+          python-version: 3.x
+      - run: pip install zensical
+        working-directory: docs/zensical
+      - run: zensical build --clean
+        working-directory: docs/zensical
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: docs/zensical-docs/site
-
+          path: docs/zensical/site
       - uses: actions/deploy-pages@v5
         id: deployment
