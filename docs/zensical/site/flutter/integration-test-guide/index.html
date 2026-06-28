@@ -1,0 +1,3815 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Starbucks Clone Flutter アプリの開発ドキュメント">
+      
+      
+        <meta name="author" content="eno-conan">
+      
+      
+      
+        <link rel="prev" href="../roadmap/">
+      
+      
+        <link rel="next" href="../widget-golden-test-guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.36">
+    
+    
+      
+        <title>統合テストガイド - Starbucks Clone - 開発ドキュメント</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.1e981d71.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,a=__md_scope)=>JSON.parse(t.getItem(a.pathname+"."+e)),__md_set=(e,t,a=localStorage,_=__md_scope)=>{try{a.setItem(_.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Starbucks Clone - 開発ドキュメント" class="md-header__button md-logo" aria-label="Starbucks Clone - 開発ドキュメント" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Starbucks Clone - 開発ドキュメント
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              統合テストガイド
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Starbucks Clone - 開発ドキュメント" class="md-nav__button md-logo" aria-label="Starbucks Clone - 開発ドキュメント" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    Starbucks Clone - 開発ドキュメント
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    プロジェクト
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    プロジェクト
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    開発環境セットアップ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/dev-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    開発環境情報
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    テスト
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    デバッグ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/cicd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/supabase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supabase
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/firebase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firebase
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    セキュリティ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/google-cloud-security-guidelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Google Cloud セキュリティ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/ui-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI・デザイン
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    機能実装
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Code
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Claude Code
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../claude/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ワークフロー
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../claude/quality-checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    品質チェックリスト
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../claude/slash-commands-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    スラッシュコマンドガイド
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../claude/building-skill/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    スキル開発
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../claude/hooks-verification-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks 検証ガイド
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../claude/claude-code-usage-monitor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    使用量モニター
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    アーキテクチャ
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    アーキテクチャ
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/MEMORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    技術スタック概要
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    アーキテクチャ詳細
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    実装パターン
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flutter
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Flutter
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ロードマップ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    統合テストガイド
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    統合テストガイド
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        概要
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ファイル構成
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        初期セットアップ
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テスト実行方法
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pay_tab_testdart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        pay_tab_test.dart の構成
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pay_tab_test.dart の構成">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストアプリのセットアップ
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        初期化・後処理
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストケース一覧
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="テストケース一覧">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        a. 未認証状態
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        b. 認証済み状態
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        待機時間について
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#login_flow_testdart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        login_flow_test.dart の構成
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="login_flow_test.dart の構成">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストアプリのセットアップ
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        初期化・後処理
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストケース一覧
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="テストケース一覧">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        a. ログインフォームが表示されること
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        c. メールアドレスが正しくパスワードが間違っている場合はログイン画面にとどまること
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        b. 正しいメールアドレスとパスワードでログインするとホーム画面に遷移すること
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#helpersauth_helperdart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        helpers/auth_helper.dart の役割
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="helpers&#x2f;auth_helper.dart の役割">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loginastestusertester" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>loginAsTestUser(tester)</code> — 正常ログイン
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attemptloginwithwrongpasswordtester" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>attemptLoginWithWrongPassword(tester)</code> — 認証失敗
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loginonce-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>loginOnce()</code> — UI なし直接認証
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logouttestuser" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>logoutTestUser()</code> — ログアウト
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fullylive" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        フレームポリシーの設定（fullyLive）
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="フレームポリシーの設定（fullyLive）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        問題: テスト実行中にアニメーションがカクカクして見える
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fullylive_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        解決策: <code>fullyLive</code> ポリシーへの変更
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-vs-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        debugモード vs profileモードの使い分け
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        CIでのデフォルト維持
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        実装上の注意点・ハマりポイント
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="実装上の注意点・ハマりポイント">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ボタンの有効化タイミング
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ホーム画面の検証に使う Key
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supabase" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Supabase の待機時間
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-apk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Release APK を使った単体ファイル実行（開発中の目視確認向け）
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release APK を使った単体ファイル実行（開発中の目視確認向け）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2つの実行方法の使い分け
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        仕組み
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        事前準備（1回のみ）
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        実行手順
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="実行手順">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-apk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 1: 対象ファイルの APK をビルド
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 2: インストール
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 3: テスト実行
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        注意点
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../widget-golden-test-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Widget ゴールデンテスト
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    セキュリティ
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    セキュリティ
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/android_verify_security_commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Android セキュリティ検証コマンド
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/improve_peformance_basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    パフォーマンス改善基礎
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../security/owasp-mobile-top-10/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OWASP Mobile Top 10
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OWASP Mobile Top 10
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M1-Improper_Credential_Usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M1: 不適切な認証情報の使用
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M2-Inadequate_Supply_Chain_Security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M2: サプライチェーンセキュリティの不備
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M3-Insecure_Authentication_Authorization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M3: 不十分な認証・認可
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M4-Insufficient_InputOutput_Validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M4: 不十分な入出力バリデーション
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M5-Insecure_Communication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M5: 安全でない通信
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M6-Inadequate_Privacy_Controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M6: プライバシー制御の不備
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M7-Insufficient_Binary_Protection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M7: 不十分なバイナリ保護
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M8-Security_Misconfiguration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M8: セキュリティの誤設定
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M9-Insecure_Data_Storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M9: 安全でないデータストレージ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/owasp-mobile-top-10/M10-Insufficient_Cryptography/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M10: 不十分な暗号化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    画面仕様
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    画面仕様
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/navigation-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ナビゲーションフロー
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ログイン機能
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ログイン機能
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signin/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    概要
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signin/authentication-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    認証フロー
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signin/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    エラーハンドリング
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signin/testing-specification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    テスト仕様
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signin/ui-specification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI仕様
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    仮会員登録機能
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    仮会員登録機能
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signup_pre/flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    フロー図（BPMN）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signup_pre/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    概要
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signup_pre/design-specification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    設計仕様
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../starbucks_user_side/signup_pre/ui-specification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI仕様
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        概要
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ファイル構成
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        初期セットアップ
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テスト実行方法
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pay_tab_testdart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        pay_tab_test.dart の構成
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pay_tab_test.dart の構成">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストアプリのセットアップ
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        初期化・後処理
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストケース一覧
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="テストケース一覧">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        a. 未認証状態
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        b. 認証済み状態
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        待機時間について
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#login_flow_testdart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        login_flow_test.dart の構成
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="login_flow_test.dart の構成">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストアプリのセットアップ
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        初期化・後処理
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        テストケース一覧
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="テストケース一覧">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        a. ログインフォームが表示されること
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        c. メールアドレスが正しくパスワードが間違っている場合はログイン画面にとどまること
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        b. 正しいメールアドレスとパスワードでログインするとホーム画面に遷移すること
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#helpersauth_helperdart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        helpers/auth_helper.dart の役割
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="helpers&#x2f;auth_helper.dart の役割">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loginastestusertester" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>loginAsTestUser(tester)</code> — 正常ログイン
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attemptloginwithwrongpasswordtester" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>attemptLoginWithWrongPassword(tester)</code> — 認証失敗
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loginonce-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>loginOnce()</code> — UI なし直接認証
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logouttestuser" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>logoutTestUser()</code> — ログアウト
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fullylive" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        フレームポリシーの設定（fullyLive）
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="フレームポリシーの設定（fullyLive）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        問題: テスト実行中にアニメーションがカクカクして見える
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fullylive_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        解決策: <code>fullyLive</code> ポリシーへの変更
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-vs-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        debugモード vs profileモードの使い分け
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        CIでのデフォルト維持
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        実装上の注意点・ハマりポイント
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="実装上の注意点・ハマりポイント">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ボタンの有効化タイミング
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ホーム画面の検証に使う Key
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supabase" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Supabase の待機時間
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-apk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Release APK を使った単体ファイル実行（開発中の目視確認向け）
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release APK を使った単体ファイル実行（開発中の目視確認向け）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2つの実行方法の使い分け
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        仕組み
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        事前準備（1回のみ）
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        実行手順
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="実行手順">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-apk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 1: 対象ファイルの APK をビルド
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 2: インストール
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 3: テスト実行
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        注意点
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+<h1 id="_1">統合テストガイド<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<h2 id="_2">概要<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p><code>flutter test integration_test/&lt;ファイル名&gt;</code> コマンドで実機またはエミュレータ上で動作する統合テスト（E2Eテスト）のガイドです。
+Firebase・Supabase を含む実際のインフラと通信するため、ユニットテストでは検証できない認証フローや画面遷移を検証します。</p>
+<hr />
+<h2 id="_3">ファイル構成<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>integration_test/
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  login_flow_test.dart        # ログイン画面のフローテスト
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  pay_tab_test.dart           # Payタブ：認証状態による表示切り替えテスト
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  app_test.dart               # サンプル：お気に入り操作テスト（flutter.dev チュートリアル由来）
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  perf_test.dart              # サンプル：スクロールパフォーマンス計測（flutter.dev チュートリアル由来）
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  test_config.dart            # テスト用の認証情報（.gitignore対象）
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  test_config.dart.example    # test_config.dart のサンプル（リポジトリ管理）
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  helpers/
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    auth_helper.dart          # 認証操作の共通ヘルパー
+</span></code></pre></div>
+<blockquote>
+<p><strong>注意</strong>: <code>app_test.dart</code> / <code>perf_test.dart</code> は flutter.dev の統合テスト入門チュートリアルをベースにしたサンプルファイルです。本アプリの実際の動作検証には使用していません。</p>
+</blockquote>
+<hr />
+<h2 id="_4">初期セットアップ<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p><code>integration_test/test_config.dart</code> はリポジトリに含まれていません（<code>.gitignore</code> 対象）。
+初回のみ以下のコマンドでサンプルからコピーして認証情報を設定してください。</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>integration_test/test_config.dart.example<span class="w"> </span>integration_test/test_config.dart
+</span></code></pre></div>
+<p><code>integration_test/test_config.dart</code> の内容：</p>
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">class</span><span class="w"> </span><span class="nc">TestConfig</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="kd">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">testEmail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-test-user@example.com&#39;</span><span class="p">;</span><span class="w"> </span><span class="c1">// Supabaseに登録済みのテストアカウント</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="kd">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">testPassword</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-password&#39;</span><span class="p">;</span><span class="w">           </span><span class="c1">// 正しいパスワード</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="kd">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">wrongPassword</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;wrongpassword&#39;</span><span class="p">;</span><span class="w">          </span><span class="c1">// 認証失敗ケース用（任意の誤ったパスワード）</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">}</span>
+</span></code></pre></div>
+<hr />
+<h2 id="_5">テスト実行方法<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>エミュレータまたは実機を起動した状態で実行します。</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># フォルダ全体（全ファイル一括実行）</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>flutter<span class="w"> </span><span class="nb">test</span><span class="w"> </span>integration_test/
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># ログインフローテスト</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>flutter<span class="w"> </span><span class="nb">test</span><span class="w"> </span>integration_test/login_flow_cases.dart
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Payタブテスト</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>flutter<span class="w"> </span><span class="nb">test</span><span class="w"> </span>integration_test/pay_tab_cases.dart
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># モバイルオーダータブテスト</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>flutter<span class="w"> </span><span class="nb">test</span><span class="w"> </span>integration_test/home_mobileorder_tab_cases.dart
+</span></code></pre></div>
+<blockquote>
+<p><strong>注意</strong>: <code>app_test.dart</code> / <code>perf_test.dart</code> はサンプルファイルのため、実用テストのみ実行したい場合は個別指定してください。</p>
+</blockquote>
+<p><code>dart_test.yaml</code> に <code>reporter: expanded</code> を設定しているため、各テストが独立した行に表示されます。</p>
+<hr />
+<h2 id="pay_tab_testdart">pay_tab_test.dart の構成<a class="headerlink" href="#pay_tab_testdart" title="Permanent link">&para;</a></h2>
+<h3 id="_6">テストアプリのセットアップ<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">Widget</span><span class="w"> </span><span class="n">buildPayTestApp</span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">ProviderScope</span><span class="p">(</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nl">child:</span><span class="w"> </span><span class="n">MaterialApp</span><span class="p">.</span><span class="n">router</span><span class="p">(</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nl">routerConfig:</span><span class="w"> </span><span class="n">GoRouter</span><span class="p">(</span><span class="nl">initialLocation:</span><span class="w"> </span><span class="n">Pay</span><span class="p">.</span><span class="n">routeName</span><span class="p">,</span><span class="w"> </span><span class="nl">routes:</span><span class="w"> </span><span class="n">AppRouter</span><span class="p">.</span><span class="n">routes</span><span class="p">),</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="p">),</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">);</span>
+</span></code></pre></div>
+<ul>
+<li><code>initialLocation</code> を <code>Pay.routeName</code> にすることで、Payタブを直接起点に起動します</li>
+<li><code>AppRouter.routes</code> を再利用するため <code>StatefulShellRoute</code> が正しく解決されます</li>
+</ul>
+<h3 id="_7">初期化・後処理<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>フック</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>setUpAll</code>（外側）</td>
+<td>Firebase・Supabase・Google Sign-In の初期化、GetIt DI コンテナのセットアップ（テストファイル全体で1回のみ）</td>
+</tr>
+<tr>
+<td><code>setUpAll</code>（b. 認証済み状態 グループ）</td>
+<td><code>AuthHelper.loginOnce()</code> で UI なしで Supabase に直接認証（グループで1回のみ）</td>
+</tr>
+<tr>
+<td><code>tearDown</code></td>
+<td>各テストケース後に <code>AuthHelper.logoutTestUser()</code> でログアウトし、認証状態をリセット</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_8">テストケース一覧<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h4 id="a">a. 未認証状態<a class="headerlink" href="#a" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>未ログイン時に正しい UI が表示されることを確認</td>
+</tr>
+<tr>
+<td>前提</td>
+<td>ログアウト状態（tearDown でリセット）</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>アプリ起動 → 10秒待機（<code>connectivityCheckProvider</code> + <code>authStateProvider</code> の解決を待つ）</td>
+</tr>
+<tr>
+<td>検証</td>
+<td><code>'ご利用にはログインが必要です'</code> が表示され、<code>'残高更新'</code> が非表示であること</td>
+</tr>
+</tbody>
+</table>
+<h4 id="b">b. 認証済み状態<a class="headerlink" href="#b" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>ログイン済み時に正しい UI が表示されることを確認</td>
+</tr>
+<tr>
+<td>前提</td>
+<td><code>setUpAll</code> で <code>AuthHelper.loginOnce()</code> により認証済み</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>アプリ起動 → 10秒待機（<code>connectivityCheckProvider</code> + <code>authStateProvider</code> の解決を待つ）</td>
+</tr>
+<tr>
+<td>検証</td>
+<td><code>'残高更新'</code> が表示され、<code>'ご利用にはログインが必要です'</code> が非表示であること</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_9">待機時間について<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p><code>pumpAndSettle(const Duration(seconds: 10))</code> を使用しています。
+<code>connectivityCheckProvider</code>（ネットワーク確認）と <code>authStateProvider</code>（Supabase の Stream）が両方解決するまで待つ必要があります。</p>
+<hr />
+<h2 id="login_flow_testdart">login_flow_test.dart の構成<a class="headerlink" href="#login_flow_testdart" title="Permanent link">&para;</a></h2>
+<h3 id="_10">テストアプリのセットアップ<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">Widget</span><span class="w"> </span><span class="n">buildLoginTestApp</span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">ProviderScope</span><span class="p">(</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nl">child:</span><span class="w"> </span><span class="n">MaterialApp</span><span class="p">.</span><span class="n">router</span><span class="p">(</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nl">routerConfig:</span><span class="w"> </span><span class="n">GoRouter</span><span class="p">(</span><span class="nl">initialLocation:</span><span class="w"> </span><span class="n">LoginPage</span><span class="p">.</span><span class="n">routeName</span><span class="p">,</span><span class="w"> </span><span class="nl">routes:</span><span class="w"> </span><span class="n">AppRouter</span><span class="p">.</span><span class="n">routes</span><span class="p">),</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="p">),</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">);</span>
+</span></code></pre></div>
+<ul>
+<li><strong>最小構成のテスト用アプリ</strong>を毎テストケースで生成します</li>
+<li><code>AppRouter.routes</code> を再利用することで、ログイン後の画面遷移も実際のルーティングで動作します</li>
+<li><code>ProviderScope</code> を含むため Riverpod Provider が正常に機能します</li>
+</ul>
+<h3 id="_11">初期化・後処理<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>フック</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>setUpAll</code></td>
+<td>Firebase・Supabase・Google Sign-In の初期化、GetIt DI コンテナのセットアップ（テストファイル全体で1回のみ実行）</td>
+</tr>
+<tr>
+<td><code>tearDown</code></td>
+<td>各テストケース後に <code>AuthHelper.logoutTestUser()</code> でログアウトし、認証状態をリセット</td>
+</tr>
+</tbody>
+</table>
+<p><code>setUpAll</code> が1回のみ実行されるのは、Firebase/Supabase の初期化が重く、テストごとに行うと不安定になるためです。</p>
+<h3 id="_12">テストケース一覧<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<h4 id="a_1">a. ログインフォームが表示されること<a class="headerlink" href="#a_1" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>ログイン画面が正しく描画されるかの基本確認</td>
+</tr>
+<tr>
+<td>前提</td>
+<td>未ログイン状態</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>アプリ起動 → 5秒待機（生体認証初期化など <code>initState</code> の非同期処理完了を待つ）</td>
+</tr>
+<tr>
+<td>検証</td>
+<td>メールアドレス入力欄・パスワード入力欄・「ログイン」ボタンが表示されていること</td>
+</tr>
+</tbody>
+</table>
+<h4 id="c">c. メールアドレスが正しくパスワードが間違っている場合はログイン画面にとどまること<a class="headerlink" href="#c" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>認証失敗時に画面遷移が起きないことを検証</td>
+</tr>
+<tr>
+<td>前提</td>
+<td>未ログイン状態</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>正しいメールアドレス + 誤ったパスワードを入力してログインボタンをタップ</td>
+</tr>
+<tr>
+<td>検証</td>
+<td>Supabase が認証エラーを返した後もログインフォームが表示されたままであること</td>
+</tr>
+<tr>
+<td>ヘルパー</td>
+<td><code>AuthHelper.attemptLoginWithWrongPassword()</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="b_1">b. 正しいメールアドレスとパスワードでログインするとホーム画面に遷移すること<a class="headerlink" href="#b_1" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>正常系のログイン〜画面遷移をエンドツーエンドで検証</td>
+</tr>
+<tr>
+<td>前提</td>
+<td>未ログイン状態</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>正しい認証情報を入力 → ログインボタンタップ → ログイン後ダイアログを閉じる</td>
+</tr>
+<tr>
+<td>検証</td>
+<td>ホーム画面の <code>SliverAppBar</code>（Key: <code>top_page_sliver_app_bar</code>）が表示されること</td>
+</tr>
+<tr>
+<td>ヘルパー</td>
+<td><code>AuthHelper.loginAsTestUser()</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>実行順序について</strong>: c → b の順で定義しています。認証失敗ケースを先に実行することで、ログイン状態のリセット漏れによる影響を受けにくくしています。</p>
+</blockquote>
+<hr />
+<h2 id="helpersauth_helperdart">helpers/auth_helper.dart の役割<a class="headerlink" href="#helpersauth_helperdart" title="Permanent link">&para;</a></h2>
+<p>テストコードの重複を避けるための UI 操作・後処理の共通ヘルパークラスです。</p>
+<h3 id="loginastestusertester"><code>loginAsTestUser(tester)</code> — 正常ログイン<a class="headerlink" href="#loginastestusertester" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>メールアドレス入力
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  ↓ pump × 2（フォームバリデーション状態の反映を待つ）
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>パスワード入力
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  ↓ pump × 2
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>ヘッダー部分をタップ（キーボードを閉じる）
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  ↓ pump 500ms
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>ログインボタン（FilledButton）をタップ
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>  ↓ pumpAndSettle 最大15秒（Supabase ネットワーク処理を待つ）
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>ログイン後ダイアログを dismiss
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>  ↓ pumpAndSettle 最大5秒（画面遷移アニメーション完了を待つ）
+</span></code></pre></div>
+<p><strong>ダイアログ dismiss の対象</strong>:
+- <code>後で</code> — 指紋認証有効化ダイアログ（生体認証が利用可能な端末で表示）
+- <code>いいえ</code> — 認証情報保存ダイアログ（生体認証が利用不可な端末で表示）</p>
+<p><strong>pump を2段階に分けている理由</strong>:
+<code>resizeToAvoidBottomInset: false</code> のログイン画面ではキーボードがボタンを覆うため、キーボードを閉じてからタップする必要があります。また、<code>_validateForm()</code> によるボタン有効化の setState 反映を待つために pump が必要です。</p>
+<h3 id="attemptloginwithwrongpasswordtester"><code>attemptLoginWithWrongPassword(tester)</code> — 認証失敗<a class="headerlink" href="#attemptloginwithwrongpasswordtester" title="Permanent link">&para;</a></h3>
+<p><code>loginAsTestUser</code> と同じ操作手順で <code>TestConfig.wrongPassword</code> を使用します。
+ログイン失敗のため、ダイアログ dismiss や画面遷移待ちは不要です。</p>
+<h3 id="loginonce-ui"><code>loginOnce()</code> — UI なし直接認証<a class="headerlink" href="#loginonce-ui" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>GetIt 経由で AuthService.signInWithEmailAndPassword() を呼び出す
+</span></code></pre></div>
+<p>ログイン画面を経由せず、Supabase に直接認証します。
+<code>setUpAll</code> で1回だけ呼ぶことを想定しており、認証状態を前提とするテストグループのセットアップに使用します。
+<code>loginAsTestUser()</code> と異なり、WidgetTester を必要としないため <code>setUpAll</code> からでも呼べます。</p>
+<h3 id="logouttestuser"><code>logoutTestUser()</code> — ログアウト<a class="headerlink" href="#logouttestuser" title="Permanent link">&para;</a></h3>
+<p>UI に依存せず GetIt 経由で <code>AuthService.signOutWithEmailAndPassword()</code> を直接呼び出します。
+どの画面状態からでも呼べるため、<code>tearDown</code> での確実なリセットに適しています。</p>
+<hr />
+<h2 id="fullylive">フレームポリシーの設定（fullyLive）<a class="headerlink" href="#fullylive" title="Permanent link">&para;</a></h2>
+<h3 id="_13">問題: テスト実行中にアニメーションがカクカクして見える<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<p>integration_test のデフォルト（<code>benchmark</code>）フレームポリシーでは、<code>pump</code> 時にのみフレームが描画されます。
+その結果、画面遷移・スクロール・アニメーションが「ワープ」するように見え、実際の手動操作と大きくかけ離れた挙動になります。</p>
+<h3 id="fullylive_1">解決策: <code>fullyLive</code> ポリシーへの変更<a class="headerlink" href="#fullylive_1" title="Permanent link">&para;</a></h3>
+<p>すべてのテストファイルで <code>fullyLive</code> を設定することで、全フレームが描画されアニメーションが自然に見えます。</p>
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kt">void</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="n">binding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IntegrationTestWidgetsFlutterBinding</span><span class="p">.</span><span class="n">ensureInitialized</span><span class="p">();</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="n">binding</span><span class="p">.</span><span class="n">framePolicy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LiveTestWidgetsFlutterBindingFramePolicy</span><span class="p">.</span><span class="n">fullyLive</span><span class="p">;</span><span class="w"> </span><span class="c1">// 追加</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="p">...</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>現在は <code>login_flow_test.dart</code> / <code>pay_tab_test.dart</code> / <code>app_test.dart</code> / <code>perf_test.dart</code> 全ファイルに設定済みです。</p>
+<h3 id="debug-vs-profile">debugモード vs profileモードの使い分け<a class="headerlink" href="#debug-vs-profile" title="Permanent link">&para;</a></h3>
+<p><code>fullyLive</code> を設定してもビルドモードによる差は残ります。</p>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>コマンド</th>
+<th>ビルド</th>
+<th>アニメーション</th>
+<th>起動速度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CI / 自動テスト</strong></td>
+<td><code>flutter test</code></td>
+<td>debug（JIT）</td>
+<td><code>fullyLive</code> で改善</td>
+<td>遅い（白画面長い）</td>
+</tr>
+<tr>
+<td><strong>開発中の目視確認</strong></td>
+<td><code>flutter drive --use-application-binary</code></td>
+<td>profile（AOT）</td>
+<td>手動操作に近い</td>
+<td>速い</td>
+</tr>
+</tbody>
+</table>
+<p>開発中の目視確認には「Release APK を使った単体ファイル実行」セクションの profile ビルドを推奨します。</p>
+<h3 id="ci">CIでのデフォルト維持<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
+<p>CI では <code>flutter test</code>（debug + benchmark）を維持します。見た目のスムーズさは CI では不要であり、実行速度を優先します。</p>
+<hr />
+<h2 id="_14">実装上の注意点・ハマりポイント<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<h3 id="_15">ボタンの有効化タイミング<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<p>ログインボタンは <code>_isFormValid</code> が <code>true</code> になると有効化されます。
+<code>_isFormValid</code> はメールアドレスとパスワードの両方が入力されたときに <code>true</code> になります。
+統合テストでは <code>enterText</code> 後に <code>pump()</code> を呼ばないとボタンが有効化されず、タップが無効になります。</p>
+<p><strong>NG（ボタンが disabled のままタップ）</strong>:
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">enterText</span><span class="p">(</span><span class="n">emailField</span><span class="p">,</span><span class="w"> </span><span class="n">email</span><span class="p">);</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">enterText</span><span class="p">(</span><span class="n">passwordField</span><span class="p">,</span><span class="w"> </span><span class="n">password</span><span class="p">);</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">tap</span><span class="p">(</span><span class="n">loginButton</span><span class="p">);</span><span class="w"> </span><span class="c1">// onPressed が null のため何も起きない</span>
+</span></code></pre></div></p>
+<p><strong>OK</strong>:
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">enterText</span><span class="p">(</span><span class="n">emailField</span><span class="p">,</span><span class="w"> </span><span class="n">email</span><span class="p">);</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">pump</span><span class="p">();</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">pump</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Duration</span><span class="p">(</span><span class="nl">milliseconds:</span><span class="w"> </span><span class="m">300</span><span class="p">));</span><span class="w"> </span><span class="c1">// setState 反映を待つ</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">enterText</span><span class="p">(</span><span class="n">passwordField</span><span class="p">,</span><span class="w"> </span><span class="n">password</span><span class="p">);</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">pump</span><span class="p">();</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">pump</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Duration</span><span class="p">(</span><span class="nl">milliseconds:</span><span class="w"> </span><span class="m">300</span><span class="p">));</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="kd">await</span><span class="w"> </span><span class="n">tester</span><span class="p">.</span><span class="n">tap</span><span class="p">(</span><span class="n">loginButton</span><span class="p">);</span><span class="w"> </span><span class="c1">// ボタンが有効化されている</span>
+</span></code></pre></div></p>
+<h3 id="key">ホーム画面の検証に使う Key<a class="headerlink" href="#key" title="Permanent link">&para;</a></h3>
+<p><code>lib/screens/starbucks_user_side/home/main.dart</code> の <code>_SliverAppBar</code> に設定されています。</p>
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">SliverAppBar</span><span class="p">(</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nl">key:</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">ValueKey</span><span class="p">(</span><span class="s1">&#39;top_page_sliver_app_bar&#39;</span><span class="p">),</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="p">...</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="p">)</span>
+</span></code></pre></div>
+<p><code>NestedScrollView</code> のヘッダー部分にあるため、スクロールなしで常に検索対象になります。</p>
+<h3 id="supabase">Supabase の待機時間<a class="headerlink" href="#supabase" title="Permanent link">&para;</a></h3>
+<p><code>pumpAndSettle(const Duration(seconds: 15))</code> を使用しています。
+ネットワーク品質によっては不足する場合があります。CIなどで不安定な場合は時間を増やしてください。</p>
+<hr />
+<h2 id="release-apk">Release APK を使った単体ファイル実行（開発中の目視確認向け）<a class="headerlink" href="#release-apk" title="Permanent link">&para;</a></h2>
+<h3 id="2">2つの実行方法の使い分け<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>コマンド</th>
+<th>ビルド</th>
+<th>白画面</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CI / 全体テスト</strong></td>
+<td><code>flutter test integration_test/xxx.dart</code></td>
+<td>debug（自動）</td>
+<td>遅い</td>
+</tr>
+<tr>
+<td><strong>開発中の目視確認（単体）</strong></td>
+<td><code>flutter drive --use-application-binary</code></td>
+<td>profile（手動）</td>
+<td>速い</td>
+</tr>
+</tbody>
+</table>
+<p><code>flutter test</code> はデフォルトで debug APK をビルドするため、JIT コンパイルにより起動が遅く白画面が長くなります。
+開発中に特定機能を目視確認したい場合は、profile APK + <code>flutter drive</code> のフローを使います。</p>
+<h3 id="_16">仕組み<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<p>通常の <code>flutter build apk</code> は <code>lib/main.dart</code> を entry point とするためテストコードが含まれません。
+<code>--target=integration_test/xxx_test.dart</code> を指定してビルドすることで、テストを entry point とした APK が生成されます。
+<code>flutter drive</code> がその APK と通信してテストを実行します。</p>
+<h3 id="1">事前準備（1回のみ）<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
+<p><code>test_driver/integration_test.dart</code> がすでに存在します（通常の integration test 用ドライバー）。</p>
+<div class="language-dart highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">// test_driver/integration_test.dart</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">import</span><span class="w"> </span><span class="s1">&#39;package:integration_test/integration_test_driver.dart&#39;</span><span class="p">;</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">Future</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">integrationDriver</span><span class="p">();</span>
+</span></code></pre></div>
+<blockquote>
+<p><code>test_driver/perf_driver.dart</code> はパフォーマンス計測専用のドライバーです。通常の統合テスト実行には <code>integration_test.dart</code> を使います。</p>
+</blockquote>
+<h3 id="_17">実行手順<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
+<h4 id="step-1-apk">Step 1: 対象ファイルの APK をビルド<a class="headerlink" href="#step-1-apk" title="Permanent link">&para;</a></h4>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>flutter<span class="w"> </span>build<span class="w"> </span>apk<span class="w"> </span>--profile<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--target<span class="o">=</span>integration_test/pay_tab_test.dart<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--split-per-abi
+</span></code></pre></div>
+<p>別のテストファイルを実行する場合は <code>--target</code> を変更するだけです：</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>flutter<span class="w"> </span>build<span class="w"> </span>apk<span class="w"> </span>--profile<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--target<span class="o">=</span>integration_test/login_flow_test.dart<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--split-per-abi
+</span></code></pre></div>
+<blockquote>
+<p><strong>なぜ <code>--profile</code> か</strong>
+- release と同等の AOT 性能（白画面が短い）
+- <code>--obfuscate</code> 不要でスタックトレースが読める</p>
+<p><code>--release --obfuscate</code> は integration test には非推奨です（シンボルが難読化されエラーメッセージが読めなくなります）。</p>
+</blockquote>
+<h4 id="step-2">Step 2: インストール<a class="headerlink" href="#step-2" title="Permanent link">&para;</a></h4>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>adb<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>build/app/outputs/flutter-apk/app-arm64-v8a-profile.apk
+</span></code></pre></div>
+<h4 id="step-3">Step 3: テスト実行<a class="headerlink" href="#step-3" title="Permanent link">&para;</a></h4>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>flutter<span class="w"> </span>drive<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>--use-application-binary<span class="o">=</span>build/app/outputs/flutter-apk/app-arm64-v8a-profile.apk<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span>--driver<span class="o">=</span>test_driver/integration_test.dart<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span>--target<span class="o">=</span>integration_test/pay_tab_test.dart<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">  </span>-d<span class="w"> </span>R5CTB2CPS5P
+</span></code></pre></div>
+<p>デバイス ID は <code>flutter devices</code> で確認できます。</p>
+<h3 id="_18">注意点<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>--target</code> は 1ファイルのみ指定可能です。複数ファイルはファイルごとにビルド→実行が必要です</li>
+<li><code>integration_test/test_config.dart</code> が存在しないとビルドが失敗します（「初期セットアップ」セクション参照）</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../roadmap/" class="md-footer__link md-footer__link--prev" aria-label="Previous: ロードマップ">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                ロードマップ
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../widget-golden-test-guide/" class="md-footer__link md-footer__link--next" aria-label="Next: Widget ゴールデンテスト">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Widget ゴールデンテスト
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 The authors
+
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.dbc0afdc.min.js"></script>
+      
+    
+  </body>
+</html>

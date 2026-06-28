@@ -1,8 +1,5 @@
 {
-  "statusLine": {
-    "type": "command",
-    "command": "bash .claude/statusline-command.sh"
-  },
+  "includeCoAuthoredBy": false,
   "cleanupPeriodDays": 14,
   "env": {
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000"
@@ -23,7 +20,6 @@
       "Read(./secrets/**)"
     ]
   },
-  "plansDirectory": "./plans",
   "hooks": {
     "PreToolUse": [
       {
@@ -47,6 +43,26 @@
             "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\" 2>/dev/null || true); if [[ \"$file\" =~ pubspec\\.yaml$ ]]; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"ask\\\",\\\"permissionDecisionReason\\\":\\\"pubspec.yamlへの変更です。依存関係の変更を確認してください\\\"}}\" && exit 0; fi'"
           }
         ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/credential-guard.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/exfil-guard.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -62,5 +78,13 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/statusline-command.sh"
+  },
+  "plansDirectory": "./plans",
+  "enabledPlugins": {
+    "andrej-karpathy-skills@karpathy-skills": true
   }
 }

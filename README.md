@@ -1,7 +1,7 @@
 # スターバックス公式アプリ クローン
 
 <p align="center">
-  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.44.0-blue?style=for-the-badge&logo=flutter"/>
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.44.2-blue?style=for-the-badge&logo=flutter"/>
   <img alt="Dart" src="https://img.shields.io/badge/Dart-%3E%3D3.10.0-blue?style=for-the-badge&logo=dart"/>
   <img alt="Supabase" src="https://img.shields.io/badge/Supabase-BaaS-green?style=for-the-badge&logo=supabase"/>
   <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Analytics%20%26%20Push-orange?style=for-the-badge&logo=firebase"/>
@@ -23,7 +23,7 @@
 ### フレームワーク・言語
 | 技術 | バージョン | 用途 |
 |------|----------|------|
-| **Flutter** | 3.44.0 | UIフレームワーク |
+| **Flutter** | 3.44.2 | UIフレームワーク |
 | **Dart** | >=3.10.0 | プログラミング言語 |
 | **FVM** | Latest | Flutterバージョン管理 |
 
