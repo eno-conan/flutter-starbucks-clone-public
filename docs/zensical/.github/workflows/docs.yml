@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - 'docs/zensical/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
