@@ -179,13 +179,9 @@ void _showAlreadyInputRegisteredEmailAddressDialog(BuildContext context) {
 
 ## 10. 関連ドキュメント
 
+- [フロー図（BPMN）](./flow.md)
 - [設計仕様書](./design-specification.md)
 - [UI仕様書](./ui-specification.md)
-- [コード品質・ドキュメント仕様書](./code-quality-specification.md)
-- [変更履歴](./changelog.md)
-- [データベース設計書](./database-specification.md)
-- [テスト仕様書](./testing-specification.md)
-- [エラーハンドリング仕様書](./error-handling.md)
 
 ## 11. 変更履歴
 
