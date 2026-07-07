@@ -1,5 +1,7 @@
 ---
 description: Android セキュリティガイドライン（AndroidManifest.xml、Deep Link、権限管理）
+paths:
+  - "android/**/*"
 ---
 
 # Android セキュリティガイドライン

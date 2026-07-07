@@ -1,0 +1,67 @@
+erDiagram
+    %% ユーザー・認証関連のER図
+    
+    auth_users ||--o{ user_profile_details : "has"
+    auth_users ||--o{ user_mail_settings : "has"
+    auth_users ||--o{ user_fcm_tokens : "has"
+    auth_users ||--o{ cards : "owns"
+    prefectures ||--o{ user_profile_details : "resides_in"
+    
+    auth_users {
+        uuid id PK "ユーザーID"
+    }
+    
+    user_profile_details {
+        uuid id PK "詳細ID"
+        uuid user_id FK "ユーザーID"
+        text birthday "生年月日"
+        integer sex "性別"
+        text tele_num "電話番号"
+        text postal_code "郵便番号"
+        integer prefecture_id FK "都道府県ID"
+        text address1 "住所1"
+        text address2 "住所2"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    user_mail_settings {
+        uuid id PK "設定ID"
+        uuid user_id FK "ユーザーID"
+        integer is_send_related_rewards "リワード関連メール"
+        integer is_send_advance_product_announce "商品先行告知メール"
+        integer is_html_mail "HTMLメール設定"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    user_fcm_tokens {
+        uuid user_id FK "ユーザーID"
+        text fcm_token "FCMトークン"
+        integer is_notify "通知設定"
+    }
+    
+    cards {
+        uuid id PK "カードID"
+        text card_id "カード番号"
+        uuid user_id FK "ユーザーID"
+        text card_name "カード名"
+        text image_url "画像URL"
+        integer balance "残高"
+        integer is_main "メインカード"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    prefectures {
+        integer id PK "都道府県ID"
+        text name "都道府県名"
+    }
+    
+    pre_signup_users {
+        uuid id PK "ID"
+        text token "トークン"
+        text email "メールアドレス"
+        timestamptz created_at "作成日時"
+        timestamptz expires_at "有効期限"
+    }

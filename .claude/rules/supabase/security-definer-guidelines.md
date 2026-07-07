@@ -1,3 +1,10 @@
+---
+description: SECURITY DEFINERガイドライン（RLSバイパス・PostgreSQL関数セキュリティ）
+paths:
+  - "supabase_schema/**/*.sql"
+  - "supabase_schema/**/*.md"
+---
+
 # SECURITY DEFINER ガイドライン
 
 ## 📋 概要

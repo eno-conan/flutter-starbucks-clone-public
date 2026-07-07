@@ -1,0 +1,340 @@
+erDiagram
+    %% ユーザー関連
+    auth_users ||--o{ user_profile_details : "has"
+    auth_users ||--o{ user_mail_settings : "has"
+    auth_users ||--o{ user_fcm_tokens : "has"
+    auth_users ||--o{ cards : "owns"
+    auth_users ||--o{ carts : "has"
+    auth_users ||--o{ carts_detail : "has"
+    auth_users ||--o{ orders : "places"
+    auth_users ||--o{ orders_detail : "has"
+    auth_users ||--o{ purchase_history : "has"
+    auth_users ||--o{ star_acquisitions : "earns"
+    auth_users ||--o{ star_aggregations : "has"
+    auth_users ||--o{ star_usage : "uses"
+    auth_users ||--o{ user_tickets : "owns"
+    auth_users ||--o{ store_profiles : "manages"
+    
+    %% 都道府県関連
+    prefectures ||--o{ stores : "located_in"
+    prefectures ||--o{ user_profile_details : "resides_in"
+    
+    %% 店舗関連
+    stores ||--o{ carts : "selected_for"
+    stores ||--o{ orders : "receives"
+    stores ||--o{ store_profiles : "has_profile"
+    stores ||--o{ staff_schedules : "employs"
+    
+    %% 商品・カテゴリ関連
+    categories ||--o{ products : "categorizes"
+    products ||--o{ product_sizes : "has_size"
+    products ||--o{ product_temperature_types : "has_temp_type"
+    products ||--o{ orders_detail : "ordered_in"
+    sizes ||--o{ product_sizes : "applied_to"
+    temperature_types ||--o{ product_temperature_types : "applied_to"
+    
+    %% 注文関連
+    orders ||--o{ orders_detail : "contains"
+    orders ||--o{ star_acquisitions : "generates"
+    sizes ||--o{ orders_detail : "selected"
+    temperature_types ||--o{ orders_detail : "selected"
+    
+    %% スターリワード関連
+    star_rewards_exchange_items ||--o{ star_usage : "exchanged_for"
+    
+    %% eチケット関連
+    e_tickets_promotions ||--o{ user_tickets : "defines"
+    e_tickets_special_offers ||--o{ user_tickets : "defines"
+    star_rewards_exchange_items ||--o{ user_tickets : "defines"
+    
+    %% スタッフ関連
+    staff ||--o{ staff_schedules : "works"
+
+    %% テーブル定義
+    auth_users {
+        uuid id PK
+    }
+    
+    user_profile_details {
+        uuid id PK
+        uuid user_id FK
+        text birthday
+        integer sex
+        text tele_num
+        text postal_code
+        integer prefecture_id FK
+        text address1
+        text address2
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    user_mail_settings {
+        uuid id PK
+        uuid user_id FK
+        integer is_send_related_rewards
+        integer is_send_advance_product_announce
+        integer is_html_mail
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    user_fcm_tokens {
+        uuid user_id PK
+        text fcm_token
+        integer is_notify
+    }
+    
+    cards {
+        uuid id PK
+        text card_id
+        uuid user_id FK
+        text card_name
+        text image_url
+        integer balance
+        integer is_main
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    prefectures {
+        integer id PK
+        text name
+    }
+    
+    stores {
+        integer id PK
+        bpchar store_number UK
+        text store_name
+        integer prefecture_id FK
+        text address
+        date opening_date
+        date closing_date
+        time opening_time
+        time closing_time
+        float8 latitude
+        float8 longitude
+        bpchar is_drive_thru_available
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    store_profiles {
+        integer id PK
+        bpchar store_number FK
+        uuid user_id FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    categories {
+        integer category_id PK
+        text category_name
+        text description
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    products {
+        integer product_id PK
+        text product_name
+        integer category_id FK
+        text description
+        boolean is_active
+        varchar product_image_path
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    sizes {
+        integer size_id PK
+        text size_name
+        text size_description
+    }
+    
+    temperature_types {
+        integer temperature_type_id PK
+        text type_name
+    }
+    
+    product_sizes {
+        integer product_id FK
+        integer size_id FK
+        integer price
+    }
+    
+    product_temperature_types {
+        integer product_id FK
+        integer temperature_type_id FK
+    }
+    
+    carts {
+        uuid user_id FK
+        bpchar store_number FK
+        integer price_without_tax
+        integer price_with_tax
+        text payment_method
+        smallint usage
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    carts_detail {
+        uuid user_id FK
+        integer item_index PK
+        integer product_id
+        integer temperature_type_id
+        integer size_id
+        integer count
+        integer subtotal_without_tax
+    }
+    
+    orders {
+        uuid id PK
+        varchar order_id UK
+        uuid user_id FK
+        smallint order_type
+        text pickup_number
+        integer price_without_tax
+        integer price_with_tax
+        text payment_method
+        text provided_status
+        bpchar store_number FK
+        smallint usage
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    orders_detail {
+        uuid id PK
+        varchar order_id FK
+        uuid user_id FK
+        integer product_id FK
+        integer temperature_type_id FK
+        integer size_id FK
+        integer count
+        integer subtotal_without_tax
+    }
+    
+    purchase_history {
+        uuid id PK
+        uuid user_id FK
+        text product_name
+        integer price
+        numeric star_points
+        text store_name
+        text card_number
+        timestamptz purchase_datetime
+        timestamptz created_at
+    }
+    
+    star_acquisitions {
+        uuid id PK
+        uuid user_id FK
+        varchar order_id FK
+        smallint category
+        numeric acquired_points
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    star_aggregations {
+        uuid user_id FK
+        bpchar target_year_month PK
+        numeric total_points
+        timestamptz expiration_datetime
+        smallint expiration_flag
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    star_usage {
+        uuid id PK
+        uuid user_id FK
+        text order_id
+        integer exchange_item_id FK
+        numeric point_used
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    star_rewards_exchange_items {
+        integer id PK
+        text short_name
+        text name
+        text image_url
+        integer points
+    }
+    
+    e_tickets_promotions {
+        integer id PK
+        text short_name
+        text name
+        text image_url
+        text discount_type
+        integer discount_value
+        boolean is_birthday_month_only
+        timestamptz created_at
+    }
+    
+    e_tickets_special_offers {
+        integer id PK
+        text short_name
+        text name
+        text image_url
+        integer special_price
+        text target_sku_id
+        integer max_quantity_per_order
+        timestamptz created_at
+    }
+    
+    user_tickets {
+        integer id PK
+        uuid user_id FK
+        text ticket_type
+        integer definition_id
+        timestamptz expired_at
+        boolean is_used
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    staff {
+        varchar staff_number PK
+        varchar staff_name
+        varchar email
+        varchar phone
+        varchar employment_type
+        date hire_date
+        date termination_date
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    staff_schedules {
+        bigint id PK
+        date date
+        varchar staff_number FK
+        varchar store_number
+        boolean period_1
+        boolean period_2
+        boolean period_3
+        boolean period_4
+        boolean period_5
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    pre_signup_users {
+        uuid id PK
+        text token
+        text email
+        timestamptz created_at
+        timestamptz expires_at
+    }
+    
+    sample {
+        uuid id PK
+        text title
+    }

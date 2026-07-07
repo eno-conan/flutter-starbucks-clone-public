@@ -2,11 +2,49 @@
 
 プロジェクト: flutter-testingapp
 作成日: 2025年7月20日
-最終更新: 2026年1月5日
+最終更新: 2026年2月15日
 
 ---
 
-## spatial_ref_sys
+## 📊 ER図について
+
+データベースの構造を視覚的に理解するため、**ER図（Entity Relationship Diagram）** を用意しています。
+
+### 管理場所
+```
+supabase_schema/supabase/er/
+```
+
+### ファイル一覧
+
+#### 全体図
+- **er_diagram_full.mmd / .svg** - 全28テーブルの関連を表示した完全版ER図
+
+#### 機能別ER図
+- **er_diagram_user.mmd / .svg** - ユーザー・認証関連
+- **er_diagram_product.mmd / .svg** - 商品・カテゴリ関連
+- **er_diagram_order.mmd / .svg** - 注文・カート関連
+- **er_diagram_star.mmd / .svg** - スター・リワード関連
+- **er_diagram_eticket.mmd / .svg** - eチケット関連
+- **er_diagram_store.mmd / .svg** - 店舗・スタッフ関連
+
+### 表示方法
+
+#### オンラインで確認
+1. [Mermaid Live Editor](https://mermaid.live/) にアクセス
+2. `.mmd`ファイルの内容をコピー＆ペースト
+
+#### SVGファイルで確認
+- `er/`フォルダ内の`.svg`ファイルをブラウザで直接開く
+- 各種ドキュメントツール（Notion、Confluence等）に埋め込み可能
+
+詳細な使い方やER図の更新方法は、`er/ER_README.md`を参照してください。
+
+---
+
+## テーブル定義
+
+### spatial_ref_sys
 
 | 論理名 | カラム名 | 型 | 主キー | 外部参照 | 備考 |
 |--------|----------|-----|--------|----------|------|
@@ -167,27 +205,6 @@
 | 更新日時 | updated_at | timestamptz | | | デフォルト: now() |
 | 商品画像パス | product_image_path | varchar | | | デフォルト: 'https://placehold.co/150x150', NOT NULL |
 
-## purchase_history
-
-| 論理名 | カラム名 | 型 | 主キー | 外部参照 | 備考 |
-|--------|----------|-----|--------|----------|------|
-| ID | id | uuid | ○ | | デフォルト: gen_random_uuid() |
-| ユーザーID | user_id | uuid | | auth.users.id | NOT NULL |
-| 商品名 | product_name | text | | | NOT NULL |
-| 価格 | price | integer | | | NOT NULL |
-| スターポイント | star_points | numeric | | | NOT NULL |
-| 店舗名 | store_name | text | | | NOT NULL |
-| カード番号 | card_number | text | | | NOT NULL |
-| 購入日時 | purchase_datetime | timestamptz | | | NOT NULL |
-| 作成日時 | created_at | timestamptz | | | デフォルト: now(), NOT NULL |
-
-## sample
-
-| 論理名 | カラム名 | 型 | 主キー | 外部参照 | 備考 |
-|--------|----------|-----|--------|----------|------|
-| ID | id | uuid | ○ | | デフォルト: gen_random_uuid() |
-| タイトル | title | text | | | NOT NULL |
-
 ## sizes
 
 | 論理名 | カラム名 | 型 | 主キー | 外部参照 | 備考 |
@@ -241,6 +258,37 @@
 | 使用ポイント | point_used | numeric | | | NOT NULL |
 | 作成日時 | created_at | timestamptz | | | デフォルト: now(), NOT NULL |
 | 更新日時 | updated_at | timestamptz | | | デフォルト: now(), NOT NULL |
+
+## staff
+
+| 論理名 | カラム名 | 型 | 主キー | 外部参照 | 備考 |
+|--------|----------|-----|--------|----------|------|
+| スタッフ番号 | staff_number | varchar(50) | ○ | | NOT NULL |
+| スタッフ名 | staff_name | varchar(100) | | | NOT NULL |
+| メールアドレス | email | varchar(255) | | | |
+| 電話番号 | phone | varchar(20) | | | |
+| 雇用形態 | employment_type | varchar(20) | | | |
+| 入社日 | hire_date | date | | | |
+| 退職日 | termination_date | date | | | |
+| 有効フラグ | is_active | boolean | | | デフォルト: true |
+| 作成日時 | created_at | timestamptz | | | デフォルト: now() |
+| 更新日時 | updated_at | timestamptz | | | デフォルト: now() |
+
+## staff_schedules
+
+| 論理名 | カラム名 | 型 | 主キー | 外部参照 | 備考 |
+|--------|----------|-----|--------|----------|------|
+| ID | id | bigint | ○ | | AUTO INCREMENT |
+| 日付 | date | date | | | NOT NULL |
+| スタッフ番号 | staff_number | varchar(50) | | staff.staff_number | NOT NULL |
+| 店舗番号 | store_number | varchar(50) | | | |
+| 第1時間帯勤務 | period_1 | boolean | | | デフォルト: false |
+| 第2時間帯勤務 | period_2 | boolean | | | デフォルト: false |
+| 第3時間帯勤務 | period_3 | boolean | | | デフォルト: false |
+| 第4時間帯勤務 | period_4 | boolean | | | デフォルト: false |
+| 第5時間帯勤務 | period_5 | boolean | | | デフォルト: false |
+| 作成日時 | created_at | timestamptz | | | デフォルト: now() |
+| 更新日時 | updated_at | timestamptz | | | デフォルト: now() |
 
 ## store_profiles
 
@@ -329,6 +377,34 @@
 
 ---
 
+## マテリアライズドビュー (Materialized Views)
+
+### mv_products_catalog
+
+商品カタログの結合済みビュー。`products` / `categories` / `product_sizes` / `sizes` / `product_temperature_types` / `temperature_types` を JOIN した読み取り専用スナップショット。
+
+> **更新手順**: `supabase_schema/supabase/mv_products_catalog_guide.md` を参照
+
+| 論理名 | カラム名 | 型 | 元テーブル | 備考 |
+|--------|----------|----|------------|------|
+| 商品ID | product_id | integer | products | |
+| 商品名 | product_name | varchar | products | |
+| カテゴリID | category_id | integer | products | |
+| カテゴリ名 | category_name | varchar | categories | |
+| 説明 | description | text | products | |
+| 商品画像パス | product_image_path | varchar | products | Supabase Storage のパス |
+| 販売タイプ | sale_type | text | products | |
+| 表示順 | display_order | integer | products | 昇順でソート |
+| サイズID | size_id | integer | sizes | LEFT JOIN（NULLあり） |
+| サイズ名 | size_name | varchar | sizes | LEFT JOIN（NULLあり） |
+| 価格 | price | integer | product_sizes | LEFT JOIN（NULLあり） |
+| 温度タイプID | temperature_type_id | integer | product_temperature_types | LEFT JOIN（NULLあり） |
+| 温度タイプ名 | temperature_type_name | varchar | temperature_types | LEFT JOIN（NULLあり） |
+
+**インデックス**: `idx_mv_products_catalog_unique (product_id, COALESCE(size_id,-1), COALESCE(temperature_type_id,-1))` UNIQUE
+
+---
+
 ## テーブル概要
 
 このデータベースは、コーヒーショップやカフェなどの店舗アプリケーション向けのテーブル構成となっています。主な機能領域は以下の通りです：
@@ -346,6 +422,7 @@
 - `temperature_types`: 温度タイプ（ホット/アイス等）
 - `product_sizes`: 商品とサイズの関連
 - `product_temperature_types`: 商品と温度タイプの関連
+- `mv_products_catalog` *(Materialized View)*: 上記6テーブルを結合した商品カタログスナップショット
 
 ### 注文・カート機能
 - `orders`: 注文情報
@@ -357,6 +434,10 @@
 - `stores`: 店舗マスタ
 - `store_profiles`: 店舗プロフィール
 - `prefectures`: 都道府県マスタ
+
+### スタッフ・シフト管理
+- `staff`: スタッフマスタ
+- `staff_schedules`: スタッフシフトスケジュール
 
 ### ポイント・リワード機能
 - `star_acquisitions`: ポイント獲得履歴
@@ -378,6 +459,20 @@
 - `spatial_ref_sys`: 空間参照システム（地理情報用）
 
 ## 主な更新点
+
+### 2026年3月10日
+1. **マテリアライズドビューの追加**:
+   - `mv_products_catalog`: 商品カタログ結合ビューの定義を追記
+   - 更新手順を `mv_products_catalog_guide.md` として別ファイルに整理
+
+### 2026年2月15日
+1. **スタッフ・シフト管理機能の追加（Issue #538対応）**:
+   - `staff`: スタッフマスタテーブル追加
+   - `staff_schedules`: スタッフシフトスケジュールテーブル追加
+2. **待ち時間算出機能の土台**:
+   - スタッフ情報と日次シフトスケジュールを管理
+   - 時間帯別（period_1 ~ period_5）の勤務状況を記録
+   - 店舗別・日付別のスタッフ配置状況を追跡可能
 
 ### 2026年1月5日
 1. **eチケット機能の追加（Issue #495対応）**:
@@ -402,4 +497,4 @@
    - storesテーブルのドライブスルー可否に値制約
 4. **主キー構造の更新**: cartsテーブルでuser_idが単一主キーに変更
 
-合計26テーブルで構成されており、カフェ・コーヒーショップアプリの主要機能をカバーする包括的なデータベース設計となっています。
+合計28テーブルで構成されており、カフェ・コーヒーショップアプリの主要機能をカバーする包括的なデータベース設計となっています。

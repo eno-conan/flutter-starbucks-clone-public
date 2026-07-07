@@ -1,0 +1,49 @@
+erDiagram
+    %% 商品・カテゴリ関連のER図
+    
+    categories ||--o{ products : "categorizes"
+    products ||--o{ product_sizes : "has_size"
+    products ||--o{ product_temperature_types : "has_temp_type"
+    sizes ||--o{ product_sizes : "applied_to"
+    temperature_types ||--o{ product_temperature_types : "applied_to"
+    
+    categories {
+        integer category_id PK "カテゴリID"
+        text category_name "カテゴリ名"
+        text description "説明"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    products {
+        integer product_id PK "商品ID"
+        text product_name "商品名"
+        integer category_id FK "カテゴリID"
+        text description "説明"
+        boolean is_active "有効フラグ"
+        varchar product_image_path "商品画像パス"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    sizes {
+        integer size_id PK "サイズID"
+        text size_name "サイズ名"
+        text size_description "サイズ説明"
+    }
+    
+    temperature_types {
+        integer temperature_type_id PK "温度タイプID"
+        text type_name "タイプ名"
+    }
+    
+    product_sizes {
+        integer product_id FK "商品ID"
+        integer size_id FK "サイズID"
+        integer price "価格"
+    }
+    
+    product_temperature_types {
+        integer product_id FK "商品ID"
+        integer temperature_type_id FK "温度タイプID"
+    }

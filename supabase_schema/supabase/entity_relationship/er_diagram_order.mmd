@@ -1,0 +1,86 @@
+erDiagram
+    %% 注文・カート関連のER図
+    
+    auth_users ||--o{ carts : "has"
+    auth_users ||--o{ carts_detail : "has"
+    auth_users ||--o{ orders : "places"
+    auth_users ||--o{ orders_detail : "has"
+    stores ||--o{ carts : "selected_for"
+    stores ||--o{ orders : "receives"
+    orders ||--o{ orders_detail : "contains"
+    products ||--o{ orders_detail : "ordered_in"
+    sizes ||--o{ orders_detail : "selected"
+    temperature_types ||--o{ orders_detail : "selected"
+    
+    auth_users {
+        uuid id PK "ユーザーID"
+    }
+    
+    stores {
+        integer id PK "店舗ID"
+        bpchar store_number UK "店舗番号"
+        text store_name "店舗名"
+    }
+    
+    carts {
+        uuid user_id FK "ユーザーID"
+        bpchar store_number FK "店舗番号"
+        integer price_without_tax "税抜価格"
+        integer price_with_tax "税込価格"
+        text payment_method "支払方法"
+        smallint usage "利用区分"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    carts_detail {
+        uuid user_id FK "ユーザーID"
+        integer item_index PK "商品インデックス"
+        integer product_id "商品ID"
+        integer temperature_type_id "温度タイプID"
+        integer size_id "サイズID"
+        integer count "数量"
+        integer subtotal_without_tax "税抜小計"
+    }
+    
+    orders {
+        uuid id PK "ID"
+        varchar order_id UK "注文ID"
+        uuid user_id FK "ユーザーID"
+        smallint order_type "注文タイプ"
+        text pickup_number "受取番号"
+        integer price_without_tax "税抜価格"
+        integer price_with_tax "税込価格"
+        text payment_method "支払方法"
+        text provided_status "提供ステータス"
+        bpchar store_number FK "店舗番号"
+        smallint usage "利用区分"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    orders_detail {
+        uuid id PK "ID"
+        varchar order_id FK "注文ID"
+        uuid user_id FK "ユーザーID"
+        integer product_id FK "商品ID"
+        integer temperature_type_id FK "温度タイプID"
+        integer size_id FK "サイズID"
+        integer count "数量"
+        integer subtotal_without_tax "税抜小計"
+    }
+    
+    products {
+        integer product_id PK "商品ID"
+        text product_name "商品名"
+    }
+    
+    sizes {
+        integer size_id PK "サイズID"
+        text size_name "サイズ名"
+    }
+    
+    temperature_types {
+        integer temperature_type_id PK "温度タイプID"
+        text type_name "タイプ名"
+    }

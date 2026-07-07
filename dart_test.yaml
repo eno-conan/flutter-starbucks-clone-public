@@ -1,2 +1,8 @@
+reporter: expanded
+
+exclude:
+  - integration_test/perf_test.dart
+  - integration_test/app_test.dart
+
 tags:
   golden:

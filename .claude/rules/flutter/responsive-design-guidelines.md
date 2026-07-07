@@ -1,3 +1,10 @@
+---
+description: レスポンシブデザイン実装ガイドライン（responsiveDimensionsProvider必須）
+paths:
+  - "lib/screens/**/*.dart"
+  - "lib/shared/widgets/**/*.dart"
+---
+
 # レスポンシブデザイン実装ガイドライン
 
 ## 📋 概要

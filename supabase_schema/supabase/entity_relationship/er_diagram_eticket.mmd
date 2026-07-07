@@ -1,0 +1,52 @@
+erDiagram
+    %% eチケット関連のER図
+    
+    auth_users ||--o{ user_tickets : "owns"
+    e_tickets_promotions ||--o{ user_tickets : "defines_PROMOTION"
+    e_tickets_special_offers ||--o{ user_tickets : "defines_SPECIAL_OFFER"
+    star_rewards_exchange_items ||--o{ user_tickets : "defines_STAR_REWARD"
+    
+    auth_users {
+        uuid id PK "ユーザーID"
+    }
+    
+    user_tickets {
+        integer id PK "ID"
+        uuid user_id FK "ユーザーID"
+        text ticket_type "チケットタイプ"
+        integer definition_id "定義ID"
+        timestamptz expired_at "有効期限"
+        boolean is_used "利用済フラグ"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    e_tickets_promotions {
+        integer id PK "ID"
+        text short_name "短縮名"
+        text name "eチケット名"
+        text image_url "画像URL"
+        text discount_type "割引タイプ"
+        integer discount_value "割引値"
+        boolean is_birthday_month_only "誕生月限定"
+        timestamptz created_at "作成日時"
+    }
+    
+    e_tickets_special_offers {
+        integer id PK "ID"
+        text short_name "短縮名"
+        text name "eチケット名"
+        text image_url "画像URL"
+        integer special_price "特別価格"
+        text target_sku_id "対象SKU_ID"
+        integer max_quantity_per_order "最大数量"
+        timestamptz created_at "作成日時"
+    }
+    
+    star_rewards_exchange_items {
+        integer id PK "ID"
+        text short_name "短縮名"
+        text name "商品名"
+        text image_url "画像URL"
+        integer points "必要ポイント"
+    }

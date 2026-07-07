@@ -1,0 +1,69 @@
+erDiagram
+    %% 店舗・スタッフ関連のER図
+    
+    prefectures ||--o{ stores : "located_in"
+    stores ||--o{ store_profiles : "has_profile"
+    stores ||--o{ staff_schedules : "employs"
+    staff ||--o{ staff_schedules : "works"
+    auth_users ||--o{ store_profiles : "manages"
+    
+    prefectures {
+        integer id PK "都道府県ID"
+        text name "都道府県名"
+    }
+    
+    stores {
+        integer id PK "店舗ID"
+        bpchar store_number UK "店舗番号"
+        text store_name "店舗名"
+        integer prefecture_id FK "都道府県ID"
+        text address "住所"
+        date opening_date "オープン日"
+        date closing_date "閉店日"
+        time opening_time "開店時間"
+        time closing_time "閉店時間"
+        float8 latitude "緯度"
+        float8 longitude "経度"
+        bpchar is_drive_thru_available "ドライブスルー"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    store_profiles {
+        integer id PK "ID"
+        bpchar store_number FK "店舗番号"
+        uuid user_id FK "ユーザーID"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    staff {
+        varchar staff_number PK "スタッフ番号"
+        varchar staff_name "スタッフ名"
+        varchar email "メールアドレス"
+        varchar phone "電話番号"
+        varchar employment_type "雇用形態"
+        date hire_date "入社日"
+        date termination_date "退職日"
+        boolean is_active "有効フラグ"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    staff_schedules {
+        bigint id PK "ID"
+        date date "日付"
+        varchar staff_number FK "スタッフ番号"
+        varchar store_number "店舗番号"
+        boolean period_1 "第1時間帯"
+        boolean period_2 "第2時間帯"
+        boolean period_3 "第3時間帯"
+        boolean period_4 "第4時間帯"
+        boolean period_5 "第5時間帯"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+    
+    auth_users {
+        uuid id PK "ユーザーID"
+    }

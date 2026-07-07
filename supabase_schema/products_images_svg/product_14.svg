@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280">
+  <defs>
+    <linearGradient id="cupGrad14" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f5f5f0"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e8e8e3"/>
+    </linearGradient>
+    <linearGradient id="latteGrad14" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8c88a"/>
+      <stop offset="100%" stop-color="#c4944a"/>
+    </linearGradient>
+    <linearGradient id="foamGrad14" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fffef8"/>
+      <stop offset="100%" stop-color="#f0dfc0"/>
+    </linearGradient>
+    <linearGradient id="caramelDrizzle14" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c67c2e"/>
+      <stop offset="100%" stop-color="#8b4513"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="100" cy="268" rx="52" ry="8" fill="#00000015"/>
+  <!-- Cup body -->
+  <path d="M55,70 L62,255 C62,262 75,268 100,268 C125,268 138,262 138,255 L145,70 Z" fill="url(#cupGrad14)" stroke="#ddd" stroke-width="0.5"/>
+  <!-- Drink fill -->
+  <path d="M58,85 L62,255 C62,262 75,268 100,268 C125,268 138,262 138,255 L142,85 Z" fill="url(#latteGrad14)"/>
+  <!-- Foam layer -->
+  <ellipse cx="100" cy="85" rx="42" ry="12" fill="url(#foamGrad14)"/>
+  <!-- Whipped cream dome -->
+  <path d="M75,82 Q80,60 100,58 Q120,60 125,82" fill="#fffef5" stroke="#f0ead8" stroke-width="0.3"/>
+  <ellipse cx="100" cy="82" rx="25" ry="6" fill="#fffef5"/>
+  <!-- Caramel drizzle on whipped cream -->
+  <path d="M80,75 Q85,70 88,76 Q91,82 95,74 Q98,68 100,74 Q102,80 106,72 Q110,66 113,74 Q116,82 120,76" fill="none" stroke="#c67c2e" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <path d="M83,80 Q88,76 92,80 Q96,84 100,78 Q104,72 108,80 Q112,86 117,80" fill="none" stroke="#a0621a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Caramel sauce drips on cup side -->
+  <path d="M88,85 Q87,95 88,105" fill="none" stroke="#c67c2e" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M112,84 Q113,98 112,110" fill="none" stroke="#c67c2e" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/>
+  <path d="M100,86 Q100,92 100,96" fill="none" stroke="#c67c2e" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <!-- Green sleeve -->
+  <path d="M67,140 L73,200 C73,200 85,204 100,204 C115,204 127,200 127,200 L133,140 Z" fill="#00704A"/>
+  <!-- Sleeve logo circle -->
+  <circle cx="100" cy="170" r="16" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+  <circle cx="100" cy="170" r="13" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+  <!-- Simplified siren -->
+  <circle cx="100" cy="167" r="3" fill="#ffffff"/>
+  <path d="M94,173 Q97,180 100,176 Q103,180 106,173" fill="none" stroke="#ffffff" stroke-width="1.2"/>
+  <!-- Cup rim -->
+  <ellipse cx="100" cy="70" rx="45" ry="13" fill="#f0f0eb" stroke="#ddd" stroke-width="0.5"/>
+  <ellipse cx="100" cy="70" rx="42" ry="11" fill="#ffffff" stroke="#eee" stroke-width="0.3"/>
+  <!-- Lid -->
+  <path d="M58,65 C58,55 75,48 100,48 C125,48 142,55 142,65" fill="#e0ddd5" stroke="#c5c2ba" stroke-width="0.5"/>
+  <ellipse cx="100" cy="65" rx="42" ry="11" fill="#eae7df" stroke="#c5c2ba" stroke-width="0.5"/>
+  <!-- Lid drinking hole -->
+  <ellipse cx="100" cy="58" rx="8" ry="3" fill="#d5d0c5" stroke="#b5b0a5" stroke-width="0.5"/>
+  <!-- Cup highlight -->
+  <path d="M70,90 L73,240 C73,240 74,242 75,242" fill="#ffffff" opacity="0.15"/>
+</svg>

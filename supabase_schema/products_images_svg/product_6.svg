@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280">
+  <defs>
+    <linearGradient id="cupBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f0ece6"/>
+    </linearGradient>
+    <linearGradient id="mocha" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a2510"/>
+      <stop offset="50%" stop-color="#3a1c0c"/>
+      <stop offset="100%" stop-color="#2a1408"/>
+    </linearGradient>
+    <linearGradient id="whippedCream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f5efe5"/>
+    </linearGradient>
+    <linearGradient id="chocolateDrizzle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3b1a08"/>
+      <stop offset="100%" stop-color="#5a2e15"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow beneath cup -->
+  <ellipse cx="100" cy="268" rx="52" ry="8" fill="rgba(0,0,0,0.10)"/>
+  <!-- Cup body -->
+  <path d="M58,70 L52,255 C52,262 60,268 100,268 C140,268 148,262 148,255 L142,70 Z" fill="url(#cupBody)" stroke="#e0d8cc" stroke-width="1"/>
+  <!-- Mocha fill -->
+  <path d="M62,100 L54,250 C54,257 62,263 100,263 C138,263 146,257 146,250 L138,100 C138,100 130,105 100,105 C70,105 62,100 62,100 Z" fill="url(#mocha)"/>
+  <!-- Chocolate swirl in drink -->
+  <path d="M75,130 C85,135 95,125 105,132 C115,139 125,128 132,133" stroke="#5c3018" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <path d="M70,165 C82,170 92,160 102,167 C112,174 122,163 135,168" stroke="#5c3018" stroke-width="1" fill="none" opacity="0.3"/>
+  <!-- Starbucks green sleeve -->
+  <path d="M65,155 L60,210 C60,210 70,215 100,215 C130,215 140,210 140,210 L135,155 C135,155 125,160 100,160 C75,160 65,155 65,155 Z" fill="#00704A"/>
+  <!-- Sleeve texture -->
+  <path d="M72,168 L69,200" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M82,170 L79,202" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M92,171 L90,203" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M102,171 L100,203" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M112,170 L110,202" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M122,168 L120,200" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M132,166 L130,198" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <!-- Logo -->
+  <circle cx="100" cy="183" r="16" fill="#00704A" stroke="#ffffff" stroke-width="1.5"/>
+  <circle cx="100" cy="183" r="12" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+  <path d="M100,173 C97,173 95,175 95,178 C95,181 96,183 98,185 C96,187 95,189 95,191 C95,193 97,194 100,194 C103,194 105,193 105,191 C105,189 104,187 102,185 C104,183 105,181 105,178 C105,175 103,173 100,173 Z" fill="#ffffff" opacity="0.9"/>
+  <!-- Cup rim -->
+  <ellipse cx="100" cy="70" rx="42" ry="9" fill="#f5f0e8" stroke="#e0d8cc" stroke-width="1"/>
+  <ellipse cx="100" cy="70" rx="38" ry="7" fill="#ffffff"/>
+  <!-- Whipped cream mound -->
+  <path d="M65,70 C65,42 75,30 100,28 C125,30 135,42 135,70" fill="url(#whippedCream)" stroke="#e8e2d8" stroke-width="0.5"/>
+  <!-- Whipped cream swirl details -->
+  <path d="M75,60 C80,52 88,48 100,46 C112,48 120,52 125,60" fill="none" stroke="#ede7dd" stroke-width="1.5" opacity="0.6"/>
+  <path d="M80,55 C88,45 95,40 100,38 C105,40 112,45 120,55" fill="none" stroke="#ede7dd" stroke-width="1" opacity="0.5"/>
+  <!-- Whipped cream peak -->
+  <path d="M95,32 C95,26 98,20 100,18 C102,20 105,26 105,32" fill="#ffffff" stroke="#ede7dd" stroke-width="0.5"/>
+  <!-- Whipped cream highlights -->
+  <ellipse cx="88" cy="50" rx="6" ry="4" fill="#ffffff" opacity="0.5"/>
+  <ellipse cx="112" cy="48" rx="5" ry="3" fill="#ffffff" opacity="0.4"/>
+  <ellipse cx="100" cy="35" rx="3" ry="5" fill="#ffffff" opacity="0.6"/>
+  <!-- Chocolate drizzle on whipped cream -->
+  <path d="M80,55 C85,50 88,58 94,52 C98,48 102,56 108,50 C112,46 116,54 120,50" stroke="#4a2010" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M85,62 C90,57 93,64 98,58 C102,54 106,62 112,56 C115,53 118,58 122,55" stroke="#4a2010" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <!-- Chocolate drizzle drips -->
+  <path d="M88,58 L87,65" stroke="#4a2010" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <path d="M108,52 L107,60" stroke="#4a2010" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.4"/>
+  <!-- Cocoa powder dusting -->
+  <circle cx="95" cy="38" r="0.8" fill="#6b3520" opacity="0.3"/>
+  <circle cx="102" cy="32" r="0.6" fill="#6b3520" opacity="0.25"/>
+  <circle cx="98" cy="42" r="0.7" fill="#6b3520" opacity="0.2"/>
+  <circle cx="105" cy="44" r="0.5" fill="#6b3520" opacity="0.2"/>
+  <circle cx="90" cy="45" r="0.6" fill="#6b3520" opacity="0.25"/>
+</svg>

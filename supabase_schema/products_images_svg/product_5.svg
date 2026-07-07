@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280">
+  <defs>
+    <linearGradient id="cupBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f0ece6"/>
+    </linearGradient>
+    <linearGradient id="cappuccino" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b3e1f"/>
+      <stop offset="100%" stop-color="#4a2810"/>
+    </linearGradient>
+    <linearGradient id="foam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fefcf8"/>
+      <stop offset="100%" stop-color="#f0e8d8"/>
+    </linearGradient>
+    <linearGradient id="saucerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e8e2d8"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow beneath saucer -->
+  <ellipse cx="100" cy="258" rx="65" ry="10" fill="rgba(0,0,0,0.10)"/>
+  <!-- Saucer -->
+  <ellipse cx="100" cy="248" rx="65" ry="12" fill="url(#saucerGrad)" stroke="#ddd5c8" stroke-width="1"/>
+  <ellipse cx="100" cy="246" rx="55" ry="9" fill="#f8f4ee" stroke="#e8e0d5" stroke-width="0.5"/>
+  <ellipse cx="100" cy="245" rx="35" ry="6" fill="#f0ece5" stroke="#e0d8cc" stroke-width="0.5"/>
+  <!-- Cup body - wider cappuccino cup -->
+  <path d="M62,120 L56,238 C56,243 68,248 100,248 C132,248 144,243 144,238 L138,120 Z" fill="url(#cupBody)" stroke="#e0d8cc" stroke-width="1"/>
+  <!-- Starbucks green band -->
+  <path d="M67,165 L62,210 C62,210 72,215 100,215 C128,215 138,210 138,210 L133,165 C133,165 123,170 100,170 C77,170 67,165 67,165 Z" fill="#00704A"/>
+  <!-- Sleeve texture -->
+  <path d="M74,178 L71,202" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M84,180 L81,204" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M94,181 L92,205" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M104,181 L102,205" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M114,180 L112,204" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <path d="M124,178 L122,202" stroke="#005c3c" stroke-width="0.5" opacity="0.4"/>
+  <!-- Logo -->
+  <circle cx="100" cy="190" r="14" fill="#00704A" stroke="#ffffff" stroke-width="1.3"/>
+  <circle cx="100" cy="190" r="10.5" fill="none" stroke="#ffffff" stroke-width="0.4"/>
+  <path d="M100,181 C97.5,181 96,183 96,185.5 C96,188 97,189.5 98.5,191 C97,192.5 96,194 96,195.5 C96,197 97.5,198 100,198 C102.5,198 104,197 104,195.5 C104,194 103,192.5 101.5,191 C103,189.5 104,188 104,185.5 C104,183 102.5,181 100,181 Z" fill="#ffffff" opacity="0.9"/>
+  <!-- Cappuccino fill -->
+  <path d="M66,145 L58,234 C58,239 70,244 100,244 C130,244 142,239 142,234 L134,145 C134,145 124,150 100,150 C76,150 66,145 66,145 Z" fill="url(#cappuccino)"/>
+  <!-- Thick foam layer -->
+  <path d="M65,128 L66,150 C66,150 76,155 100,155 C124,155 134,150 134,150 L135,128 C135,128 124,133 100,133 C76,133 65,128 65,128 Z" fill="url(#foam)"/>
+  <!-- Foam surface -->
+  <ellipse cx="100" cy="128" rx="35" ry="8" fill="#faf6f0"/>
+  <ellipse cx="100" cy="128" rx="33" ry="7" fill="#fefcf8" opacity="0.8"/>
+  <!-- Latte art heart -->
+  <path d="M100,122 C100,122 93,118 90,121 C87,124 90,128 100,134 C110,128 113,124 110,121 C107,118 100,122 100,122 Z" fill="#8b5e3c" opacity="0.6"/>
+  <!-- Heart detail/highlight -->
+  <path d="M100,124 C100,124 95,121 93,123 C91,125 93,128 100,132 C107,128 109,125 107,123 C105,121 100,124 100,124 Z" fill="#a07050" opacity="0.4"/>
+  <!-- Foam bubbles -->
+  <circle cx="85" cy="127" r="1.5" fill="#ffffff" opacity="0.5"/>
+  <circle cx="115" cy="126" r="1.2" fill="#ffffff" opacity="0.4"/>
+  <circle cx="90" cy="131" r="1" fill="#ffffff" opacity="0.3"/>
+  <circle cx="112" cy="130" r="1.3" fill="#ffffff" opacity="0.35"/>
+  <!-- Cup rim -->
+  <ellipse cx="100" cy="120" rx="38" ry="9" fill="#f5f0e8" stroke="#e0d8cc" stroke-width="1"/>
+  <ellipse cx="100" cy="120" rx="35" ry="8" fill="#ffffff"/>
+  <!-- Cup handle -->
+  <path d="M138,145 C155,145 160,162 160,178 C160,194 155,205 138,205" fill="none" stroke="#e0d8cc" stroke-width="5" stroke-linecap="round"/>
+  <path d="M138,145 C152,145 157,162 157,178 C157,194 152,205 138,205" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <!-- Steam -->
+  <path d="M88,108 C88,100 92,94 88,86" stroke="#d0ccc5" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <path d="M100,105 C100,96 104,90 100,81" stroke="#d0ccc5" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+  <path d="M112,108 C112,100 108,94 112,86" stroke="#d0ccc5" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/>
+</svg>

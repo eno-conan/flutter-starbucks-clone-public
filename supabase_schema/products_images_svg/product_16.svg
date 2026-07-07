@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280">
+  <defs>
+    <linearGradient id="cupGrad16" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f5f5f0"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e8e8e3"/>
+    </linearGradient>
+    <linearGradient id="chaiGrad16" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4915a"/>
+      <stop offset="100%" stop-color="#a0602e"/>
+    </linearGradient>
+    <linearGradient id="foamGrad16" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5e8d5"/>
+      <stop offset="100%" stop-color="#dbb88a"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="100" cy="268" rx="52" ry="8" fill="#00000015"/>
+  <!-- Cup body -->
+  <path d="M55,70 L62,255 C62,262 75,268 100,268 C125,268 138,262 138,255 L145,70 Z" fill="url(#cupGrad16)" stroke="#ddd" stroke-width="0.5"/>
+  <!-- Drink fill - spiced orange-brown -->
+  <path d="M58,85 L62,255 C62,262 75,268 100,268 C125,268 138,262 138,255 L142,85 Z" fill="url(#chaiGrad16)"/>
+  <!-- Foam layer -->
+  <ellipse cx="100" cy="85" rx="42" ry="12" fill="url(#foamGrad16)"/>
+  <!-- Cinnamon powder dusting on foam -->
+  <circle cx="88" cy="83" r="0.6" fill="#8b4513" opacity="0.4"/>
+  <circle cx="92" cy="80" r="0.5" fill="#8b4513" opacity="0.35"/>
+  <circle cx="96" cy="85" r="0.4" fill="#8b4513" opacity="0.3"/>
+  <circle cx="100" cy="82" r="0.5" fill="#8b4513" opacity="0.4"/>
+  <circle cx="104" cy="86" r="0.6" fill="#8b4513" opacity="0.35"/>
+  <circle cx="108" cy="81" r="0.4" fill="#8b4513" opacity="0.3"/>
+  <circle cx="112" cy="84" r="0.5" fill="#8b4513" opacity="0.4"/>
+  <circle cx="95" cy="88" r="0.4" fill="#8b4513" opacity="0.3"/>
+  <circle cx="105" cy="79" r="0.5" fill="#8b4513" opacity="0.35"/>
+  <circle cx="85" cy="86" r="0.4" fill="#8b4513" opacity="0.25"/>
+  <!-- Star anise shape on foam -->
+  <g transform="translate(100,83)" opacity="0.5">
+    <line x1="0" y1="-3" x2="0" y2="3" stroke="#6b3410" stroke-width="0.6"/>
+    <line x1="-2.6" y1="-1.5" x2="2.6" y2="1.5" stroke="#6b3410" stroke-width="0.6"/>
+    <line x1="-2.6" y1="1.5" x2="2.6" y2="-1.5" stroke="#6b3410" stroke-width="0.6"/>
+  </g>
+  <!-- Cinnamon stick -->
+  <g transform="translate(118,60) rotate(25)">
+    <rect x="-2" y="0" width="4" height="35" rx="2" fill="#8b5e3c" stroke="#6b4226" stroke-width="0.5"/>
+    <rect x="-1.5" y="0" width="1" height="35" fill="#a0723e" opacity="0.4"/>
+    <!-- Bark texture lines -->
+    <line x1="-1" y1="5" x2="1" y2="5" stroke="#6b4226" stroke-width="0.3" opacity="0.5"/>
+    <line x1="-1" y1="10" x2="1" y2="10" stroke="#6b4226" stroke-width="0.3" opacity="0.5"/>
+    <line x1="-1" y1="15" x2="1" y2="15" stroke="#6b4226" stroke-width="0.3" opacity="0.5"/>
+    <line x1="-1" y1="20" x2="1" y2="20" stroke="#6b4226" stroke-width="0.3" opacity="0.5"/>
+    <line x1="-1" y1="25" x2="1" y2="25" stroke="#6b4226" stroke-width="0.3" opacity="0.5"/>
+    <line x1="-1" y1="30" x2="1" y2="30" stroke="#6b4226" stroke-width="0.3" opacity="0.5"/>
+    <!-- Curled end -->
+    <path d="M-2,35 Q-4,38 -2,40 Q0,42 2,40 Q4,38 2,35" fill="#8b5e3c" stroke="#6b4226" stroke-width="0.4"/>
+  </g>
+  <!-- Green sleeve -->
+  <path d="M67,140 L73,200 C73,200 85,204 100,204 C115,204 127,200 127,200 L133,140 Z" fill="#00704A"/>
+  <!-- Sleeve logo circle -->
+  <circle cx="100" cy="170" r="16" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+  <circle cx="100" cy="170" r="13" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+  <!-- Simplified siren -->
+  <circle cx="100" cy="167" r="3" fill="#ffffff"/>
+  <path d="M94,173 Q97,180 100,176 Q103,180 106,173" fill="none" stroke="#ffffff" stroke-width="1.2"/>
+  <!-- Cup rim -->
+  <ellipse cx="100" cy="70" rx="45" ry="13" fill="#f0f0eb" stroke="#ddd" stroke-width="0.5"/>
+  <ellipse cx="100" cy="70" rx="42" ry="11" fill="#ffffff" stroke="#eee" stroke-width="0.3"/>
+  <!-- Lid -->
+  <path d="M58,65 C58,55 75,48 100,48 C125,48 142,55 142,65" fill="#e0ddd5" stroke="#c5c2ba" stroke-width="0.5"/>
+  <ellipse cx="100" cy="65" rx="42" ry="11" fill="#eae7df" stroke="#c5c2ba" stroke-width="0.5"/>
+  <!-- Lid drinking hole -->
+  <ellipse cx="100" cy="58" rx="8" ry="3" fill="#d5d0c5" stroke="#b5b0a5" stroke-width="0.5"/>
+  <!-- Cup highlight -->
+  <path d="M70,90 L73,240 C73,240 74,242 75,242" fill="#ffffff" opacity="0.15"/>
+</svg>

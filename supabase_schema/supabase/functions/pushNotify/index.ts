@@ -33,77 +33,81 @@ const supabase = createClient(
 )
 
 Deno.serve(async (req) => {
-  // const payload = await req.json()
   const payload: WebhookPayload = await req.json()
-  // console.log('payload', payload);
 
-  // orderテーブルの更新レコード情報から、user_idを条件にfcmトークン値を取得
-  // 更新前が0で、更新後が1のレコードだった場合は、通知対象
+  // 更新前が0で、更新後が1のレコードだった場合は通知対象
   if (payload.old_record.provided_status == '0' && payload.record.provided_status == '1') {
     const { data } = await supabase
       .from('user_fcm_tokens')
       .select('fcm_token, is_notify')
       .eq('user_id', payload.record.user_id)
-      .single()
 
-    // データがない場合
-    if (data == null) {
-      console.warn('fcm_token is null');
+    // デバイス未登録の場合
+    if (!data || data.length === 0) {
+      console.warn('user_fcm_tokens: no records found for user_id', payload.record.user_id);
       return new Response('No data found', { status: 404 })
     }
-    // 通知フラグを確認
-    const isNotify = data!.is_notify as number
-    if (isNotify == 0) {
-      // OFFの場合はここで終了（通知しない）
+
+    // is_notify == 1 かつ fcm_token が存在するデバイスのみ通知対象
+    const notifyTargets = data.filter(d => d.is_notify === 1 && d.fcm_token)
+    if (notifyTargets.length === 0) {
       return new Response('Notify flag is off', { status: 200 })
-    } else {
-      const fcmToken = data!.fcm_token as string
-
-      const accessToken = await getAccessToken({
-        clientEmail: serviceAccount.client_email,
-        privateKey: serviceAccount.private_key,
-      })
-
-      // ここでorders情報から受け取り番号を取得する。
-      const res = await fetch(
-        `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            message: {
-              token: fcmToken,
-              notification: {
-                title: `【受取番号:${payload.record.pickup_number}】`,
-                body: '商品のご用意ができました！お待ちしております',
-              },
-              data: {
-                order_id: payload.record.order_id,
-                // Add other relevant data
-              }
-            },
-          }),
-        }
-      )
-
-      const resData = await res.json()
-      if (res.status < 200 || 299 < res.status) {
-        throw resData
-      }
-      // const resData = { 'sample': 'hello' };
-      return new Response(JSON.stringify(resData), {
-        headers: { 'Content-Type': 'application/json' },
-      })
     }
+
+    const accessToken = await getAccessToken({
+      clientEmail: serviceAccount.client_email,
+      privateKey: serviceAccount.private_key,
+    })
+
+    // 全デバイスに並列送信
+    const results = await Promise.all(
+      notifyTargets.map(device => sendFcmNotification(accessToken, device.fcm_token, payload.record))
+    )
+
+    return new Response(JSON.stringify(results), {
+      headers: { 'Content-Type': 'application/json' },
+    })
   } else {
     return new Response(JSON.stringify({}), {
       headers: { 'Content-Type': 'application/json' },
     })
   }
 })
+
+const sendFcmNotification = async (
+  accessToken: string,
+  fcmToken: string,
+  order: Order,
+): Promise<unknown> => {
+  const res = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        message: {
+          token: fcmToken,
+          notification: {
+            title: `【受取番号:${order.pickup_number}】`,
+            body: '商品のご用意ができました！お待ちしております',
+          },
+          data: {
+            order_id: order.order_id,
+          },
+        },
+      }),
+    }
+  )
+
+  const resData = await res.json()
+  if (res.status < 200 || 299 < res.status) {
+    throw resData
+  }
+  return resData
+}
 
 const getAccessToken = ({
   clientEmail,
