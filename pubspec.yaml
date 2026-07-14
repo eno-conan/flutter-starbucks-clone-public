@@ -39,7 +39,7 @@ dependencies:
   google_maps_flutter: ^2.17.0  
   http: ^1.5.0
   intl: any
-  local_auth: ^3.0.1
+  local_auth: ^3.0.2
   logger: ^2.7.0
   no_screenshot: ^1.0.0
   package_info_plus: ^10.2.0
