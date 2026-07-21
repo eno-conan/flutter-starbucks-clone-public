@@ -18,7 +18,7 @@ dependencies:
   app_links: ^7.2.0
   cached_network_image: ^3.4.1
   carousel_slider: ^5.1.2
-  connectivity_plus: ^7.2.0
+  connectivity_plus: ^7.3.0
   device_info_plus: ^13.2.0
   custom_info_window: ^1.0.1
   dio: ^5.10.0
