@@ -14,7 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  animated_bottom_navigation_bar: ^1.4.0
+  animated_bottom_navigation_bar: ^1.4.1
   app_links: ^7.2.0
   cached_network_image: ^3.4.1
   carousel_slider: ^5.1.2

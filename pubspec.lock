@@ -29,10 +29,10 @@ packages:
     dependency: "direct main"
     description:
       name: animated_bottom_navigation_bar
-      sha256: "94971fdfd53acd443acd0d17ce1cb5219ad833f20c75b50c55b205e54a5d6117"
+      sha256: "7ad064b98536d9a38366d3f39907a82da35c695ed79b9ed27ccd16444f5c3184"
       url: "https://pub.dev"
     source: hosted
-    version: "1.4.0"
+    version: "1.4.1"
   ansicolor:
     dependency: transitive
     description:
