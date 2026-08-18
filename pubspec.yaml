@@ -41,7 +41,7 @@ dependencies:
   intl: any
   local_auth: ^3.0.1
   logger: ^2.7.0
-  no_screenshot: ^1.0.0
+  no_screenshot: ^2.0.1
   package_info_plus: ^10.2.0
   qr_flutter: ^4.1.0
   riverpod_annotation: ^4.0.2
