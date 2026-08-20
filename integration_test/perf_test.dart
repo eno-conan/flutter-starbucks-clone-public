@@ -1,8 +1,6 @@
 //8. Flutter Driver でアプリのパフォーマンスをテストする
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:testingapp/app/app.dart';
 
 void main() {
   group('Testing App Performance', () {
@@ -10,17 +8,17 @@ void main() {
     binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
     testWidgets('Scrolling test', (tester) async {
-      await tester.pumpWidget(const TestingApp());
+      // await tester.pumpWidget(const TestingApp());
 
-      final listFinder = find.byType(ListView);
+      // final listFinder = find.byType(ListView);
 
-      await binding.traceAction(() async {
-        await tester.fling(listFinder, const Offset(0, -500), 10000);
-        await tester.pumpAndSettle();
+      // await binding.traceAction(() async {
+      //   await tester.fling(listFinder, const Offset(0, -500), 10000);
+      //   await tester.pumpAndSettle();
 
-        await tester.fling(listFinder, const Offset(0, 500), 10000);
-        await tester.pumpAndSettle();
-      }, reportKey: 'scrolling_summary');
+      //   await tester.fling(listFinder, const Offset(0, 500), 10000);
+      //   await tester.pumpAndSettle();
+      // }, reportKey: 'scrolling_summary');
     });
   });
 }

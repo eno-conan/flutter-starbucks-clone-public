@@ -6,12 +6,12 @@
 
 | ワークフロー名 | ファイル名 | トリガー | 用途 |
 |--------------|-----------|---------|------|
-| Flutter CI/CD | [`app.yml`](#appyml) | mainへのpush/PR | ビルド・テスト・デプロイの自動化 |
+| Flutter CI/CD | [`app.yml`](#appyml) | 手動実行 | ビルド・テスト・App Distributionへの配布 |
 | Claude Support | [`claude.yml`](#claudeyml) | `@claude`メンション | Issue/PRでのAI支援 |
 | AI Code Review | [`claude-code-review.yml`](#claude-code-reviewyml) | PRのオープン/更新 | 自動コードレビュー |
 | Bot PR Review | [`claude-code-review-only-bot.yml`](#claude-code-review-only-botyml) | ボットによるPR | ボットPRの自動レビュー |
 | Revert Commit | [`revert-to-commit.yml`](#revert-to-commityml) | 手動実行 | 特定コミットへの巻き戻し |
-| Firebase Deploy | [`deploy-firebase-hosting.yml`](#deploy-firebase-hostingyml) | mainへのpush | assetlinks.jsonのデプロイ |
+| Firebase Deploy | [`deploy-firebase-hosting.yml`](#deploy-firebase-hostingyml) | mainへのpush / 手動 | assetlinks.jsonのデプロイとRP Origins同期 |
 | Flutter Version Update | [`flutter-update-latest.yml`](#flutter-update-latestyml) | 水曜日の午前7時 | Flutterの最新安定版への自動更新 |
 | Dependabot 自動マージ | [`dependabot-auto-merge.yml`](#dependabot-auto-mergeyml) | 水曜日の午後5時 | Dependabotパッチバージョンの自動マージ |
 
@@ -22,13 +22,20 @@ Flutter アプリケーションのビルド、テスト、デプロイを自動
 <summary>詳細を見る</summary>
 
 **トリガー条件:**
-- mainブランチへのプッシュ時
-- mainブランチへのPR作成・更新時
-- 対象パス: `.github/**`, `android/**`, `lib/**`, `test/**`, `integration_test/**`, `pubspec.yaml`
+- 手動実行（`workflow_dispatch`）のみ。pushトリガーはコメントアウトしてある
+
+**実行時の入力:**
+
+| 入力 | 既定 | 説明 |
+|---|---|---|
+| `run_tests` | true | `flutter test` を実行する |
+| `build_apk` | true | APKをビルドする |
+| `distribute` | true | Firebase App Distributionへ配布する |
+| `release_notes` | 空 | 配布時のリリースノート。省略時はブランチ名とコミットハッシュ |
 
 **主な処理内容:**
 1. **環境セットアップ**
-    - Flutter 3.44.2のインストール
+    - Flutter 3.47.0のインストール
     - Android SDKのセットアップ
     - 各種キャッシュの復元（依存関係、Gradle、Android SDK）
 
@@ -45,9 +52,16 @@ Flutter アプリケーションのビルド、テスト、デプロイを自動
     - テストの実行（`flutter test`）
     - APKのビルド（ABI別、難読化あり）
 
-4. **後処理**
+4. **配布**
+    - APK署名証明書のSHA-256を`assetlinks.json`の`get_login_creds`と照合（未登録なら警告）
+    - Firebase App Distributionへの配布（`app-arm64-v8a-release.apk`をグループ`testers`へ）
     - ビルド成果物のクリーンアップ
-    - （コメントアウト済）Firebase App Distributionへのデプロイ
+
+!!! note "APKをArtifactsに置かない"
+
+    APKは1ファイル約40MBあり、毎回Artifactsに上げるとFreeプランのストレージ上限に到達する。
+    成果物の受け渡しはApp Distribution側に寄せているため、`Upload APK`ステップは意図的に持たない。
+    詳細は[Android 署名鍵の管理](android-signing-keys.md)を参照。
 
 **必要なGitHub Secrets:**
 - 認証情報: `GOOGLE_SERVICES_JSON`, `RELEASE_KEYSTORE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`
@@ -157,21 +171,34 @@ mainブランチの特定のコミットまで状態を戻すためのワーク�
 </details>
 
 ## `deploy-firebase-hosting.yml`
-Deep Link設定用の`assetlinks.json`をFirebase Hostingに自動デプロイします。
+Deep Link・パスキー設定用の`assetlinks.json`をFirebase Hostingに自動デプロイし、
+同じ署名鍵をSupabaseのRelying Party Originsへ同期します。
 
 <details>
 <summary>詳細を見る</summary>
 
 **トリガー条件:**
 - mainブランチへのプッシュ時
-- `public/.well-known/assetlinks.json`の変更がある場合
+- 対象パス: `public/.well-known/assetlinks.json`, `firebase.json`, `scripts/sync-rp-origins.sh`, 自ワークフロー
+- 手動実行（`workflow_dispatch`）。`assetlinks.json`を変えずにSupabase側だけ再同期したいときに使う
 
 **主な処理内容:**
-- `assetlinks.json`の更新
-- Firebase Hostingへの自動デプロイ
+1. Firebase Hostingへのデプロイ（`assetlinks.json`の反映）
+2. `scripts/sync-rp-origins.sh --apply` によるSupabaseのRelying Party Origins同期
 
 **必要なGitHub Secrets:**
 - `FIREBASE_HOSTING_DEPLOY_SERVICE_ACCOUNT_JSON`
+- `FIREBASE_HOSTING_DOMAIN`, `SUPABASE_URL`, `SUPABASE_ACCESS_TOKEN`（同期ステップ用）
+
+!!! warning "二重管理の同期"
+
+    `assetlinks.json`（16進）とSupabaseのRelying Party Origins（`android:apk-key-hash:`）は
+    同じ署名鍵を別形式で持っている。片方だけ更新すると
+    400 `webauthn_verification_failed` または `DomainNotAssociatedException` になり、
+    エラーメッセージから原因を推測しにくい。このワークフローが両方をまとめて更新する。
+
+    `SUPABASE_ACCESS_TOKEN`が未登録の場合は、警告を出して反映すべき値をログに表示するだけで
+    スキップする。詳細は[Android 署名鍵の管理](android-signing-keys.md)を参照。
 
 </details>
 

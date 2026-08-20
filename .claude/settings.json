@@ -17,17 +17,91 @@
       "Bash(rmdir)",
       "Read(**/.env)",
       "Read(**/.env.*)",
-      "Read(./secrets/**)"
+      "Read(./secrets/**)",
+      "Read(**/key.properties)",
+      "Read(**/secrets.properties)",
+      "Read(**/service-account.json)",
+      "Read(**/*.jks)",
+      "Read(**/*.keystore)",
+      "Read(~/.bashrc)",
+      "Read(~/.bash_profile)",
+      "Read(~/.bash_login)",
+      "Read(~/.profile)",
+      "Read(~/.zshrc)",
+      "Read(~/.zprofile)",
+      "Read(~/.zshenv)",
+      "Read(~/.zlogin)",
+      "Read(~/.claude/.credentials.json)",
+      "Read(~/.netrc)",
+      "Read(~/.git-credentials)",
+      "Read(~/.aws/**)",
+      "Read(~/.ssh/**)",
+      "Read(//etc/profile)",
+      "Read(//etc/environment)",
+      "Read(//etc/bash.bashrc)"
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-git-hooks-installed.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'cmd=$(cat | jq -r \".tool_input.command // empty\" 2>/dev/null || true); if echo \"$cmd\" | grep -qE \"git\\s+(push\\s+.*--force|push\\s+.*-f[^i]|reset\\s+--hard|clean\\s+-f)\"; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"deny\\\",\\\"permissionDecisionReason\\\":\\\"破壊的gitコマンドはHookでブロックされました\\\"}}\" && exit 0; fi'"
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-shell-profile-read.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-destructive-git.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-gate-bypass.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/exfil-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/credential-guard.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-shell-profile-read.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/credential-guard.sh",
+            "timeout": 5
           }
         ]
       },
@@ -43,26 +117,6 @@
             "command": "bash -c 'file=$(cat | jq -r \".tool_input.file_path // empty\" 2>/dev/null || true); if [[ \"$file\" =~ pubspec\\.yaml$ ]]; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"ask\\\",\\\"permissionDecisionReason\\\":\\\"pubspec.yamlへの変更です。依存関係の変更を確認してください\\\"}}\" && exit 0; fi'"
           }
         ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/credential-guard.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/exfil-guard.sh",
-            "timeout": 5
-          }
-        ]
       }
     ],
     "PostToolUse": [
@@ -71,7 +125,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/post-tool-use-lint.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-tool-use-lint.sh",
             "timeout": 120,
             "statusMessage": "Running lint check..."
           }

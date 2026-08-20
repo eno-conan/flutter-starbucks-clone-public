@@ -383,7 +383,7 @@ Body: {}
 | `No data found` | FCMトークンが登録されていない | アプリ側でFCMトークン登録処理を実行 |
 | `Notify flag is off` | ユーザーが通知をOFF | 正常動作（通知しない） |
 | `Invalid registration token` | FCMトークンが無効 | アプリ再起動時にトークン再取得・再登録 |
-| `Authentication error` | JWT認証失敗 | service-account.jsonの設定確認 |
+| `Authentication error` | JWT認証失敗 | `supabase secrets list` で `FIREBASE_SERVICE_ACCOUNT` の登録を確認 |
 | Webhook not triggered | 条件不一致またはWebhook設定ミス | Webhook条件式とDatabase設定を確認 |
 
 #### デバッグ手順
@@ -442,7 +442,7 @@ Body: {}
 - IPベースのレート制限で連続送信を防止
 
 **認証方式:**
-- `--no-verify-jwt` でデプロイ（JWT なしで呼び出し可能）
+- `config.toml` の `[functions.checkEmailExists] verify_jwt = false`（JWT なしで呼び出し可能）
 - Flutter 側から `supabase.functions.invoke('checkEmailExists', ...)` で直接呼び出す
 
 ### アーキテクチャ
@@ -585,8 +585,9 @@ Content-Type: application/json
 ### デプロイ
 
 ```bash
-# JWT検証なしでデプロイ（Flutter から匿名呼び出しのため）
-supabase functions deploy checkEmailExists --no-verify-jwt
+# verify_jwt は config.toml の [functions.checkEmailExists] で管理する（false）。
+# CLI フラグは config.toml を上書きするため付けない。
+supabase functions deploy checkEmailExists
 
 # デプロイ確認
 supabase functions list
@@ -615,10 +616,33 @@ Supabase Dashboard > Edge Functions > checkEmailExists > **Logs** タブで以�
 
 ### 必要な環境変数
 
+`SUPABASE_URL` と `SUPABASE_SERVICE_ROLE_KEY` は Edge Function に自動提供されるため、
+登録は不要（`SUPABASE_` プレフィックスは `secrets set` 側で除外される）。
+
+登録が必要なのは以下。宣言は `supabase/config.toml` の `[edge_runtime.secrets]` にある。
+
+| 変数 | 使用する Function |
+|---|---|
+| `FIREBASE_SERVICE_ACCOUNT` | pushNotify（service-account.json の中身をそのまま JSON 文字列で登録） |
+| `RESEND_API_KEY` | sendMailRegisterUser |
+| `TEST_MAIL_ADDRESS` | sendMailRegisterUser |
+| `HOSTING_DOMEIN` | sendMailRegisterUser |
+
 ```bash
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
+# 本番へ登録（再デプロイ不要。設定後すぐ反映される）
+supabase secrets set FIREBASE_SERVICE_ACCOUNT="$(cat service-account.json)"
+supabase secrets list
 ```
+
+**`supabase secrets set --env-file .env` は使わないこと。**
+`--env-file` はファイル内の全キーを無条件にアップロードする（除外されるのは
+`SUPABASE_` プレフィックスのみ）。リポジトリルートの `.env` には Flutter アプリ用の
+機密情報が入っており、Edge Function の secrets はプロジェクト単位で全関数が共有するため、
+無関係な関数のランタイムにまで載ることになる。
+
+ローカル実行時は `supabase/functions/.env`（全関数共通）または
+`supabase/functions/<関数名>/.env`（関数個別・共通側を上書き）に置けば
+`--env-file` なしで読み込まれる。いずれも Git 管理外にすること。
 
 ### ローカルでの実行
 
@@ -640,6 +664,8 @@ curl -i --location --request POST 'http://localhost:54321/functions/v1/pushNotif
 
 ```bash
 # 本番環境へのデプロイ
+# verify_jwt は config.toml の [functions.pushNotify] で管理する（true）。
+# --no-verify-jwt を付けると config.toml を上書きして無認証で公開されるため付けない。
 supabase functions deploy pushNotify
 
 # デプロイ確認

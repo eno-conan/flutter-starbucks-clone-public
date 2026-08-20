@@ -34,7 +34,11 @@ adb reverse tcp:54321 tcp:54321
 - [公式docs](https://supabase.com/docs/guides/functions/examples/push-notifications?queryGroups=platform&platform=fcm)
 ```shell
 npx supabase functions new {functionName}
-npx supabase functions deploy {functionName} --no-verify-jwt
+# JWT 検証の要否は CLI フラグではなく supabase/config.toml で管理する。
+# 新規関数を追加したら [functions.{functionName}] を必ず定義すること
+#（未定義だと verify_jwt はデフォルトの true になる）。
+# --no-verify-jwt は config.toml を上書きするため使わない。
+npx supabase functions deploy {functionName}
 ```
 
 ## Google認証

@@ -71,7 +71,27 @@ class TestConfig {
 
 > ⚠️ `test/test_config.dart` は `.gitignore` 対象。CI では環境変数から注入が必要。
 
-### 2. エミュレータ起動 → テスト実行
+### 2. 通知権限の事前許可（実機のみ・全体実行前に必須）
+
+実機で`all_tests_test.dart`（フル実行）を回す場合、`login_flow_cases.dart`のログイン成功テストで
+通知許可を求めるOSネイティブダイアログが発生し、誰にも dismiss されないままそれ以降の全テストに
+悪影響を与える（詳細: Issue #915）。**事前に権限を許可した状態にしてからテストを実行すること。**
+
+```bash
+flutter build apk --debug
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
+adb shell pm grant com.enoconan.testingappv2 android.permission.POST_NOTIFICATIONS
+```
+
+`flutter test`はアプリを`adb install -r`で更新してから実行するため、事前に付与した許可は引き継がれる。
+なお`flutter test`は実行完了後にアプリを自動アンインストールするため、この手順は**フル実行するたびに**
+必要になる（`pm grant`は対象パッケージが端末に存在しないと失敗するため、テスト実行後に単独で叩いても
+意味がない）。
+
+> ⚠️ プロダクションコードにテスト環境検知の分岐を入れる対応は意図的に採用していない
+> （Issue #915のコメント参照）。この運用でのカバーが現状の方針。
+
+### 3. エミュレータ起動 → テスト実行
 
 ```bash
 # エミュレータ起動（Flutter DevTools 経由 or コマンド）
@@ -275,6 +295,20 @@ await tester.pump(const Duration(milliseconds: 300)); // 反映待ち
 
 `AuthHelper.loginAsTestUser()` は内部で自動的に dismiss する。
 パターンB（UI なし認証）では表示されない。
+
+### 通知許可のネイティブダイアログ（重要・Flutter側では dismiss 不可）
+
+ログイン成功後（`lib/screens/starbucks_user_side/signin/login.dart` の `_navigateToHome()` 経由）に
+`FirebaseMessaging.instance.requestPermission()` が呼ばれ、**OSネイティブの通知許可ダイアログ**が表示される。
+これは上記の「後で」「いいえ」とは別物（Flutter Widget の `AlertDialog` ではない）で、
+`find.text()` / `tester.tap()` から操作できず、`AuthHelper` でも dismiss できない。
+
+実機で dismiss されないまま放置すると、以降の全テストの描画・Widget構築に悪影響を与え、
+`find.text()`が0件を返す・`scrollUntilVisible`が`Scrollable`を見つけられない等の原因不明な失敗を
+引き起こす（実例: Issue #915、Payタブ・設定画面のテスト失敗）。
+
+**対策**: 上記セットアップ手順（`pm grant`での事前許可）を必ず実施してからフル実行すること。
+個別のケースファイルを1本だけ実行する分には、ログイン成功テストを経由しない限り影響しない。
 
 ---
 

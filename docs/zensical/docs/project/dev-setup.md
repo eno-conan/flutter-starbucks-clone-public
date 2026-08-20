@@ -4,6 +4,25 @@ description: 開発環境セットアップとプロジェクト情報
 
 # 開発環境とプロジェクト情報
 
+## 初回セットアップ: 共有 debug keystore
+
+パスキー・App Links・Google Maps は「このドメイン／APIキーはこの署名鍵のアプリを信頼する」という
+登録に依存しており、debug 鍵も登録対象になる。開発者ごとに違う鍵だと登録枠が枯渇するため、
+**チーム共通の debug keystore** を使う（Issue #924 4-1 の案A）。
+
+1. Google ドライブの共有ディレクトリから `debug.keystore` を取得する
+2. リポジトリの `android/debug.keystore` に置く（gitignore 済み。コミットしない）
+3. 正しいファイルか照合する
+
+```bash
+keytool -list -v -keystore android/debug.keystore -alias androiddebugkey -storepass android
+# SHA-256 が B6:26:8F:61:B8:89:CD:EC:4C:25:6A:41:9C:88:4A:40:E6:BC:67:13:D2:9C:F3:8F:FC:D1:16:1F:F5:79:33:06 であること
+```
+
+未配置でも `flutter run` は通る（各自の `~/.android/debug.keystore` にフォールバックする）が、
+パスキーが `DomainNotAssociatedException` で動かない。背景・鍵を差し替えるときの手順は
+[Android 署名鍵の管理](android-signing-keys.md)を参照。
+
 ## Development Commands
 
 ### Running the app

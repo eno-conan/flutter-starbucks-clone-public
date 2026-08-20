@@ -12,10 +12,14 @@
 - `.claude/rules/flutter/code-quality-guidelines.md`
 - `.claude/rules/repository-investigation.md`
 - `.claude/rules/lsp-guidelines.md`
+- `.claude/rules/model-routing.md`
+- `.claude/rules/quality-gate-layers.md`
 
 ## スラッシュコマンド
 
-`/session-start` `/session-update` `/session-end` `/session-current` `/session-list` `/session-help` `/fix-github-issue`
+`/dev-loop` `/session-start` `/session-update` `/session-end` `/session-current` `/session-list` `/session-help` `/fix-github-issue`
+
+`/dev-loop <作業内容>`: 実装 → 自動レビュー → 修正を品質ゲート通過まで回す Loop Engineering ワークフロー（`.claude/skills/dev-loop/SKILL.md`）
 
 詳細: `docs/zensical-docs/docs/claude/slash-commands-guide.md`
 
@@ -45,6 +49,9 @@
 - ログに機密情報（パスワード・APIキー）を出力しない
 - 実装時に参照したサイト・Issue があれば開発者に伝える
 - `.claude/rules/` に新規ファイルを追加する際、全作業に横断しないルール（特定ディレクトリ・ファイル種別限定）には必ず `paths:` frontmatter を設定する（例: `lib/screens/` 限定なら `paths: ["lib/screens/**/*.dart"]`）
+- モデル選択は `bash .claude/scripts/impact-classify.sh <paths>` の判定に従う（計画=Opus / 実装=Sonnet / 単調作業=Haiku）。詳細は `.claude/rules/model-routing.md`
+- 機械的チェックは Linter → pre-commit → CI の順で下層に置き、Claude Hooks には Claude 固有の事故だけを置く。詳細は `.claude/rules/quality-gate-layers.md`
+- pre-commit / commit-msg を迂回しない（Claude 側は Hook でブロック済み）。未導入なら `bash scripts/install-git-hooks.sh` を提案する
 
 ## 詳細ドキュメント
 

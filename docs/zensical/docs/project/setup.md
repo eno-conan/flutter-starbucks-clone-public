@@ -3,7 +3,7 @@
 ## クイックスタート
 
 ### 必須要件
-- Flutter 3.44.2 (FVMでの管理推奨)
+- Flutter 3.47.0 (FVMでの管理推奨)
 - Dart >=3.10.0
 - Android Studio / Xcode
 - Firebase プロジェクト
@@ -103,7 +103,7 @@ alias dart="fvm dart"
 
 VS Codeでは、`.vscode/settings.json`に既にFVM設定が追加されているため、自動的にFVMのFlutter SDKを使用します。
 
-**固定されるFlutterバージョン**: `3.44.2`
+**固定されるFlutterバージョン**: `3.47.0`
 
 ## 依存関係管理
 

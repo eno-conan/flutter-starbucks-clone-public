@@ -1,0 +1,171 @@
+{
+  "$comment": [
+    "generate-schema-docs.js / render-er-diagrams.js の設定。",
+    "テーブルを追加したら groups と erDiagrams の両方に登録すること。",
+    "どちらにも属さないテーブルがあると生成スクリプトが失敗する（記載漏れの検出）。"
+  ],
+
+  "output": {
+    "definitions": "supabase/supabase_table_definitions.md",
+    "erDir": "supabase/entity_relationship"
+  },
+
+  "excludeTables": ["spatial_ref_sys"],
+
+  "excludeTablesNote": "PostGIS 拡張が所有するテーブル。マイグレーション管理外のため定義書・ER図から除外する。",
+
+  "groups": [
+    {
+      "title": "ユーザー管理",
+      "tables": [
+        "user_profile_details",
+        "user_mail_settings",
+        "user_nickname",
+        "user_fcm_tokens",
+        "pre_signup_users"
+      ]
+    },
+    {
+      "title": "商品・カテゴリ管理",
+      "tables": [
+        "products",
+        "categories",
+        "sizes",
+        "temperature_types",
+        "product_sizes",
+        "product_temperature_types"
+      ],
+      "materializedViews": ["mv_products_catalog"]
+    },
+    {
+      "title": "注文・カート機能",
+      "tables": ["orders", "orders_detail", "carts", "carts_detail"]
+    },
+    {
+      "title": "店舗管理",
+      "tables": ["stores", "store_profiles", "prefectures"]
+    },
+    {
+      "title": "スタッフ・シフト管理",
+      "tables": ["staff", "staff_schedules"]
+    },
+    {
+      "title": "ポイント・リワード機能",
+      "tables": [
+        "star_acquisitions",
+        "star_aggregations",
+        "star_usage",
+        "star_rewards_exchange_items"
+      ]
+    },
+    {
+      "title": "eチケット機能",
+      "tables": [
+        "e_tickets_promotions",
+        "e_tickets_special_offers",
+        "user_tickets"
+      ]
+    },
+    {
+      "title": "決済・カード機能",
+      "tables": ["cards"]
+    },
+    {
+      "title": "キャンペーン",
+      "tables": ["campaign_settings"]
+    },
+    {
+      "title": "アーカイブ（18ヶ月経過データの退避先）",
+      "tables": [
+        "orders_archive",
+        "orders_detail_archive",
+        "star_acquisitions_archive",
+        "star_usage_archive"
+      ],
+      "note": "退避・削除の運用手順は `data_archive_guide.md` / `partitioning_archiving_guide.md` を参照"
+    },
+    {
+      "title": "その他",
+      "tables": ["email_check_rate_limits", "poc_realtime"]
+    }
+  ],
+
+  "erDiagrams": [
+    {
+      "name": "er_diagram_full",
+      "description": "全テーブルの関連を表示した完全版ER図",
+      "tables": "*"
+    },
+    {
+      "name": "er_diagram_user",
+      "description": "ユーザー・認証関連",
+      "tables": [
+        "user_profile_details",
+        "user_mail_settings",
+        "user_nickname",
+        "user_fcm_tokens",
+        "pre_signup_users",
+        "cards",
+        "prefectures"
+      ]
+    },
+    {
+      "name": "er_diagram_product",
+      "description": "商品・カテゴリ関連",
+      "tables": [
+        "products",
+        "categories",
+        "sizes",
+        "temperature_types",
+        "product_sizes",
+        "product_temperature_types"
+      ]
+    },
+    {
+      "name": "er_diagram_order",
+      "description": "注文・カート関連",
+      "tables": [
+        "orders",
+        "orders_detail",
+        "carts",
+        "carts_detail",
+        "orders_archive",
+        "orders_detail_archive"
+      ]
+    },
+    {
+      "name": "er_diagram_star",
+      "description": "スター・リワード関連",
+      "tables": [
+        "star_acquisitions",
+        "star_aggregations",
+        "star_usage",
+        "star_rewards_exchange_items",
+        "star_acquisitions_archive",
+        "star_usage_archive"
+      ]
+    },
+    {
+      "name": "er_diagram_eticket",
+      "description": "eチケット関連",
+      "tables": [
+        "user_tickets",
+        "e_tickets_promotions",
+        "e_tickets_special_offers",
+        "star_rewards_exchange_items"
+      ]
+    },
+    {
+      "name": "er_diagram_store",
+      "description": "店舗・スタッフ関連",
+      "tables": [
+        "stores",
+        "store_profiles",
+        "prefectures",
+        "staff",
+        "staff_schedules",
+        "campaign_settings"
+      ]
+    }
+  ]
+}

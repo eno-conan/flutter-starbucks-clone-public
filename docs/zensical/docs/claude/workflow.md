@@ -78,9 +78,24 @@
 
 実装後の品質確認には専任エージェントを呼び出す：
 
+- **`code-reviewer`**: 差分の規約・設計レビュー（コード修正権限なし）
 - **`qa-agent`**: テスト実行・静的解析（コード修正権限なし）
 - **`security-agent`**: セキュリティ評価（コード修正権限なし）
 - **`riverpod-specialist`**: Riverpod 3.0 準拠チェック
+
+### Loop Engineering（`/dev-loop`）
+
+上記のフィードバックループ（最大ラウンド数・オシレーション検知・Generator-Evaluator 分離）を
+手順として実行可能にしたのが `/dev-loop` コマンド。
+
+```
+影響度判定 → 計画(Opus) → 実装(Sonnet/Haiku) → 機械的検証 → レビュー(Sonnet) → 判定 → 修正
+```
+
+- 影響度ティアは `bash .claude/scripts/impact-classify.sh <paths>` が決定論的に判定する
+- 実装は `implementer`（Sonnet）、docs のみの定型作業は `docs-scribe`（Haiku）
+- 計画は `plan-architect`（Opus）を 1 ループ 1 回まで
+- 詳細: `.claude/rules/model-routing.md` / `.claude/skills/dev-loop/SKILL.md`
 
 ## 完了検証チェック
 

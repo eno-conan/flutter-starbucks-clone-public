@@ -76,7 +76,7 @@ openai_api_key = "env(OPENAI_API_KEY)"
 
 # Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
 # are monitored, and you can view the emails that would have been sent from the web interface.
-[inbucket]
+[local_smtp]
 enabled = true
 # Port to use for the email testing server web interface.
 port = 54324
@@ -269,6 +269,21 @@ policy = "oneshot"
 # Port to attach the Chrome inspector for debugging edge functions.
 inspector_port = 8083
 
+# Edge Function に渡す secret を宣言する。
+# `supabase secrets set` 実行時に、ここの宣言 → --env-file → コマンドライン引数
+# の順にマージされて本番へ登録される。
+#
+# 値は必ず `env(VAR)` 形式で書く（このファイルは Git 管理下にあるため）。
+# 参照先の環境変数が未設定の場合、その項目は送信されずスキップされる。
+#
+# SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY は Edge Function に自動提供されるため
+# ここには書かない（SUPABASE_ プレフィックスは CLI 側で除外される）。
+[edge_runtime.secrets]
+FIREBASE_SERVICE_ACCOUNT = "env(FIREBASE_SERVICE_ACCOUNT)"
+RESEND_API_KEY           = "env(RESEND_API_KEY)"
+TEST_MAIL_ADDRESS        = "env(TEST_MAIL_ADDRESS)"
+HOSTING_DOMEIN           = "env(HOSTING_DOMEIN)"
+
 # Use these configurations to customize your Edge Function.
 # [functions.MY_FUNCTION_NAME]
 # enabled = true
@@ -327,3 +342,12 @@ enabled = true
 verify_jwt = false        # 未認証ユーザーから呼ばれる
 import_map = "./functions/checkEmailExists/deno.json"
 entrypoint = "./functions/checkEmailExists/index.ts"
+
+[functions.exportArchiveToStorage]
+enabled = true
+# pg_cron → trigger_export_archive_to_storage() → net.http_post() から呼ばれる。
+# 呼び出し元（20260319000003）が Authorization ヘッダーを付けないため false が必須。
+# ここを true にすると月次のアーカイブエクスポートが 401 で止まる。
+verify_jwt = false
+# import_map は指定しない（deno.json を持たず、npm: 指定で直接 import しているため）
+entrypoint = "./functions/exportArchiveToStorage/index.ts"

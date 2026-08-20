@@ -2,29 +2,37 @@
 
 カフェアプリケーションのデータベース構造を可視化したER図です。
 
+> ⚠️ **`.mmd` / `.svg` はすべて自動生成物です。手で編集しないでください。**
+> 実スキーマから `npm run schema:docs` で生成されます。
+> 更新手順は `.claude/rules/supabase/update-db-schema.md` を参照してください。
+
+## 生成方法
+
+```bash
+cd supabase_schema
+npm run start && npm run db:reset   # マイグレーションを適用したローカルDBを用意
+npm run schema:docs                 # .mmd を生成し、続けて .svg へ変換
+```
+
+図の構成（どのテーブルをどの図に載せるか）は
+`supabase_schema/scripts/schema-doc-config.json` の `erDiagrams` で定義します。
+テーブルを追加したらここに登録してください。登録漏れは生成時に検出されます。
+
+カラムの日本語ラベルはマイグレーションの `COMMENT ON COLUMN` が正です。
+
 ## ファイル一覧
 
-### 全体図
-- **er_diagram_full.mmd** - 全28テーブルの関連を表示した完全版ER図
+生成されるファイルは `schema-doc-config.json` の `erDiagrams` と1対1で対応します。
 
-### 機能別ER図
-- **er_diagram_user.mmd** - ユーザー・認証関連
-  - ユーザープロフィール、メール設定、FCMトークン、カード情報など
-  
-- **er_diagram_product.mmd** - 商品・カテゴリ関連
-  - 商品マスタ、カテゴリ、サイズ、温度タイプの関連
-  
-- **er_diagram_order.mmd** - 注文・カート関連
-  - 注文、注文明細、カート、カート明細の関連
-  
-- **er_diagram_star.mmd** - スター・リワード関連
-  - ポイント獲得、集計、使用、交換商品の関連
-  
-- **er_diagram_eticket.mmd** - eチケット関連
-  - ユーザーチケット、プロモーション、特別オファー、スターリワード交換の関連
-  
-- **er_diagram_store.mmd** - 店舗・スタッフ関連
-  - 店舗、スタッフ、シフトスケジュールの関連
+| ファイル | 内容 |
+|---|---|
+| `er_diagram_full` | 全テーブルの関連を表示した完全版ER図 |
+| `er_diagram_user` | ユーザー・認証関連 |
+| `er_diagram_product` | 商品・カテゴリ関連 |
+| `er_diagram_order` | 注文・カート関連 |
+| `er_diagram_star` | スター・リワード関連 |
+| `er_diagram_eticket` | eチケット関連 |
+| `er_diagram_store` | 店舗・スタッフ関連 |
 
 ## 使い方
 
@@ -69,34 +77,6 @@ Markdownファイルに以下のように記述：
 - **Docusaurus**: Mermaidプラグインをインストール
 - **VuePress**: @vuepress/plugin-mermaid を使用
 - **MkDocs**: pymdown-extensions を使用
-
-## テーブル定義の更新時
-
-テーブル定義が変更された場合の更新手順：
-
-### 1. 新しいテーブルの追加
-```mermaid
-新テーブル名 {
-    型 カラム名 制約 "日本語名"
-}
-```
-
-### 2. リレーションシップの追加
-```mermaid
-親テーブル ||--o{ 子テーブル : "関係性の説明"
-```
-
-### 3. カラムの追加・変更
-テーブル定義ブロック内で該当カラムを追加・修正
-
-### 4. リレーション記号の意味
-
-| 記号 | 意味 |
-|------|------|
-| \|\|--\|\| | 1対1 |
-| \|\|--o{ | 1対多 |
-| }o--o{ | 多対多 |
-| \|\|--o\| | 1対0または1 |
 
 ## 制約の使用方法とベストプラクティス
 
@@ -157,27 +137,17 @@ Error: Parse error on line XX:
 Expecting 'ATTRIBUTE_WORD', got 'COMMENT'
 ```
 
-### 新規ER図作成時のチェックリスト
+### 生成スクリプト側での対応
 
-新しいER図を作成する際は、以下を確認してください：
+上記の制約は `scripts/lib/render.js` の `mermaidConstraint()` が担保しています。
 
-- [ ] 制約は`PK`、`FK`、`UK`のみを使用（複合制約は使用しない）
-- [ ] 日本語コメントは二重引用符`"`で囲む
-- [ ] リレーションシップで外部キー関係を明示
-- [ ] SVG生成前にmmdファイルで`PK_FK`を検索し、残存していないか確認
+- 主キーかつ外部キーのカラムは `FK` のみを出力し、主キー性はリレーションで表現する
+- 単独ユニーク制約のカラムは `UK` を出力する
+- `numeric(10,1)` のような桁付きの型は括弧・カンマがパースエラーになるため桁を落とす
+- コメント中の二重引用符は除去する
 
-### SVG生成前の確認コマンド
-
-```bash
-# プロジェクトルートから実行
-cd supabase_schema/supabase/er
-
-# PK_FKが残っていないか確認
-grep -n "PK_FK" *.mmd
-
-# 出力がなければOK（0件）
-# 出力があれば、該当箇所をFKに修正
-```
+`scripts/render-er-diagrams.js` は SVG 変換前に `PK_FK` の残存も検査します。
+手で `.mmd` を編集しない限り、これらのエラーは起きません。
 
 ## カスタマイズ例
 
@@ -224,33 +194,18 @@ npm install -g @mermaid-js/mermaid-cli
 mmdc -i er_diagram_full.mmd -o er_diagram_full.pdf
 ```
 
-### SVG一括生成（コマンドライン）
+### SVG一括生成
 
-全てのER図を一度にSVG形式で生成する場合：
+`npm run schema:docs:svg` を使ってください（`scripts/render-er-diagrams.js` が
+`schema-doc-config.json` の全図を mermaid-cli で変換します）。
 
 ```bash
-# プロジェクトルートから実行
-cd supabase_schema/supabase/er
-
-# 事前チェック：PK_FKが残っていないか確認
-grep -n "PK_FK" er_diagram_*.mmd
-# 出力があれば修正: sed -i 's/PK_FK/FK/g' er_diagram_*.mmd
-
-# 全mmdファイルをSVGに変換
-for file in er_diagram_*.mmd; do
-    mmdc -i "$file" -o "${file%.mmd}.svg"
-    echo "✓ ${file%.mmd}.svg 生成完了"
-done
-
-# 生成確認
-ls -lh er_diagram_*.svg
+cd supabase_schema
+npm run schema:docs:svg
 ```
 
-**個別ファイルのSVG生成**：
-```bash
-# 特定のファイルのみ生成
-mmdc -i er_diagram_user.mmd -o er_diagram_user.svg
-```
+mermaid-cli は Puppeteer 経由で Chromium を起動します。
+既にある Chromium を使わせたい場合は `PUPPETEER_EXECUTABLE_PATH` を設定してください。
 
 ## トラブルシューティング
 
@@ -365,6 +320,11 @@ sed -i 's/PK_FK/FK/g' er_diagram_xxx.mmd
 
 ## 更新履歴
 
+- 2026-08-19:
+  - `.mmd` / `.svg` を実スキーマからの自動生成に移行（`npm run schema:docs`）
+  - 図の構成を `scripts/schema-doc-config.json` で管理するように変更
+  - カラムの日本語ラベルの正を `COMMENT ON COLUMN` に移行
+  - 手書き前提だった「テーブル定義の更新時」セクションを削除
 - 2026-02-15:
   - スタッフ・シフト管理テーブル追加
   - mermaid-cli 11.12.0対応のため`PK_FK`を`FK`に修正

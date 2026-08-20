@@ -1,48 +1,14 @@
 erDiagram
-    %% 注文・カート関連のER図
-    
-    auth_users ||--o{ carts : "has"
-    auth_users ||--o{ carts_detail : "has"
-    auth_users ||--o{ orders : "places"
-    auth_users ||--o{ orders_detail : "has"
-    stores ||--o{ carts : "selected_for"
-    stores ||--o{ orders : "receives"
-    orders ||--o{ orders_detail : "contains"
-    products ||--o{ orders_detail : "ordered_in"
-    sizes ||--o{ orders_detail : "selected"
-    temperature_types ||--o{ orders_detail : "selected"
-    
+    auth_users ||--o{ orders : "user_id"
+    auth_users ||--o{ orders_detail : "user_id"
+    auth_users ||--o| carts : "user_id"
+    carts ||--o{ carts_detail : "user_id"
+    orders ||--o{ orders_detail : "order_id"
+
     auth_users {
-        uuid id PK "ユーザーID"
+        uuid id PK "ユーザーID (Supabase Auth)"
     }
-    
-    stores {
-        integer id PK "店舗ID"
-        bpchar store_number UK "店舗番号"
-        text store_name "店舗名"
-    }
-    
-    carts {
-        uuid user_id FK "ユーザーID"
-        bpchar store_number FK "店舗番号"
-        integer price_without_tax "税抜価格"
-        integer price_with_tax "税込価格"
-        text payment_method "支払方法"
-        smallint usage "利用区分"
-        timestamptz created_at "作成日時"
-        timestamptz updated_at "更新日時"
-    }
-    
-    carts_detail {
-        uuid user_id FK "ユーザーID"
-        integer item_index PK "商品インデックス"
-        integer product_id "商品ID"
-        integer temperature_type_id "温度タイプID"
-        integer size_id "サイズID"
-        integer count "数量"
-        integer subtotal_without_tax "税抜小計"
-    }
-    
+
     orders {
         uuid id PK "ID"
         varchar order_id UK "注文ID"
@@ -52,13 +18,14 @@ erDiagram
         integer price_without_tax "税抜価格"
         integer price_with_tax "税込価格"
         text payment_method "支払方法"
-        text provided_status "提供ステータス"
-        bpchar store_number FK "店舗番号"
-        smallint usage "利用区分"
         timestamptz created_at "作成日時"
         timestamptz updated_at "更新日時"
+        provided_status_enum provided_status "提供ステータス"
+        bpchar store_number FK "店舗番号"
+        smallint usage "利用区分"
+        smallint tax_rate "消費税率"
     }
-    
+
     orders_detail {
         uuid id PK "ID"
         varchar order_id FK "注文ID"
@@ -68,19 +35,57 @@ erDiagram
         integer size_id FK "サイズID"
         integer count "数量"
         integer subtotal_without_tax "税抜小計"
-    }
-    
-    products {
-        integer product_id PK "商品ID"
         text product_name "商品名"
+        integer unit_price_without_tax "税抜単価"
     }
-    
-    sizes {
-        integer size_id PK "サイズID"
-        text size_name "サイズ名"
+
+    carts {
+        uuid user_id FK "ユーザーID"
+        bpchar store_number FK "店舗番号"
+        text payment_method "支払方法"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        smallint usage "利用区分"
     }
-    
-    temperature_types {
-        integer temperature_type_id PK "温度タイプID"
-        text type_name "タイプ名"
+
+    carts_detail {
+        uuid user_id FK "ユーザーID"
+        integer item_index PK "商品インデックス"
+        integer product_id FK "商品ID"
+        integer temperature_type_id FK "温度タイプID"
+        integer size_id FK "サイズID"
+        integer count "数量"
+        integer subtotal_without_tax "税抜小計"
+    }
+
+    orders_archive {
+        uuid id PK "ID"
+        text order_id UK "注文ID"
+        uuid user_id "ユーザーID"
+        bpchar store_number "店舗番号"
+        smallint usage "利用区分"
+        smallint order_type "注文タイプ"
+        text pickup_number "受取番号"
+        integer price_without_tax "税抜価格"
+        integer price_with_tax "税込価格"
+        text payment_method "支払方法"
+        provided_status_enum provided_status "提供ステータス"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        timestamptz archived_at "アーカイブ日時"
+        smallint tax_rate "消費税率"
+    }
+
+    orders_detail_archive {
+        uuid id PK "ID"
+        text order_id "注文ID"
+        uuid user_id "ユーザーID"
+        integer product_id "商品ID"
+        integer temperature_type_id "温度タイプID"
+        integer size_id "サイズID"
+        integer count "数量"
+        integer subtotal_without_tax "税抜小計"
+        timestamptz archived_at "アーカイブ日時"
+        text product_name "商品名"
+        integer unit_price_without_tax "税抜単価"
     }

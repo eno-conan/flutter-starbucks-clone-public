@@ -1,0 +1,8 @@
+// このファイルをコピーして integration_test/test_config.dart を作成し、実際の認証情報を設定してください。
+// cp integration_test/test_config.dart.example integration_test/test_config.dart
+
+class TestConfig {
+  static const String testEmail = 'test-user@example.com';
+  static const String testPassword = 'your-password-here';
+  static const String wrongPassword = 'wrongpassword';
+}

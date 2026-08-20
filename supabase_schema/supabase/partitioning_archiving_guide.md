@@ -366,8 +366,10 @@ archives/
 #### デプロイ手順
 
 ```bash
-# --no-verify-jwt 必須（pg_net からの呼び出しは新形式キーで JWT 検証が通らないため）
-supabase functions deploy exportArchiveToStorage --no-verify-jwt
+# verify_jwt は config.toml の [functions.exportArchiveToStorage] で管理する（false）。
+# trigger_export_archive_to_storage() が Authorization ヘッダーを付けないため false が必須。
+# CLI フラグは config.toml を上書きするため付けない。
+supabase functions deploy exportArchiveToStorage
 ```
 
 #### 初回セットアップ（SQL Editor で一度だけ実行）

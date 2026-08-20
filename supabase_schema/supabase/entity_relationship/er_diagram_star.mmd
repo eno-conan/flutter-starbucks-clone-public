@@ -1,21 +1,13 @@
 erDiagram
-    %% スター・リワード関連のER図
-    
-    auth_users ||--o{ star_acquisitions : "earns"
-    auth_users ||--o{ star_aggregations : "has"
-    auth_users ||--o{ star_usage : "uses"
-    orders ||--o{ star_acquisitions : "generates"
-    star_rewards_exchange_items ||--o{ star_usage : "exchanged_for"
-    
+    auth_users ||--o{ star_acquisitions : "user_id"
+    auth_users ||--o{ star_aggregations : "user_id"
+    auth_users ||--o{ star_usage : "user_id"
+    star_rewards_exchange_items ||--o{ star_usage : "exchange_item_id"
+
     auth_users {
-        uuid id PK "ユーザーID"
+        uuid id PK "ユーザーID (Supabase Auth)"
     }
-    
-    orders {
-        uuid id PK "ID"
-        varchar order_id UK "注文ID"
-    }
-    
+
     star_acquisitions {
         uuid id PK "ID"
         uuid user_id FK "ユーザーID"
@@ -25,27 +17,27 @@ erDiagram
         timestamptz created_at "作成日時"
         timestamptz updated_at "更新日時"
     }
-    
+
     star_aggregations {
         uuid user_id FK "ユーザーID"
         bpchar target_year_month PK "対象年月"
         numeric total_points "合計ポイント"
         timestamptz expiration_datetime "有効期限"
-        smallint expiration_flag "期限切れフラグ"
         timestamptz created_at "作成日時"
         timestamptz updated_at "更新日時"
+        boolean expiration_flag "期限切れフラグ"
     }
-    
+
     star_usage {
         uuid id PK "ID"
         uuid user_id FK "ユーザーID"
-        text order_id "注文ID"
+        varchar order_id FK "注文ID"
         integer exchange_item_id FK "交換商品ID"
         numeric point_used "使用ポイント"
         timestamptz created_at "作成日時"
         timestamptz updated_at "更新日時"
     }
-    
+
     star_rewards_exchange_items {
         integer id PK "ID"
         text short_name "短縮名"
@@ -53,15 +45,25 @@ erDiagram
         text image_url "画像URL"
         integer points "必要ポイント"
     }
-    
-    purchase_history {
+
+    star_acquisitions_archive {
         uuid id PK "ID"
-        uuid user_id FK "ユーザーID"
-        text product_name "商品名"
-        integer price "価格"
-        numeric star_points "スターポイント"
-        text store_name "店舗名"
-        text card_number "カード番号"
-        timestamptz purchase_datetime "購入日時"
+        uuid user_id "ユーザーID"
+        text order_id "注文ID"
+        smallint category "カテゴリ"
+        numeric acquired_points "獲得ポイント"
         timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        timestamptz archived_at "アーカイブ日時"
+    }
+
+    star_usage_archive {
+        uuid id PK "ID"
+        uuid user_id "ユーザーID"
+        varchar order_id "注文ID"
+        integer exchange_item_id "交換商品ID"
+        numeric point_used "使用ポイント"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        timestamptz archived_at "アーカイブ日時"
     }

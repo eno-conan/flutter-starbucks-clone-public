@@ -40,6 +40,20 @@ docs: add Android security guidelines for AndroidManifest.xml
 fix: store status incorrectly shown as closed during business hours
 ```
 
+形式は `.githooks/commit-msg` が機械的に検査します（`<type>: <説明>`）。
+
+### 対話でメッセージを組み立てる
+
+人が手でコミットを切るときは、規約を対話で満たす補助スクリプトを使えます。
+
+```bash
+bash scripts/commit.sh
+```
+
+type の選択・scope・説明・本文・関連 Issue を順に聞き、内容を確認してからコミットします。
+ステージ済みの変更をそのままコミットするだけで `git add` はしません。
+hook は迂回しないため、pre-commit / commit-msg で落ちた場合は内容を直して再実行します。
+
 ## トークン使用量・コスト表示
 
 Claude Code 実行後には以下の情報を必ず表示してください：

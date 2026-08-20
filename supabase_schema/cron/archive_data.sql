@@ -16,7 +16,9 @@ WHERE jobname IN (
     'archive-old-orders',
     'archive-old-star-usage',
     'cleanup-expired-tickets',
-    'cleanup-abandoned-carts'
+    'cleanup-abandoned-carts',
+    'cleanup-expired-pre-signup-users',
+    'cleanup-email-check-rate-limits'
 );
 
 -- ----------------------------------------------------------------
@@ -57,6 +59,26 @@ SELECT cron.schedule(
     'cleanup-abandoned-carts',
     '0 18 * * 0',
     $$SELECT public.cleanup_abandoned_carts(30)$$
+);
+
+-- ----------------------------------------------------------------
+-- 期限切れ仮登録の削除 (毎日 18:20 UTC = 翌日 3:20 JST)
+-- 有効期限（登録から30分）を24時間以上超過した pre_signup_users を削除
+-- ----------------------------------------------------------------
+SELECT cron.schedule(
+    'cleanup-expired-pre-signup-users',
+    '20 18 * * *',
+    $$SELECT public.cleanup_expired_pre_signup_users(24)$$
+);
+
+-- ----------------------------------------------------------------
+-- レート制限記録の削除 (毎日 18:25 UTC = 翌日 3:25 JST)
+-- 判定に効かなくなった7日以上前の email_check_rate_limits を削除
+-- ----------------------------------------------------------------
+SELECT cron.schedule(
+    'cleanup-email-check-rate-limits',
+    '25 18 * * *',
+    $$SELECT public.cleanup_email_check_rate_limits(7)$$
 );
 
 -- ----------------------------------------------------------------

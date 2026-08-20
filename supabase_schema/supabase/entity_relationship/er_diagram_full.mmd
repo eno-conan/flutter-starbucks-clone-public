@@ -1,340 +1,399 @@
 erDiagram
-    %% ユーザー関連
-    auth_users ||--o{ user_profile_details : "has"
-    auth_users ||--o{ user_mail_settings : "has"
-    auth_users ||--o{ user_fcm_tokens : "has"
-    auth_users ||--o{ cards : "owns"
-    auth_users ||--o{ carts : "has"
-    auth_users ||--o{ carts_detail : "has"
-    auth_users ||--o{ orders : "places"
-    auth_users ||--o{ orders_detail : "has"
-    auth_users ||--o{ purchase_history : "has"
-    auth_users ||--o{ star_acquisitions : "earns"
-    auth_users ||--o{ star_aggregations : "has"
-    auth_users ||--o{ star_usage : "uses"
-    auth_users ||--o{ user_tickets : "owns"
-    auth_users ||--o{ store_profiles : "manages"
-    
-    %% 都道府県関連
-    prefectures ||--o{ stores : "located_in"
-    prefectures ||--o{ user_profile_details : "resides_in"
-    
-    %% 店舗関連
-    stores ||--o{ carts : "selected_for"
-    stores ||--o{ orders : "receives"
-    stores ||--o{ store_profiles : "has_profile"
-    stores ||--o{ staff_schedules : "employs"
-    
-    %% 商品・カテゴリ関連
-    categories ||--o{ products : "categorizes"
-    products ||--o{ product_sizes : "has_size"
-    products ||--o{ product_temperature_types : "has_temp_type"
-    products ||--o{ orders_detail : "ordered_in"
-    sizes ||--o{ product_sizes : "applied_to"
-    temperature_types ||--o{ product_temperature_types : "applied_to"
-    
-    %% 注文関連
-    orders ||--o{ orders_detail : "contains"
-    orders ||--o{ star_acquisitions : "generates"
-    sizes ||--o{ orders_detail : "selected"
-    temperature_types ||--o{ orders_detail : "selected"
-    
-    %% スターリワード関連
-    star_rewards_exchange_items ||--o{ star_usage : "exchanged_for"
-    
-    %% eチケット関連
-    e_tickets_promotions ||--o{ user_tickets : "defines"
-    e_tickets_special_offers ||--o{ user_tickets : "defines"
-    star_rewards_exchange_items ||--o{ user_tickets : "defines"
-    
-    %% スタッフ関連
-    staff ||--o{ staff_schedules : "works"
+    auth_users ||--o{ cards : "user_id"
+    auth_users ||--o{ orders : "user_id"
+    auth_users ||--o{ orders_detail : "user_id"
+    auth_users ||--o{ poc_realtime : "user_id"
+    auth_users ||--o{ star_acquisitions : "user_id"
+    auth_users ||--o{ star_aggregations : "user_id"
+    auth_users ||--o{ star_usage : "user_id"
+    auth_users ||--o{ user_fcm_tokens : "user_id"
+    auth_users ||--o{ user_tickets : "user_id"
+    auth_users ||--o| carts : "user_id"
+    auth_users ||--o| store_profiles : "user_id"
+    auth_users ||--o| user_mail_settings : "user_id"
+    auth_users ||--o| user_nickname : "user_id"
+    auth_users ||--o| user_profile_details : "user_id"
+    carts ||--o{ carts_detail : "user_id"
+    categories ||--o{ products : "category_id"
+    orders ||--o{ orders_detail : "order_id"
+    orders ||--o{ star_acquisitions : "order_id"
+    orders ||--o{ star_usage : "order_id"
+    prefectures ||--o{ stores : "prefecture_id"
+    prefectures ||--o{ user_profile_details : "prefecture_id"
+    products ||--o{ carts_detail : "product_id"
+    products ||--o{ orders_detail : "product_id"
+    products ||--o{ product_sizes : "product_id"
+    products ||--o{ product_temperature_types : "product_id"
+    sizes ||--o{ carts_detail : "size_id"
+    sizes ||--o{ orders_detail : "size_id"
+    sizes ||--o{ product_sizes : "size_id"
+    staff ||--o{ staff_schedules : "staff_number"
+    star_rewards_exchange_items ||--o{ star_usage : "exchange_item_id"
+    stores ||--o{ carts : "store_number"
+    stores ||--o{ orders : "store_number"
+    stores ||--o{ staff_schedules : "store_number"
+    stores ||--o{ store_profiles : "store_number"
+    temperature_types ||--o{ carts_detail : "temperature_type_id"
+    temperature_types ||--o{ orders_detail : "temperature_type_id"
+    temperature_types ||--o{ product_temperature_types : "temperature_type_id"
 
-    %% テーブル定義
     auth_users {
-        uuid id PK
+        uuid id PK "ユーザーID (Supabase Auth)"
     }
-    
-    user_profile_details {
-        uuid id PK
-        uuid user_id FK
-        text birthday
-        integer sex
-        text tele_num
-        text postal_code
-        integer prefecture_id FK
-        text address1
-        text address2
-        timestamptz created_at
-        timestamptz updated_at
+
+    campaign_settings {
+        integer id PK "ID"
+        varchar campaign_name UK "キャンペーン名"
+        varchar display_name "表示名"
+        timestamptz start_date "開始日時"
+        timestamptz end_date "終了日時"
+        boolean is_active "有効フラグ"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
     }
-    
-    user_mail_settings {
-        uuid id PK
-        uuid user_id FK
-        integer is_send_related_rewards
-        integer is_send_advance_product_announce
-        integer is_html_mail
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    user_fcm_tokens {
-        uuid user_id PK
-        text fcm_token
-        integer is_notify
-    }
-    
+
     cards {
-        uuid id PK
-        text card_id
-        uuid user_id FK
-        text card_name
-        text image_url
-        integer balance
-        integer is_main
-        timestamptz created_at
-        timestamptz updated_at
+        uuid id PK "ID"
+        text card_id UK "カードID"
+        uuid user_id FK "ユーザーID"
+        text card_name "カード名"
+        text image_url "画像URL"
+        integer balance "残高"
+        boolean is_main "メインカードフラグ"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
     }
-    
-    prefectures {
-        integer id PK
-        text name
-    }
-    
-    stores {
-        integer id PK
-        bpchar store_number UK
-        text store_name
-        integer prefecture_id FK
-        text address
-        date opening_date
-        date closing_date
-        time opening_time
-        time closing_time
-        float8 latitude
-        float8 longitude
-        bpchar is_drive_thru_available
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    store_profiles {
-        integer id PK
-        bpchar store_number FK
-        uuid user_id FK
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    categories {
-        integer category_id PK
-        text category_name
-        text description
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    products {
-        integer product_id PK
-        text product_name
-        integer category_id FK
-        text description
-        boolean is_active
-        varchar product_image_path
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    sizes {
-        integer size_id PK
-        text size_name
-        text size_description
-    }
-    
-    temperature_types {
-        integer temperature_type_id PK
-        text type_name
-    }
-    
-    product_sizes {
-        integer product_id FK
-        integer size_id FK
-        integer price
-    }
-    
-    product_temperature_types {
-        integer product_id FK
-        integer temperature_type_id FK
-    }
-    
+
     carts {
-        uuid user_id FK
-        bpchar store_number FK
-        integer price_without_tax
-        integer price_with_tax
-        text payment_method
-        smallint usage
-        timestamptz created_at
-        timestamptz updated_at
+        uuid user_id FK "ユーザーID"
+        bpchar store_number FK "店舗番号"
+        text payment_method "支払方法"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        smallint usage "利用区分"
     }
-    
+
     carts_detail {
-        uuid user_id FK
-        integer item_index PK
-        integer product_id
-        integer temperature_type_id
-        integer size_id
-        integer count
-        integer subtotal_without_tax
+        uuid user_id FK "ユーザーID"
+        integer item_index PK "商品インデックス"
+        integer product_id FK "商品ID"
+        integer temperature_type_id FK "温度タイプID"
+        integer size_id FK "サイズID"
+        integer count "数量"
+        integer subtotal_without_tax "税抜小計"
     }
-    
-    orders {
-        uuid id PK
-        varchar order_id UK
-        uuid user_id FK
-        smallint order_type
-        text pickup_number
-        integer price_without_tax
-        integer price_with_tax
-        text payment_method
-        text provided_status
-        bpchar store_number FK
-        smallint usage
-        timestamptz created_at
-        timestamptz updated_at
+
+    categories {
+        integer category_id PK "カテゴリID"
+        text category_name "カテゴリ名"
+        text description "説明"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
     }
-    
-    orders_detail {
-        uuid id PK
-        varchar order_id FK
-        uuid user_id FK
-        integer product_id FK
-        integer temperature_type_id FK
-        integer size_id FK
-        integer count
-        integer subtotal_without_tax
-    }
-    
-    purchase_history {
-        uuid id PK
-        uuid user_id FK
-        text product_name
-        integer price
-        numeric star_points
-        text store_name
-        text card_number
-        timestamptz purchase_datetime
-        timestamptz created_at
-    }
-    
-    star_acquisitions {
-        uuid id PK
-        uuid user_id FK
-        varchar order_id FK
-        smallint category
-        numeric acquired_points
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    star_aggregations {
-        uuid user_id FK
-        bpchar target_year_month PK
-        numeric total_points
-        timestamptz expiration_datetime
-        smallint expiration_flag
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    star_usage {
-        uuid id PK
-        uuid user_id FK
-        text order_id
-        integer exchange_item_id FK
-        numeric point_used
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    
-    star_rewards_exchange_items {
-        integer id PK
-        text short_name
-        text name
-        text image_url
-        integer points
-    }
-    
+
     e_tickets_promotions {
-        integer id PK
-        text short_name
-        text name
-        text image_url
-        text discount_type
-        integer discount_value
-        boolean is_birthday_month_only
-        timestamptz created_at
+        integer id PK "ID"
+        text short_name "短縮名"
+        text name "eチケット名"
+        text image_url "画像URL"
+        text discount_type "割引タイプ"
+        integer discount_value "割引値"
+        boolean is_birthday_month_only "誕生月限定フラグ"
+        timestamptz created_at "作成日時"
     }
-    
+
     e_tickets_special_offers {
-        integer id PK
-        text short_name
-        text name
-        text image_url
-        integer special_price
-        text target_sku_id
-        integer max_quantity_per_order
-        timestamptz created_at
+        integer id PK "ID"
+        text short_name "短縮名"
+        text name "eチケット名"
+        text image_url "画像URL"
+        integer special_price "特別価格"
+        text target_sku_id "対象SKU ID"
+        integer max_quantity_per_order "1注文あたりの最大数量"
+        timestamptz created_at "作成日時"
     }
-    
-    user_tickets {
-        integer id PK
-        uuid user_id FK
-        text ticket_type
-        integer definition_id
-        timestamptz expired_at
-        boolean is_used
-        timestamptz created_at
-        timestamptz updated_at
+
+    email_check_rate_limits {
+        uuid id PK "ID"
+        text ip_hash "IPハッシュ"
+        timestamptz created_at "作成日時"
     }
-    
-    staff {
-        varchar staff_number PK
-        varchar staff_name
-        varchar email
-        varchar phone
-        varchar employment_type
-        date hire_date
-        date termination_date
-        boolean is_active
-        timestamptz created_at
-        timestamptz updated_at
+
+    orders {
+        uuid id PK "ID"
+        varchar order_id UK "注文ID"
+        uuid user_id FK "ユーザーID"
+        smallint order_type "注文タイプ"
+        text pickup_number "受取番号"
+        integer price_without_tax "税抜価格"
+        integer price_with_tax "税込価格"
+        text payment_method "支払方法"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        provided_status_enum provided_status "提供ステータス"
+        bpchar store_number FK "店舗番号"
+        smallint usage "利用区分"
+        smallint tax_rate "消費税率"
     }
-    
-    staff_schedules {
-        bigint id PK
-        date date
-        varchar staff_number FK
-        varchar store_number
-        boolean period_1
-        boolean period_2
-        boolean period_3
-        boolean period_4
-        boolean period_5
-        timestamptz created_at
-        timestamptz updated_at
+
+    orders_archive {
+        uuid id PK "ID"
+        text order_id UK "注文ID"
+        uuid user_id "ユーザーID"
+        bpchar store_number "店舗番号"
+        smallint usage "利用区分"
+        smallint order_type "注文タイプ"
+        text pickup_number "受取番号"
+        integer price_without_tax "税抜価格"
+        integer price_with_tax "税込価格"
+        text payment_method "支払方法"
+        provided_status_enum provided_status "提供ステータス"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        timestamptz archived_at "アーカイブ日時"
+        smallint tax_rate "消費税率"
     }
-    
+
+    orders_detail {
+        uuid id PK "ID"
+        varchar order_id FK "注文ID"
+        uuid user_id FK "ユーザーID"
+        integer product_id FK "商品ID"
+        integer temperature_type_id FK "温度タイプID"
+        integer size_id FK "サイズID"
+        integer count "数量"
+        integer subtotal_without_tax "税抜小計"
+        text product_name "商品名"
+        integer unit_price_without_tax "税抜単価"
+    }
+
+    orders_detail_archive {
+        uuid id PK "ID"
+        text order_id "注文ID"
+        uuid user_id "ユーザーID"
+        integer product_id "商品ID"
+        integer temperature_type_id "温度タイプID"
+        integer size_id "サイズID"
+        integer count "数量"
+        integer subtotal_without_tax "税抜小計"
+        timestamptz archived_at "アーカイブ日時"
+        text product_name "商品名"
+        integer unit_price_without_tax "税抜単価"
+    }
+
+    poc_realtime {
+        uuid id PK "ID"
+        uuid user_id FK "ユーザーID"
+        timestamptz created_at "作成日時"
+    }
+
     pre_signup_users {
-        uuid id PK
-        text token
-        text email
-        timestamptz created_at
-        timestamptz expires_at
+        uuid id PK "ID"
+        text token "トークン"
+        text email "メールアドレス"
+        timestamptz created_at "作成日時"
+        timestamptz expires_at "有効期限"
     }
-    
-    sample {
-        uuid id PK
-        text title
+
+    prefectures {
+        integer id PK "ID"
+        text name "都道府県名"
+    }
+
+    product_sizes {
+        integer product_id FK "商品ID"
+        integer size_id FK "サイズID"
+        integer price "価格"
+    }
+
+    product_temperature_types {
+        integer product_id FK "商品ID"
+        integer temperature_type_id FK "温度タイプID"
+    }
+
+    products {
+        integer product_id PK "商品ID"
+        text product_name "商品名"
+        integer category_id FK "カテゴリID"
+        text description "説明"
+        boolean is_active "有効フラグ"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        varchar product_image_path "商品画像パス"
+        integer display_order "表示順"
+        sale_type_enum sale_type "販売タイプ"
+    }
+
+    sizes {
+        integer size_id PK "サイズID"
+        text size_name "サイズ名"
+        text size_description "サイズ説明"
+    }
+
+    staff {
+        varchar staff_number PK "スタッフ番号"
+        varchar staff_name "スタッフ名"
+        varchar email "メールアドレス"
+        varchar phone "電話番号"
+        varchar employment_type "雇用形態"
+        date hire_date "入社日"
+        date termination_date "退職日"
+        boolean is_active "有効フラグ"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    staff_schedules {
+        bigint id PK "ID"
+        date date "日付"
+        varchar staff_number FK "スタッフ番号"
+        bpchar store_number FK "店舗番号"
+        boolean period_1 "第1時間帯勤務"
+        boolean period_2 "第2時間帯勤務"
+        boolean period_3 "第3時間帯勤務"
+        boolean period_4 "第4時間帯勤務"
+        boolean period_5 "第5時間帯勤務"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    star_acquisitions {
+        uuid id PK "ID"
+        uuid user_id FK "ユーザーID"
+        varchar order_id FK "注文ID"
+        smallint category "カテゴリ"
+        numeric acquired_points "獲得ポイント"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    star_acquisitions_archive {
+        uuid id PK "ID"
+        uuid user_id "ユーザーID"
+        text order_id "注文ID"
+        smallint category "カテゴリ"
+        numeric acquired_points "獲得ポイント"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        timestamptz archived_at "アーカイブ日時"
+    }
+
+    star_aggregations {
+        uuid user_id FK "ユーザーID"
+        bpchar target_year_month PK "対象年月"
+        numeric total_points "合計ポイント"
+        timestamptz expiration_datetime "有効期限"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        boolean expiration_flag "期限切れフラグ"
+    }
+
+    star_rewards_exchange_items {
+        integer id PK "ID"
+        text short_name "短縮名"
+        text name "商品名"
+        text image_url "画像URL"
+        integer points "必要ポイント"
+    }
+
+    star_usage {
+        uuid id PK "ID"
+        uuid user_id FK "ユーザーID"
+        varchar order_id FK "注文ID"
+        integer exchange_item_id FK "交換商品ID"
+        numeric point_used "使用ポイント"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    star_usage_archive {
+        uuid id PK "ID"
+        uuid user_id "ユーザーID"
+        varchar order_id "注文ID"
+        integer exchange_item_id "交換商品ID"
+        numeric point_used "使用ポイント"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        timestamptz archived_at "アーカイブ日時"
+    }
+
+    store_profiles {
+        integer id PK "ID"
+        bpchar store_number FK "店舗番号"
+        uuid user_id FK "ユーザーID"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    stores {
+        integer id PK "ID"
+        bpchar store_number UK "店舗番号"
+        text store_name "店舗名"
+        integer prefecture_id FK "都道府県ID"
+        text address "住所"
+        date opening_date "オープン日"
+        date closing_date "閉店日"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        time closing_time "閉店時間"
+        time opening_time "開店時間"
+        float8 latitude "緯度"
+        float8 longitude "経度"
+        boolean is_drive_thru_available "ドライブスルー利用可能"
+    }
+
+    temperature_types {
+        integer temperature_type_id PK "温度タイプID"
+        text type_name "タイプ名"
+    }
+
+    user_fcm_tokens {
+        text fcm_token "FCMトークン"
+        boolean is_notify "通知設定"
+        uuid user_id FK "ユーザーID"
+        text device_id PK "デバイスID"
+        text device_name "デバイス名"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    user_mail_settings {
+        uuid id PK "ID"
+        uuid user_id FK "ユーザーID"
+        boolean is_send_related_rewards "リワード関連メール送信設定"
+        boolean is_send_advance_product_announce "商品先行告知メール送信設定"
+        boolean is_html_mail "HTMLメール設定"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    user_nickname {
+        uuid user_id FK "ユーザーID"
+        text nick_name "ニックネーム"
+    }
+
+    user_profile_details {
+        uuid id PK "ID"
+        uuid user_id FK "ユーザーID"
+        date birthday "生年月日"
+        integer sex "性別"
+        text tele_num "電話番号"
+        text postal_code "郵便番号"
+        integer prefecture_id FK "都道府県ID"
+        text address1 "住所1"
+        text address2 "住所2"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+    }
+
+    user_tickets {
+        integer id PK "ID"
+        uuid user_id FK "ユーザーID"
+        text ticket_type "チケットタイプ"
+        integer definition_id "定義ID"
+        timestamptz expired_at "有効期限"
+        boolean is_used "利用済フラグ"
+        timestamptz created_at "作成日時"
+        timestamptz updated_at "更新日時"
+        timestamptz used_at "利用日時"
     }

@@ -141,6 +141,41 @@ Session管理システムのヘルプを表示します。
 **参考:**
 - [Claude Code Best Practices - Custom Slash Commands](https://www.anthropic.com/engineering/claude-code-best-practices)
 
+### 3. Loop Engineering コマンド
+
+#### `/dev-loop [作業内容]`
+
+実装 → 自動レビュー → 修正のサイクルを、品質ゲートを通過するまで回します。
+定義は `.claude/skills/dev-loop/SKILL.md`（スキル形式。`.claude/commands/` と同じく `/名前` で起動できる）。
+
+**使用例:**
+```
+/dev-loop 店舗検索画面の営業時間表示を修正する
+/dev-loop Issue 485 の対応
+```
+
+**実行内容:**
+
+| フェーズ | 担当 | モデル |
+|---|---|---|
+| 0. 影響度判定 | `.claude/scripts/impact-classify.sh` | （スクリプト） |
+| 1. 計画・設計 | `plan-architect` | Opus |
+| 2. 実装 | `implementer` / `docs-scribe` | Sonnet / Haiku |
+| 3. 機械的検証 | `dart analyze` / `flutter test` | （コマンド） |
+| 4. レビュー | `code-reviewer` + `qa-agent` + `security-agent` | Sonnet |
+| 5. 判定・修正 | Orchestrator | — |
+
+- 影響度ティア（critical / standard / trivial）はパスルールで決定論的に決まる
+- FAIL なら実装フェーズに戻る。最大ラウンド数（critical/standard=3, trivial=2）で強制 STOP
+- 同じ修正の繰り返し（オシレーション）を検知したら即 STOP してユーザーに判断を仰ぐ
+
+**引数:**
+- `作業内容` (必須): 実施したい作業、または Issue 番号
+
+**関連ルール:**
+- `.claude/rules/model-routing.md`（影響度とモデルの対応）
+- `.claude/rules/quality-gate-layers.md`（Linter / pre-commit / CI / Hooks の責務分離）
+
 ## ⚠️ 重要な注意点
 
 ### 名前空間プレフィックスについて

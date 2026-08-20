@@ -1,15 +1,10 @@
 erDiagram
-    %% eチケット関連のER図
-    
-    auth_users ||--o{ user_tickets : "owns"
-    e_tickets_promotions ||--o{ user_tickets : "defines_PROMOTION"
-    e_tickets_special_offers ||--o{ user_tickets : "defines_SPECIAL_OFFER"
-    star_rewards_exchange_items ||--o{ user_tickets : "defines_STAR_REWARD"
-    
+    auth_users ||--o{ user_tickets : "user_id"
+
     auth_users {
-        uuid id PK "ユーザーID"
+        uuid id PK "ユーザーID (Supabase Auth)"
     }
-    
+
     user_tickets {
         integer id PK "ID"
         uuid user_id FK "ユーザーID"
@@ -19,8 +14,9 @@ erDiagram
         boolean is_used "利用済フラグ"
         timestamptz created_at "作成日時"
         timestamptz updated_at "更新日時"
+        timestamptz used_at "利用日時"
     }
-    
+
     e_tickets_promotions {
         integer id PK "ID"
         text short_name "短縮名"
@@ -28,21 +24,21 @@ erDiagram
         text image_url "画像URL"
         text discount_type "割引タイプ"
         integer discount_value "割引値"
-        boolean is_birthday_month_only "誕生月限定"
+        boolean is_birthday_month_only "誕生月限定フラグ"
         timestamptz created_at "作成日時"
     }
-    
+
     e_tickets_special_offers {
         integer id PK "ID"
         text short_name "短縮名"
         text name "eチケット名"
         text image_url "画像URL"
         integer special_price "特別価格"
-        text target_sku_id "対象SKU_ID"
-        integer max_quantity_per_order "最大数量"
+        text target_sku_id "対象SKU ID"
+        integer max_quantity_per_order "1注文あたりの最大数量"
         timestamptz created_at "作成日時"
     }
-    
+
     star_rewards_exchange_items {
         integer id PK "ID"
         text short_name "短縮名"
