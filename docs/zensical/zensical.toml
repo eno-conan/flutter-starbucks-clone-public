@@ -66,6 +66,7 @@ nav = [
     { "スキル開発" = "claude/building-skill.md" },
     { "Hooks 検証ガイド" = "claude/hooks-verification-guide.md" },
     { "使用量モニター" = "claude/claude-code-usage-monitor.md" },
+    { "OpenShell" = "claude/openshell.md" },
   ]},
   { "アーキテクチャ" = [
     { "技術スタック概要" = "architecture/MEMORY.md" },
