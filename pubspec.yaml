@@ -41,7 +41,7 @@ dependencies:
   intl: any
   logger: ^2.7.0
   no_screenshot: ^2.0.1
-  package_info_plus: ^10.2.0
+  package_info_plus: ^10.2.2
   passkeys: ^2.22.3
   phosphoricons_flutter: ^1.0.0
   qr_flutter: ^4.1.0
