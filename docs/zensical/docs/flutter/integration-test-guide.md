@@ -11,17 +11,80 @@ Firebase・Supabase を含む実際のインフラと通信するため、ユニ
 
 ```
 integration_test/
-  login_flow_test.dart        # ログイン画面のフローテスト
-  pay_tab_test.dart           # Payタブ：認証状態による表示切り替えテスト
-  app_test.dart               # サンプル：お気に入り操作テスト（flutter.dev チュートリアル由来）
-  perf_test.dart              # サンプル：スクロールパフォーマンス計測（flutter.dev チュートリアル由来）
-  test_config.dart            # テスト用の認証情報（.gitignore対象）
-  test_config.dart.example    # test_config.dart のサンプル（リポジトリ管理）
+  all_tests_test.dart              # 全ケースファイルの集約（フォルダ一括実行の入口）
+  login_flow_cases.dart            # ログイン画面のフローテスト（実認証）
+  pay_tab_cases.dart               # Payタブ：認証済み状態の表示・支払い動線
+  home_mobileorder_tab_cases.dart  # モバイルオーダータブ（実データ依存）
+  store_map_tab_cases.dart         # 店舗マップ（GoogleMap の描画がネイティブ依存）
+  eticket_cases.dart               # eTicket（実データ依存）
+  setting_screen_cases.dart        # 設定画面（実認証依存）
+  perf_test.dart                   # サンプル：スクロールパフォーマンス計測（flutter.dev チュートリアル由来）
+  test_config.dart                 # テスト用の認証情報（.gitignore対象）
+  test_config.dart.example         # test_config.dart のサンプル（リポジトリ管理）
   helpers/
-    auth_helper.dart          # 認証操作の共通ヘルパー
+    auth_helper.dart               # 認証操作の共通ヘルパー
+
+test/
+  helpers/
+    ui_expect.dart                 # 失敗時に画面状態を添えるアサーション／待機ヘルパー
+                                   # （Widget テストからも使うため test/ 配下に置く）
+    tier1_screen.dart              # 画面1枚を最小構成で描画する Widget テスト用ヘルパー
+  screens/starbucks_user_side/
+    gift/gift_screen_test.dart     # Tier1（旧 integration_test/gift_tab_cases.dart）
+    inbox/main_test.dart           # Tier1（旧 integration_test/inbox_cases.dart）
+    rewards/rewards_screen_test.dart # Tier1（旧 integration_test/rewards_screen_cases.dart）
+    pay/pay_screen_test.dart       # Tier1（旧 pay_tab_cases.dart の「a. 未認証状態」）
 ```
 
-> **注意**: `app_test.dart` / `perf_test.dart` は flutter.dev の統合テスト入門チュートリアルをベースにしたサンプルファイルです。本アプリの実際の動作検証には使用していません。
+> **注意**: `perf_test.dart` は flutter.dev の統合テスト入門チュートリアルをベースにしたサンプルファイルです。本アプリの実際の動作検証には使用していません。
+
+---
+
+## どの Tier に置くか
+
+統合テストは実機・エミュレータが必要で、遅く、実バックエンドの状態に左右されます。
+**実バックエンドかネイティブが絡むものだけ**を統合テストに置き、それ以外は Widget テストへ降ろします。
+
+| Tier | 置き場所 | 実行環境 | 対象 |
+|---|---|---|---|
+| **Tier1** | `test/`（Widget テスト） | `flutter test`（デバイス不要・CI で毎PR） | 画面の描画内容、認証状態などによる UI 分岐、go_router の遷移 |
+| **Tier2** | `integration_test/` | 実機・エミュレータ | 実認証フロー、実データ依存、ネイティブ描画（GoogleMap・QR など） |
+
+### Tier1 に降ろせるかの判断
+
+1. その画面が読む Provider を洗い出す（`ref.watch` / `ref.read`）
+2. そのすべてを **フェイクに差し替えられる**なら Tier1 に降ろせる
+3. 差し替えると検証したい対象そのものが消えるなら Tier2 に残す
+   （例: 「実際にログインしたら Supabase の Stream が User を返すこと」）
+
+### フェイクの当て方
+
+差し替えは **画面が実際に読む Provider** で行います。`supabaseClientProvider` だけを差し替える方式は採りません。
+キャッシュサービス（`StarPointsCacheService` など）は Supabase だけでなく sqflite にも到達するため、
+SupabaseClient を差し替えてもプラットフォームチャネルで落ちます。
+
+```dart
+await pumpScreen(
+  tester,
+  const Rewards(),
+  overrides: <Override>[
+    starPointsCacheServiceProvider.overrideWithValue(starPoints),
+    starAggregationsCacheServiceProvider.overrideWithValue(starAggregations),
+  ],
+);
+```
+
+`Mock implements` はコンストラクタを走らせないので、sqflite にも Supabase にも触れません。
+
+### Tier1 では `AppRouter.routes` を使わない
+
+統合テストは `GoRouter(initialLocation: ..., routes: AppRouter.routes)` を組み、
+`StatefulShellRoute` 経由で `ScaffoldWithCustomNavBar` ごと描画します。
+このシェルは `initState` の postFrameCallback で `FirebasePerformance.instance` を参照するため、
+**Firebase を初期化していない Widget テストでは必ず落ちます**。
+
+Tier1 では `test/helpers/tier1_screen.dart` の `pumpScreen()` を使い、対象画面だけを持つ
+最小の `GoRouter` を組みます。ボトムナビとの結線は Tier2 に残ります。
 
 ---
 
@@ -64,9 +127,200 @@ flutter test integration_test/pay_tab_cases.dart
 flutter test integration_test/home_mobileorder_tab_cases.dart
 ```
 
-> **注意**: `app_test.dart` / `perf_test.dart` はサンプルファイルのため、実用テストのみ実行したい場合は個別指定してください。
+Tier1（Widget テスト）はデバイス不要で、通常の `flutter test` に含まれます。
+
+```bash
+# Tier1 の画面テストのみ
+bash scripts/run-tests.sh test/screens
+```
+
+> **注意**: `perf_test.dart` はサンプルファイルのため、実用テストのみ実行したい場合は個別指定してください。
 
 `dart_test.yaml` に `reporter: expanded` を設定しているため、各テストが独立した行に表示されます。
+
+---
+
+## CI での自動実行（nightly）
+
+`.github/workflows/integration-test.yml` が Android エミュレータ上で
+`integration_test/all_tests_test.dart` を実行する。
+
+| 項目 | 内容 |
+|---|---|
+| トリガー | nightly（03:00 JST）と手動実行（`workflow_dispatch`） |
+| 対象 | `all_tests_test.dart`（6ファイルの集約） |
+| エミュレータ | API 34 / `google_apis` / x86_64 / pixel_6 |
+| 出力 | ダイジェスト（job summary + artifact）、`test.json`、`logcat.txt` |
+
+**毎 PR では回さない。** 実 Firebase / Supabase に接続するため遅く、バックエンドの状態に
+左右される。PR の速いフィードバックは `test.yml`（Tier1・デバイス不要）が担う。
+
+### なぜ `all_tests_test.dart` を対象にするのか
+
+ファイルごとに `flutter test` を呼ぶとアプリの起動が毎回発生して極端に遅くなる。
+集約ファイルなら 1 回の起動で全ケースを回せる。
+
+### 認証情報
+
+`integration_test/test_config.dart` は CI が GitHub の secret から生成する
+（`TEST_USER_EMAIL` / `TEST_USER_PASSWORD` / `TEST_USER_WRONG_PASSWORD`。
+最後の 1 つは省略時 `wrongpassword`）。
+
+`key.properties` と署名鍵は debug ビルドでは読まれないため用意していない。
+
+### フレークの扱い
+
+失敗の分類が **`infra`（ネットワーク／バックエンド起因）だけ**のときに限り、1 回だけ再実行する
+（`scripts/ci-integration-test.sh`）。`assertion` / `timeout` / `crash` / `env` が
+混ざっていたら実装かテストの問題なので再実行しない。
+
+**「とりあえずリトライ」は禁止。** 再実行してよい条件はダイジェストの分類で機械的に判定する。
+
+---
+
+## 失敗した理由を読み取る
+
+`flutter test` の標準出力は ok/ng が分かる程度で、「何が NG だったか」を読み取りにくい。
+そのため機械可読な JSON レポートを併産し、失敗の要点だけに圧縮したダイジェストを出す。
+
+### 実行
+
+```bash
+bash scripts/run-tests.sh                   # 単体・Widget テスト
+bash scripts/run-tests.sh integration_test/ # 統合テスト（要 実機/エミュレータ）
+```
+
+人間向けの `expanded` 出力はそのまま表示され、加えて以下が生成される。
+
+| 出力 | 内容 |
+|---|---|
+| `build/reports/test.json` | `--file-reporter=json:` の生レポート |
+| `build/reports/digest.md` | 失敗ダイジェスト（CI の artifact 用） |
+
+### ダイジェストの読み方
+
+先頭に 1 行の機械可読サマリが出る。
+
+```
+DIGEST_SUMMARY total=42 passed=40 failed=2 skipped=0 classes=assertion:1,infra:1
+```
+
+各失敗には**分類**が付く。分類は「次に何をすべきか」と対応している。
+
+| 分類 | 意味 | 取るべき行動 |
+|---|---|---|
+| `assertion` | expect の不一致 | 期待値と実装のどちらが正しいかを判断して修正する |
+| `timeout` | 待機条件が満たされなかった | 待機条件を見直す（**待ち時間を伸ばすだけの修正は禁止**） |
+| `env` | 設定ファイル欠落・初期化失敗・コンパイル失敗 | テスト環境を直す。テストコードは触らない |
+| `infra` | ネットワーク／バックエンド起因 | 1回だけ再実行する。コードは触らない |
+| `crash` | 未捕捉の例外 | 最優先で修正する |
+
+分類ロジックは `tool/src/test_report_digest.dart` にあり、
+`test/tool/test_report_digest_test.dart` で検証されている。
+
+---
+
+## アサーションと待機のヘルパー（test/helpers/ui_expect.dart）
+
+素の `expect(find.text('残高更新'), findsOneWidget)` が落ちても、得られるのは
+「zero widgets with text "残高更新"」だけで、**画面に何が出ていたのか**が分からない。
+
+### `expectVisible(tester, finder, {matcher, reason})`
+
+`expect` と同じだが、失敗時に「そのとき画面に出ていたテキスト一覧」を必ず添える。
+`reason` にはそのアサーションの意図（何を確かめたいのか）を書く。
+
+```dart
+expectVisible(
+  tester,
+  find.text('残高更新'),
+  reason: '認証済みなので残高更新が出るはず',
+);
+
+expectVisible(
+  tester,
+  find.text('ご利用にはログインが必要です'),
+  matcher: findsNothing,
+  reason: '認証済みでログイン促しが出ていたら、認証状態の判定が誤っている',
+);
+```
+
+画面状態の組み立ては失敗時にしか行わないため、成功時のコストはほぼない。
+
+### `waitUntil(tester, finder, {timeout, interval, reason})`
+
+`finder` が一致するまでフレームを進める。タイムアウト時は、待機対象・待機設定・
+実経過時間・そのときの画面テキストを失敗メッセージに残す。
+
+```dart
+await waitUntil(
+  tester,
+  find.byType(QrImageView),
+  reason: '支払い画面へ遷移し QR コードが描画されるのを待つ',
+);
+```
+
+#### ⚠️ 画面遷移のあとは `pumpAndSettle()` も要る
+
+`waitUntil` は **条件が成立した瞬間に返る**。画面遷移の直後だと遷移アニメーションが
+まだ進行中で、**前の画面もツリーに残っている**。
+
+```dart
+await tester.tap(find.text('支払い'));
+await waitUntil(tester, find.byType(QrImageView), reason: '...');
+
+// ここで find.text('支払い') を findsOneWidget で検証すると
+// FAB のラベル（fontSize 18）と支払い画面のヘッダー（fontSize 28）の
+// 2 件が見つかって落ちる
+await tester.pumpAndSettle();   // ← 遷移アニメーションの完了を待つ
+
+expectVisible(tester, find.text('支払い'), reason: '...');
+```
+
+**`pumpAndSettle()` は禁止されていない。** 禁止しているのは
+**第1引数をタイムアウトのつもりで使うこと**（実際はフレーム間隔）。
+役割が違うので使い分ける。
+
+| やりたいこと | 使うもの |
+|---|---|
+| 要素が出現/消滅したか | `waitUntil` / `waitUntilGone` |
+| アニメーションが止まって UI が安定したか | `pumpAndSettle()` |
+
+前の画面の有無に依存しないアサーション（開いたダイアログの中身を見るだけ等）なら
+`pumpAndSettle()` は不要。
+
+### `waitUntilGone(tester, finder, {timeout, interval, reason})`
+
+ダイアログを閉じる・ローディングが消えるといった「消滅」の待機に使う。
+
+```dart
+await tester.tap(find.text('閉じる'));
+await waitUntilGone(
+  tester,
+  find.byType(AlertDialog),
+  reason: '「閉じる」でダイアログが閉じるのを待つ',
+);
+```
+
+### `visibleTexts(tester)` / `describeScreen(tester)`
+
+現在描画されているテキストの収集と、その要約。上記ヘルパーが内部で使うが、
+デバッグ時に直接呼んでもよい。offstage は含めず、重複はあえて残す
+（`findsOneWidget` が「2件見つかった」で落ちる状況をそのまま観測するため）。
+
+### 置き場所について
+
+`test/helpers/ui_expect.dart` にある。統合テスト専用ではなく **Widget テストからも使う**ため、
+`integration_test/` 配下ではなく `test/` 配下に置いている。
+統合テストからは `import '../test/helpers/ui_expect.dart';` で参照する。
+
+### リファレンス実装
+
+- `integration_test/pay_tab_cases.dart` — 統合テスト（Tier2）での利用例（全面移行済み）
+- `test/screens/starbucks_user_side/rewards/rewards_screen_test.dart` — Widget テスト（Tier1）での利用例。
+  フェイクの当て方と `waitUntilGone` によるローディング待ちを含む
+- `test/helpers/ui_expect_test.dart` — ヘルパー自体の検証。
+  失敗時にどんなメッセージが出るのかはこのテストが仕様書になっている
 
 ---
 
@@ -91,18 +345,18 @@ Widget buildPayTestApp() => ProviderScope(
 |---|---|
 | `setUpAll`（外側） | Firebase・Supabase・Google Sign-In の初期化、GetIt DI コンテナのセットアップ（テストファイル全体で1回のみ） |
 | `setUpAll`（b. 認証済み状態 グループ） | `AuthHelper.loginOnce()` で UI なしで Supabase に直接認証（グループで1回のみ） |
-| `tearDown` | 各テストケース後に `AuthHelper.logoutTestUser()` でログアウトし、認証状態をリセット |
+| `tearDownAll`（b. 認証済み状態 グループ） | `AuthHelper.logoutTestUser()` でログアウトし、認証状態をリセット |
 
 ### テストケース一覧
 
-#### a. 未認証状態
+#### a. 未認証状態 → Tier1 へ降格済み
 
-| 項目 | 内容 |
-|---|---|
-| 目的 | 未ログイン時に正しい UI が表示されることを確認 |
-| 前提 | ログアウト状態（tearDown でリセット） |
-| 操作 | アプリ起動 → 10秒待機（`connectivityCheckProvider` + `authStateProvider` の解決を待つ） |
-| 検証 | `'ご利用にはログインが必要です'` が表示され、`'残高更新'` が非表示であること |
+`test/screens/starbucks_user_side/pay/pay_screen_test.dart` に移りました。
+未認証時の UI 分岐は実バックエンドに依存しないため、`connectivityCheckProvider` と
+`authStateProvider` を差し替えれば Widget テストで検証できます（デバイス不要・CI で毎PR実行）。
+
+実バックエンドから未認証状態が正しく解決されることは `login_flow_cases.dart`
+（ログアウト状態から起動してログインフォームが出る）が引き続き Tier2 で担保しています。
 
 #### b. 認証済み状態
 
@@ -110,13 +364,39 @@ Widget buildPayTestApp() => ProviderScope(
 |---|---|
 | 目的 | ログイン済み時に正しい UI が表示されることを確認 |
 | 前提 | `setUpAll` で `AuthHelper.loginOnce()` により認証済み |
-| 操作 | アプリ起動 → 10秒待機（`connectivityCheckProvider` + `authStateProvider` の解決を待つ） |
+| 操作 | アプリ起動 → `waitUntil(find.text('残高更新'))`（`connectivityCheckProvider` + `authStateProvider` の解決を待つ） |
 | 検証 | `'残高更新'` が表示され、`'ご利用にはログインが必要です'` が非表示であること |
 
-### 待機時間について
+### 待機について
 
-`pumpAndSettle(const Duration(seconds: 10))` を使用しています。
-`connectivityCheckProvider`（ネットワーク確認）と `authStateProvider`（Supabase の Stream）が両方解決するまで待つ必要があります。
+`connectivityCheckProvider`（ネットワーク確認）と `authStateProvider`（Supabase の Stream）が
+両方解決するまで待つ必要があります。この待機は **時間ではなく条件** で表現します。
+
+```dart
+await waitUntil(
+  tester,
+  find.text('残高更新'),
+  timeout: const Duration(seconds: 20),
+  reason: 'connectivityCheckProvider と authStateProvider が認証済みとして解決するのを待つ',
+);
+```
+
+`pumpAndSettle(const Duration(seconds: 10))` は使いません。理由は2つあります。
+
+1. **第1引数はタイムアウトではありません。** シグネチャは以下のとおりで、第1引数は
+   フレーム間隔、タイムアウトは第3引数（既定 10 分）です。
+   「10秒待つ」つもりのコードは実際には「10秒間隔でフレームを進め、最大10分待つ」になります。
+
+    ```dart
+    Future<int> pumpAndSettle([
+      Duration duration = const Duration(milliseconds: 100),  // フレーム間隔
+      EnginePhase phase = EnginePhase.sendSemanticsUpdate,
+      Duration timeout = const Duration(minutes: 10),          // タイムアウト
+    ])
+    ```
+
+2. **失敗しても何を待っていたか分かりません。** `waitUntil` は待機対象・待機設定・
+   実経過時間・タイムアウト時の画面テキストを失敗メッセージに残します。
 
 ---
 
@@ -309,8 +589,11 @@ SliverAppBar(
 
 ### Supabase の待機時間
 
-`pumpAndSettle(const Duration(seconds: 15))` を使用しています。
-ネットワーク品質によっては不足する場合があります。CIなどで不安定な場合は時間を増やしてください。
+ネットワーク品質によって待機時間は変動します。`waitUntil` の `timeout` で上限を指定し、
+待機対象は「その処理が終わったことを示す画面要素」を指定してください。
+
+**時間を伸ばすだけの対処は禁止です**（`.claude/rules/quality-gate-layers.md` / Issue #934）。
+タイムアウトが頻発する場合は、待っている条件が正しいかをまず疑ってください。
 
 ---
 

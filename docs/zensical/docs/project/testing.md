@@ -39,6 +39,47 @@ flutter test
 flutter test test/x.dart
 ```
 
+### 失敗の内容まで読みたいとき
+
+`flutter test` の出力は ok/ng が分かる程度で「何が NG だったか」を追いにくい。
+`scripts/run-tests.sh` は機械可読な JSON レポートを併産し、失敗の要点だけに
+圧縮したダイジェスト（テスト名 / 位置 / Expected / Actual / スタック / 失敗分類）を出す。
+
+```sh
+bash scripts/run-tests.sh                    # 単体・Widget テスト
+bash scripts/run-tests.sh integration_test/  # 統合テスト（要 実機/エミュレータ）
+bash scripts/run-tests.sh test/provider      # 対象を絞る
+```
+
+| 出力 | 内容 |
+|---|---|
+| `build/reports/test.json` | `--file-reporter=json:` の生レポート |
+| `build/reports/digest.md` | 失敗ダイジェスト（CI の artifact 用） |
+
+詳細は [統合テストガイド](../flutter/integration-test-guide.md) の「失敗した理由を読み取る」を参照。
+
+### CI での自動実行
+
+`.github/workflows/test.yml` が main への push と Pull Request で自動実行される。
+対象は**実機が要らない層（単体 / Widget）のみ**。統合テストは実機・エミュレータが必要なため含まない。
+
+| ステップ | 内容 |
+|---|---|
+| Resolve and verify Flutter version | `pubspec.yaml` と fvm の pin が一致するか検証し、食い違えば失敗させる |
+| Analyze | `dart analyze --no-fatal-warnings`（error のみで落とす） |
+| Run tests | `bash scripts/run-tests.sh` |
+| Publish digest to job summary | 失敗ダイジェストを実行ページに出力 |
+| Upload test reports | `digest.md` / `test.json` を artifact 化（7日保持） |
+
+**失敗ダイジェストは実行ページの Summary で直接読める。** ログをダウンロードしなくても
+「何が NG だったか」と失敗の分類が分かる。
+
+`dart analyze` は `integration_test/` も対象に含む。`flutter test` は `test/` しか実行しないため、
+**統合テストのコードに対する構文・型チェックはこのステップが唯一の防衛線**になる。
+
+なお配布用の `app.yml`（APK ビルド + Firebase App Distribution）は手動実行のままで、
+このワークフローとは分離している。
+
 ## カバレッジ出力
 - [参考記事](https://fredgrott.medium.com/lcov-on-windows-7c58dda07080)
 ```bash

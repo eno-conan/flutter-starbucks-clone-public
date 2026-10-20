@@ -363,6 +363,5 @@ class Logger {
 
 ## 14. 関連ドキュメント
 
-- [フロー図（BPMN）](./flow.md)
 - [概要仕様書](./overview.md)
 - [UI仕様書](./ui-specification.md)

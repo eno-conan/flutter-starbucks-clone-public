@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="376" viewBox="0 0 940 376" role="img" aria-label="実体が書き換わったら、ハッシュの照合で通信を止める">
+<title>実体が書き換わったら、ハッシュの照合で通信を止める</title>
+<desc>初回の通信でプロキシが呼び出し元バイナリの SHA256 を記録する。のちに同じパスの実体が書き換わり、次の通信でハッシュが記録と一致しなければ通信を拒否する。ただし初回より前に書き換えられていた場合は、その時点の中身が基準になる。</desc>
+<defs><marker id="a-line" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="a-ok_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="a-ng_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="a-box_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/></marker></defs>
+<rect x="0.5" y="0.5" width="939" height="375" rx="12" fill="#ffffff" stroke="#d1d5db"/>
+<g transform="translate(0,-40)">
+<rect x="24" y="64" width="250" height="170" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="149.0" y="106.4" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">① 初回の通信</text>
+<text x="149.0" y="125.0" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">curl が通信しようとする</text>
+<text x="149.0" y="143.7" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace,'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">/proc/&lt;pid&gt;/exe から</text>
+<text x="149.0" y="163.1" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">実行ファイルを特定</text>
+<text x="149.0" y="182.1" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">SHA256 を計算 → A</text>
+<text x="149.0" y="201.1" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#166534" text-anchor="middle">記録して許可</text>
+<rect x="344" y="64" width="250" height="170" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="469.0" y="115.9" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">② 実体の書き換え</text>
+<text x="469.0" y="134.6" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace,'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#1f2937" text-anchor="middle">/usr/bin/curl</text>
+<text x="469.0" y="153.6" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">パスは同じ</text>
+<text x="469.0" y="172.6" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">中身だけが別物になる</text>
+<text x="469.0" y="191.2" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#991b1b" text-anchor="middle">計算すると B</text>
+<rect x="664" y="64" width="250" height="170" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="789.0" y="115.9" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">③ 次の通信</text>
+<text x="789.0" y="134.6" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">同じ手順で計算 → B</text>
+<text x="789.0" y="153.6" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">記録した A と照合</text>
+<text x="789.0" y="172.6" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#991b1b" text-anchor="middle">不一致</text>
+<text x="789.0" y="191.6" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#991b1b" text-anchor="middle">通信を拒否</text>
+<polyline points="274,149 344,149" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-box_s)"/>
+<text x="309" y="139" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">その後</text>
+<polyline points="594,149 664,149" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-box_s)"/>
+<text x="629" y="139" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">再び通信</text>
+<rect x="344" y="290" width="250" height="56" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="469.0" y="313.4" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">記録（SHA256）</text>
+<text x="469.0" y="331.7" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace,'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">curl = A</text>
+<polyline points="149,234 149,318 344,318" fill="none" stroke="#374151" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-line)"/>
+<text x="246" y="309" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">A を記録</text>
+<polyline points="789,234 789,318 594,318" fill="none" stroke="#dc2626" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-ng_s)"/>
+<text x="692" y="309" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">A と照合</text>
+<text x="24" y="392" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#92400e"><tspan font-weight="700">弱点:</tspan> 初回より前に書き換えられていると、その時点の中身が基準 A になる</text>
+</g>
+</svg>

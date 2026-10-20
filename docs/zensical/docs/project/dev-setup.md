@@ -47,7 +47,7 @@ keytool -list -v -keystore android/debug.keystore -alias androiddebugkey -storep
 - `flutter pub upgrade` - Upgrade all dependencies
 
 ```bash
-dart fix --apply --code=always_use_package_imports
+dart fix --apply --code=prefer_relative_imports
 dart fix --apply --code=directives_ordering
 dart fix --apply --code=missing_dependency
 dart format .
@@ -57,7 +57,7 @@ These commands will automatically fix common linting issues such as:
 - Missing newlines at end of files (`eol_at_end_of_file`)
 - Unused imports (`unused_import`)
 - Incorrect directive ordering (`directives_ordering`)
-- Package import usage (`always_use_package_imports`)
+- Relative import usage inside `lib/` (`prefer_relative_imports`)
 
 **Note**: While pre-commit hooks are configured to run these commands automatically, Claude Code cannot access git hooks, so manual execution of these commands is necessary before committing changes made through Claude Code.
 

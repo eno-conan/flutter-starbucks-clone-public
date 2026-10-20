@@ -146,12 +146,13 @@ Session管理システムのヘルプを表示します。
 #### `/dev-loop [作業内容]`
 
 実装 → 自動レビュー → 修正のサイクルを、品質ゲートを通過するまで回します。
+**critical ティア（スキーマ・サービス層・RPC・認証・CI）専用**です。画面修正など standard 以下は通常作業で行い、`dart format` / `dart analyze` / `flutter test` は Stop hook（`.claude/hooks/stop-gate.sh`）が自動で検証します。
 定義は `.claude/skills/dev-loop/SKILL.md`（スキル形式。`.claude/commands/` と同じく `/名前` で起動できる）。
 
 **使用例:**
 ```
-/dev-loop 店舗検索画面の営業時間表示を修正する
-/dev-loop Issue 485 の対応
+/dev-loop 注文確定 RPC の認可チェックを追加する
+/dev-loop Issue 485 の対応（スキーマ変更を含む場合）
 ```
 
 **実行内容:**
@@ -161,9 +162,8 @@ Session管理システムのヘルプを表示します。
 | 0. 影響度判定 | `.claude/scripts/impact-classify.sh` | （スクリプト） |
 | 1. 計画・設計 | `plan-architect` | Opus |
 | 2. 実装 | `implementer` / `docs-scribe` | Sonnet / Haiku |
-| 3. 機械的検証 | `dart analyze` / `flutter test` | （コマンド） |
-| 4. レビュー | `code-reviewer` + `qa-agent` + `security-agent` | Sonnet |
-| 5. 判定・修正 | Orchestrator | — |
+| 3. レビュー | `code-reviewer` + `qa-agent` + `security-agent` | Sonnet |
+| 4. 判定・修正 | Orchestrator | — |
 
 - 影響度ティア（critical / standard / trivial）はパスルールで決定論的に決まる
 - FAIL なら実装フェーズに戻る。最大ラウンド数（critical/standard=3, trivial=2）で強制 STOP

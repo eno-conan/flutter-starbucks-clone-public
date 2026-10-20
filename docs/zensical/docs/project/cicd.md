@@ -6,17 +6,24 @@
 
 | ワークフロー名 | ファイル名 | トリガー | 用途 |
 |--------------|-----------|---------|------|
-| Flutter CI/CD | [`app.yml`](#appyml) | 手動実行 | ビルド・テスト・App Distributionへの配布 |
+| Flutter CI/CD | [`app.yml`](#appyml) | 手動実行 | APKビルド・App Distributionへの配布 |
+| Test | [`test.yml`](#testyml) | main push / PR / 手動 | 静的解析・単体/Widgetテスト（デバイス不要） |
+| Integration Test | [`integration-test.yml`](#integration-testyml) | 毎日 03:00 JST / 手動 | Androidエミュレータでの統合テスト |
+| Deploy Edge Functions | [`deploy-edge-functions.yml`](#deploy-edge-functionsyml) | main push / PR / 手動 | Supabase Edge Functionsの型チェックとデプロイ |
+| Deploy Firebase Functions | [`deploy-firebase-functions.yml`](#deploy-firebase-functionsyml) | main push / PR / 手動 | Crashlyticsアラート→Issue変換のCloud Functionsデプロイ |
+| Deploy Firebase Hosting | [`deploy-firebase-hosting.yml`](#deploy-firebase-hostingyml) | main push / 手動 | assetlinks.jsonのデプロイとRP Origins同期 |
+| Deploy Order Assistant | [`deploy-order-assistant.yml`](#deploy-order-assistantyml) | main push / PR / 手動 | 会話注文サーバーのCloud Runデプロイ |
+| Schema Docs | [`schema-docs.yml`](#schema-docsyml) | PR / 手動 | テーブル定義書・ER図の更新漏れ検出 |
+| Design Tokens | [`design-tokens.yml`](#design-tokensyml) | PR / 手動 | デザイントークン生成物の再生成 |
+| Documentation | [`docs.yml`](#docsyml) | main push / 手動 | ドキュメントサイトのGitHub Pages公開 |
+| Documentation Sync | [`documentation-sync.yaml`](#documentation-syncyaml) | PR | 画面/サービス変更時のdocs自動更新 |
+| Revert Commit | [`revert-to-commit.yml`](#revert-to-commityml) | 手動実行 | 特定コミットへの巻き戻し |
 | Claude Support | [`claude.yml`](#claudeyml) | `@claude`メンション | Issue/PRでのAI支援 |
 | AI Code Review | [`claude-code-review.yml`](#claude-code-reviewyml) | PRのオープン/更新 | 自動コードレビュー |
-| Bot PR Review | [`claude-code-review-only-bot.yml`](#claude-code-review-only-botyml) | ボットによるPR | ボットPRの自動レビュー |
-| Revert Commit | [`revert-to-commit.yml`](#revert-to-commityml) | 手動実行 | 特定コミットへの巻き戻し |
-| Firebase Deploy | [`deploy-firebase-hosting.yml`](#deploy-firebase-hostingyml) | mainへのpush / 手動 | assetlinks.jsonのデプロイとRP Origins同期 |
-| Flutter Version Update | [`flutter-update-latest.yml`](#flutter-update-latestyml) | 水曜日の午前7時 | Flutterの最新安定版への自動更新 |
-| Dependabot 自動マージ | [`dependabot-auto-merge.yml`](#dependabot-auto-mergeyml) | 水曜日の午後5時 | Dependabotパッチバージョンの自動マージ |
 
 ## `app.yml`
-Flutter アプリケーションのビルド、テスト、デプロイを自動化します。
+Flutter アプリケーションのAPKビルドとFirebase App Distributionへの配布を行います。
+push では回さない。テストはPR/push向けの[`test.yml`](#testyml)が担う。
 
 <details>
 <summary>詳細を見る</summary>
@@ -35,7 +42,7 @@ Flutter アプリケーションのビルド、テスト、デプロイを自動
 
 **主な処理内容:**
 1. **環境セットアップ**
-    - Flutter 3.47.0のインストール
+    - Flutter 3.47.7のインストール
     - Android SDKのセットアップ
     - 各種キャッシュの復元（依存関係、Gradle、Android SDK）
 
@@ -44,11 +51,10 @@ Flutter アプリケーションのビルド、テスト、デプロイを自動
     - リリース用Keystoreファイルの作成
     - `key.properties`の生成（署名情報）
     - `secrets.properties`の生成（Maps API Key等）
-    - `.env`ファイルの生成（Supabase、Firebase等の接続情報）
+    - `.env`ファイルの生成（Supabase、Firebase、Order Assistant等の接続情報）
 
 3. **ビルドプロセス**
     - `build_runner`の実行（コード生成）
-    - 静的解析（`flutter analyze --no-fatal-infos`）
     - テストの実行（`flutter test`）
     - APKのビルド（ABI別、難読化あり）
 
@@ -65,11 +71,11 @@ Flutter アプリケーションのビルド、テスト、デプロイを自動
 
 **必要なGitHub Secrets:**
 - 認証情報: `GOOGLE_SERVICES_JSON`, `RELEASE_KEYSTORE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`
-- API Keys: `MAPS_API_KEY`, `ANTHROPIC_API_KEY`
+- API Keys: `MAPS_API_KEY`
 - Firebase: `FIREBASE_APP_ID`, `FIREBASE_HOSTING_DOMAIN`, `CREDENTIAL_FILE_CONTENT`
 - Supabase: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
 - Google認証: `GOOGLE_CLIENT_ID`, `GOOGLE_WEB_SERVER_CLIENT_ID`
-- その他: `STARBUCKS_WEB_URL`, `SSL_SHA256_FINGER_PRINT`, `PUBLISHABLE_KEY`, `SECRET_KEY`
+- その他: `STARBUCKS_WEB_URL`, `SSL_SHA256_FINGER_PRINT`, `ORDER_ASSISTANT_URL`
 
 </details>
 
@@ -86,8 +92,9 @@ IssueやPRのコメントで`@claude`とメンションすることで、Claude�
 - Issueのタイトル・本文に`@claude`が含まれる時
 
 **主な処理内容:**
-- Claude Code Actionの実行（最大8ターン、Bashツール使用可能）
-- モデル: `claude-4-0-sonnet-20250805`
+- Claude Code Actionの実行（最大30ターン。調査だけでなく修正の実装とPR作成まで行う）
+- モデル: 別名`sonnet`（リポジトリの`.claude/rules/model-routing.md`に従い、フルIDは直書きしない）
+- Crashlyticsアラート由来のIssue（[`deploy-firebase-functions.yml`](#deploy-firebase-functionsyml)が作成）への自動修復もこのワークフローが受ける
 
 **必要なGitHub Secrets:**
 - `ANTHROPIC_API_KEY`
@@ -101,26 +108,14 @@ PRの差分を自動的にレビューし、改善提案をコメントします
 <summary>詳細を見る</summary>
 
 **トリガー条件:**
-- PRのオープン・同期・再オープン時
+- PRのオープン・同期時（作成者による絞り込みはコメントアウトしてあり、全PRが対象）
 
 **主な処理内容:**
-- 変更ファイルの差分解析
-- Claudeによるコードレビュー
-- レビューコメントの自動投稿
+- `anthropics/claude-code-action`でPRの差分を確認
+- `lib/`の変更に対応する設計ドキュメント（`docs/`配下）の作成・更新を促し、結果を`gh pr comment`で投稿
 
-</details>
-
-## `claude-code-review-only-bot.yml`
-ボット（Dependabot等）によるPRに対して、Claudeによるレビューを実行します。
-
-<details>
-<summary>詳細を見る</summary>
-
-**トリガー条件:**
-- ボットアカウントによるPRのオープン・同期時
-
-**主な処理内容:**
-- claude-code-review.ymlと同様のレビュープロセス
+**必要なGitHub Secrets:**
+- `ANTHROPIC_API_KEY`
 
 </details>
 
@@ -202,66 +197,220 @@ Deep Link・パスキー設定用の`assetlinks.json`をFirebase Hostingに自�
 
 </details>
 
-## `flutter-update-latest.yml`
-Flutterの最新安定版への自動更新を実装します。
+## `test.yml`
+PR・mainへのpushで回す、デバイス不要の単体/Widgetテストです。配布用の`app.yml`とは切り離してある。
 
 <details>
 <summary>詳細を見る</summary>
 
 **トリガー条件:**
-- 水曜日の午前7時
+- mainへのpush、PR、手動実行
+- 対象パス: `lib/` `test/` `integration_test/` `server/` `tool/` `scripts/` `pubspec.yaml` `pubspec.lock` `analysis_options.yaml` `dart_test.yaml` `.fvm/` `.fvmrc` 自ワークフロー
 
 **主な処理内容:**
-- Flutterの最新安定版を取得
-- 現在のFlutterバージョンを確認
-- 更新が必要な場合、自動的にPRを作成して更新を提案
+1. `pubspec.yaml`の`environment.flutter`を基準にFlutterバージョンを決め、FVMの固定値（`.fvmrc`）と食い違えば失敗させてからSDKをセットアップ（Issue #947）
+2. `.env`と統合テスト用設定の生成、`flutter pub get`、`build_runner`
+3. `dart analyze --no-fatal-warnings`（静的解析）
+4. `scripts/run-tests.sh`（単体/Widgetテスト）
+5. `server/order_assistant`のテスト（`dart test`）
+6. テスト結果をジョブサマリーに出力し、レポートをArtifactsへアップロード
 
 **必要なGitHub Secrets:**
-- `GITHUB_TOKEN`
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `STARBUCKS_WEB_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_WEB_SERVER_CLIENT_ID`, `FIREBASE_HOSTING_DOMAIN`, `SSL_SHA256_FINGER_PRINT`
 
 </details>
 
-## `dependabot-auto-merge.yml`
-Dependabotが作成したパッチバージョンアップPRを、CI通過を条件に自動マージします。
+## `integration-test.yml`
+Androidエミュレータ上で`integration_test/`を実行します。実Firebase/Supabaseに接続して遅く、バックエンドの状態に左右されるため、PRでは回さずnightlyと手動に限定している。
 
 <details>
 <summary>詳細を見る</summary>
 
 **トリガー条件:**
-- 毎週水曜日 17:00 JST（= 08:00 UTC）
+- 毎日 03:00 JST（cron `0 18 * * *` = 18:00 UTC）
 - 手動実行（`workflow_dispatch`）
 
 **主な処理内容:**
-1. DependabotのオープンなパッチバージョンアップPRを一覧取得
-2. 各PRに対して以下を確認
-    - CI チェックが全て `SUCCESS` であること
-    - パッチバージョンアップであること（メジャー・マイナーは対象外）
-3. 条件を満たしたPRを `gh pr merge --merge` で自動マージ
+1. Flutter/Javaのセットアップ、`.env`・`google-services.json`・`secrets.properties`・統合テスト用設定の復元
+2. KVMを有効化し、`android-emulator-runner`でテストを実行（タイムアウト60分）
+3. テスト結果をジョブサマリーに出力し、レポートをArtifactsへアップロード
 
-**バージョン判定ロジック:**
-- **シングルパッケージ**: タイトル `Bump X from A.B.C to D.E.F` をパース
-    - メジャー・マイナーが同じ場合のみパッチと判定
-- **グループPR**: タイトル `Bump the X group` → PRボディのバージョンテーブルを解析
-    - グループ内の全パッケージがパッチの場合のみマージ
+進行中の実行は打ち切らない（`cancel-in-progress: false`）。APKのビルドも配布も行わない。
 
-**スキップ条件:**
-- CIチェックが未実行または未通過
-- マイナー・メジャーバージョンアップ
-- バージョン情報が解析不可能なタイトル
+**必要なGitHub Secrets:**
+- `test.yml`と同じ接続情報、`GOOGLE_SERVICES_JSON`, `MAPS_API_KEY`, `FIREBASE_APP_ID`
+- テスト用アカウント: `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`, `TEST_USER_WRONG_PASSWORD`
 
-**必要な権限:**
-- `contents: write` - マージコミットの作成
-- `pull-requests: write` - PRのマージ操作
+</details>
 
-**動作フロー:**
+## `deploy-edge-functions.yml`
+Supabase Edge Functionsを型チェックし、mainへのpushでデプロイします（Issue #943）。
+
+<details>
+<summary>詳細を見る</summary>
+
+**トリガー条件:**
+- mainへのpush、PR、手動実行
+- 対象パス: `supabase_schema/supabase/functions/**`, `supabase_schema/supabase/config.toml`, 自ワークフロー
+
+**主な処理内容:**
+1. `check`ジョブ: Edge Functionsの型チェック（PRでも実行）
+2. `deploy`ジョブ（PR以外）:
+    - 必須Secretsの存在確認
+    - デプロイ対象の決定（変更された関数のみ。`config.toml`が変わったとき、および手動実行は全関数）
+    - Edge Functionのsecretを GitHub Secrets から同期
+    - デプロイ（`--no-verify-jwt`は使わない。`verify_jwt`は`config.toml`を唯一の正とする）
+
+!!! warning "secretはGitHub Secretsを正とする"
+
+    Dashboardでの手貼りや手元のシェルからの`secrets set`は使わない。
+    PowerShell/cmdではJSONの二重引用符が壊れ、`pushNotify`がモジュール初期化時に停止した実績がある。
+
+**必要なGitHub Secrets:**
+- `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT`
+- 関数のsecret同期用: `RESEND_API_KEY`, `TEST_MAIL_ADDRESS`, `HOSTING_DOMEIN`, `ANTHROPIC_API_KEY`, `ORDER_ASSISTANT_MODEL`, `EXPORT_ARCHIVE_SECRET`, `EXPORT_ARCHIVE_AUTH_MODE`
+
+</details>
+
+## `deploy-firebase-functions.yml`
+CrashlyticsのアラートをGitHub Issueに変換するCloud Functionsをデプロイします。
+
+<details>
+<summary>詳細を見る</summary>
+
+**トリガー条件:**
+- mainへのpush、PR、手動実行
+- 対象パス: `functions/**`, `firebase.json`, 自ワークフロー
+
+**主な処理内容:**
+1. `build`ジョブ（PRでも実行）: `npm ci`、型チェック、ビルド、テスト
+2. `deploy`ジョブ（PR以外）: Firebase CLIとサービスアカウントを用意し、`firebase deploy --only functions`
+
+**事前設定（一度きり）:**
+- FirebaseプロジェクトをBlazeプランにする
+- Issue作成権限を持つGitHubトークンをSecret Managerに`GH_ISSUE_TOKEN`として登録する。`GITHUB_TOKEN`は使えない（Actionsのトークンで作ったIssueは他のワークフローを起動せず、[`claude.yml`](#claudeyml)の自動修復が発火しない）
+- Crashlyticsのアラートを有効にする
+
+**必要なGitHub Secrets:**
+- `FIREBASE_FUNCTIONS_DEPLOY_SERVICE_ACCOUNT_JSON`（Hosting用とは別の、Cloud Functionsのデプロイ権限を持つサービスアカウント）
+
+</details>
+
+## `deploy-order-assistant.yml`
+会話注文の発話解釈サーバー（`server/order_assistant`）をCloud Runにソースデプロイします（Issue #998）。
+
+<details>
+<summary>詳細を見る</summary>
+
+**トリガー条件:**
+- mainへのpush、PR、手動実行
+- 対象パス: `server/order_assistant/**`, 自ワークフロー
+
+**主な処理内容:**
+1. `test`ジョブ（PRでも実行）: `dart format`、`dart analyze`、`dart test`
+2. `deploy`ジョブ（PR以外）: Google Cloud認証 → `Dockerfile`をCloud Buildでビルドして`order-assistant`サービスへデプロイ（リージョン`asia-northeast1`）→ サービスURLを表示
+
+**公開範囲:**
+Cloud RunのIAM認証は使わず（`--allow-unauthenticated`）、サーバー側でSupabaseのアクセストークンを検証する。
+
+**必要なGitHub Secrets:**
+- `ORDER_ASSISTANT_DEPLOY_SERVICE_ACCOUNT_JSON`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Gemini APIキーはGitHub Secretsではなく、Google Cloud Secret Manager（`order-assistant-gemini-api-key`）に登録する
+
+**サーバーの任意の環境変数（ローカル確認用）:**
+
+| 名前 | 既定 | 内容 |
+|---|---|---|
+| `RATE_LIMIT_MAX` | `20` | 利用者ごとの1分あたりの上限回数。1以上の整数のみ有効で、0・負数・数値以外は既定値に戻る |
+
+- このワークフローでは設定しない。本番（Cloud Run）は常に既定の20回で動く
+- 上限超過（429）の確認で Gemini の呼び出しを減らすためだけに、ローカルで小さくする（例: `3`）。`server/order_assistant/.env` に書くか、起動時に渡す
+- `tool/check_server.sh --rate-limit` はサーバーと**同じ値**の `RATE_LIMIT_MAX` を必須とする（未設定だと失敗する）。有効な発話で最大 `RATE_LIMIT_MAX + 1` 回呼び、429 が出た時点で止める
+
+```bash
+# サーバー側
+RATE_LIMIT_MAX=3 dart run bin/server.dart
+# 確認側（別ターミナル）
+RATE_LIMIT_MAX=3 bash tool/check_server.sh --rate-limit
 ```
-水曜 7:00 JST  Dependabot が PR 作成
-水曜 7〜9時    claude-code-review-only-bot.yml が実行（flutter test + Claudeレビュー）
-水曜 17:00 JST dependabot-auto-merge.yml が実行
-               ├─ CI通過 + パッチ → 自動マージ
-               ├─ CI通過 + マイナー/メジャー → スキップ（手動マージ）
-               └─ CI未通過 → スキップ
-```
+
+</details>
+
+## `schema-docs.yml`
+マイグレーションが変わったのにテーブル定義書・ER図が更新されていないPRを失敗させます。
+
+<details>
+<summary>詳細を見る</summary>
+
+**トリガー条件:**
+- PR、手動実行
+- 対象パス: `supabase_schema/supabase/migrations/**`, `supabase_table_definitions.md`, `entity_relationship/**`, `supabase_schema/scripts/**`, `supabase_schema/package.json`
+
+**主な処理内容:**
+1. Supabase（DBのみ）をローカルで起動
+2. `npm run schema:docs:check`で生成物が最新か検査
+3. `npm run schema:docs:svg`でER図を描画し、Artifactsへアップロード
+4. Supabaseを停止
+
+生成物そのものは開発者が`npm run schema:docs`で作ってコミットする。このワークフローは検査のみ。
+
+</details>
+
+## `design-tokens.yml`
+`design/tokens.json`または生成スクリプトを変えたPRで、`lib/constants/design_tokens.g.dart`を再生成します（Issue #1003）。
+
+<details>
+<summary>詳細を見る</summary>
+
+**トリガー条件:**
+- PR（対象パス: `design/tokens.json`, `tool/gen_design_tokens.dart`, `tool/src/design_tokens_generator.dart`, 自ワークフロー）
+- 手動実行
+
+**主な処理内容:**
+1. `dart tool/gen_design_tokens.dart`で再生成
+2. 同一リポジトリのPR: 差分があればPRブランチへ自動コミット
+3. フォークのPR・手動実行: 書き込まずに、生成物が最新かだけ検査（古ければ失敗）
+
+!!! note "自動コミットではTestが起動しない"
+
+    `GITHUB_TOKEN`でpushしたコミットは他のワークフローを起動しない。
+    自動コミットが入ったら、`test.yml`をActions画面から手動実行するか、もう1回pushする。
+
+</details>
+
+## `docs.yml`
+`docs/zensical/`のドキュメントサイトをビルドし、GitHub Pagesに公開します。
+
+<details>
+<summary>詳細を見る</summary>
+
+**トリガー条件:**
+- mainへのpush（対象パス: `docs/zensical/**`）
+- 手動実行
+
+**主な処理内容:**
+1. `pip install zensical` → `zensical build --clean`（`docs/zensical`で実行）
+2. `docs/zensical/site`をPagesへアップロードしてデプロイ
+
+</details>
+
+## `documentation-sync.yaml`
+`lib/screens/`・`lib/services/`のDartファイルを変えたPRで、対応するドキュメントをClaudeに作成・更新させます。
+
+<details>
+<summary>詳細を見る</summary>
+
+**トリガー条件:**
+- PR（対象パス: `lib/screens/**/*.dart`, `lib/services/**/*.dart`）
+
+**主な処理内容:**
+1. ベースブランチとの差分から対象ファイルを抽出
+2. `anthropics/claude-code-base-action`で変更内容を分析（最大3ターン）し、更新すべきdocsを判断
+3. 同アクションでドキュメントを生成・更新
+4. 変更があればgithub-actions botとしてPRブランチへコミット
+
+**必要なGitHub Secrets:**
+- `ANTHROPIC_API_KEY`
 
 </details>
 

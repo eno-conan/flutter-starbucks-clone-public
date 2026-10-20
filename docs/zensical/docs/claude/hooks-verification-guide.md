@@ -16,7 +16,7 @@ https://code.claude.com/docs/ja/hooks
 - **目的**: Dartファイルの自動フォーマットとLint修正
 - **実行内容**:
   - `dart format` - コードフォーマット
-  - `dart fix --apply --code=always_use_package_imports` - パッケージimport修正
+  - `dart fix --apply --code=prefer_relative_imports` - `lib/` 内の import を相対パスに統一
   - `dart fix --apply --code=directives_ordering` - import順序修正
 
 ## 設定ファイルの確認
@@ -90,7 +90,7 @@ echo '{"tool_name":"Edit","tool_input":{"file_path":"lib/main.dart"},"tool_respo
 **期待される出力:**
 ```
 ✓ Formatted: lib/main.dart
-✓ Fixed package imports: lib/main.dart
+✓ Fixed relative imports: lib/main.dart
 ✓ Fixed directive ordering: lib/main.dart
 ```
 
@@ -101,7 +101,7 @@ echo '{"tool_name":"Edit","tool_input":{"file_path":"lib/main.dart"},"tool_respo
 3. Hookが実行されていれば、以下のようなメッセージが表示されます：
    ```
    ✓ Formatted: <ファイルパス>
-   ✓ Fixed package imports: <ファイルパス>
+   ✓ Fixed relative imports: <ファイルパス>
    ✓ Fixed directive ordering: <ファイルパス>
    ```
 
@@ -221,7 +221,7 @@ echo '{"tool_input":{"file_path":"存在しないファイル.dart"}}' | bash .c
 4. Hookがファイルパスを確認
 5. `.dart`ファイルの場合:
    - `dart format`実行
-   - `dart fix --apply --code=always_use_package_imports`実行
+   - `dart fix --apply --code=prefer_relative_imports`実行
    - `dart fix --apply --code=directives_ordering`実行
 6. 処理完了メッセージを出力
 7. exit code 0で終了
@@ -276,7 +276,7 @@ Hooksを使用しない場合、以下のコマンドで手動実行可能：
 /dart-lint-fix
 
 # 手動実行（ターミナル）
-dart fix --apply --code=always_use_package_imports
+dart fix --apply --code=prefer_relative_imports
 dart fix --apply --code=directives_ordering
 dart format .
 ```

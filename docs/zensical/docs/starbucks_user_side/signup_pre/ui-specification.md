@@ -229,6 +229,5 @@ SafeArea(child: Column(children: const [_Header(), _Form()]))
 
 ## 10. 関連ドキュメント
 
-- [フロー図（BPMN）](./flow.md)
 - [概要仕様書](./overview.md)
 - [設計仕様書](./design-specification.md)

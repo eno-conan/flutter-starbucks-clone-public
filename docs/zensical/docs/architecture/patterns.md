@@ -271,14 +271,16 @@ context.go('/next');
 
 ## 8. import ルール
 
-### package import を使用（相対 import 禁止）
+### `lib/` 内は相対 import を使用（`prefer_relative_imports`）
 ```dart
-// ✅ 推奨
-import 'package:flutter_starbucks_clone/constants/supabase_rpcs.dart';
-
-// ❌ 禁止
+// ✅ 推奨（lib/ 内のファイル）
 import '../constants/supabase_rpcs.dart';
+
+// ❌ 禁止（lib/ 内で package import）
+import 'package:testingapp/constants/supabase_rpcs.dart';
 ```
+
+`test/` と `integration_test/` は `lib/` の外にあるため、`package:testingapp/...` で import する。
 
 ### シングルクォートを使用
 ```dart

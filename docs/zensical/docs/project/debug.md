@@ -10,8 +10,8 @@
 
 #### Linting
 ```sh
-# Fix package import issues
-dart fix --apply --code=always_use_package_imports
+# Fix relative import issues (lib/ 内は相対 import)
+dart fix --apply --code=prefer_relative_imports
 # Fix directive ordering issues
 dart fix --apply --code=directives_ordering
 # Fix missing dependency issues
