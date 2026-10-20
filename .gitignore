@@ -86,3 +86,6 @@ docs/zensical-docs/.cache/
 
 # codegraph
 .codegraph/
+
+# Windows Zone.Identifier (WSL経由のコピーで生成される)
+*:Zone.Identifier
