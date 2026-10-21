@@ -2,7 +2,9 @@
 
 ## 1. エラーハンドリング概要
 
-ログイン機能では、認証プロセス、ネットワーク通信、ユーザー入力バリデーション等で発生する可能性のあるエラーを適切に処理し、ユーザーにわかりやすいフィードバックを提供します。
+- 対象: 認証プロセス、ネットワーク通信、ユーザー入力バリデーションなどで起きうるエラー。
+- 方針: エラーを適切に処理し、ユーザーにわかりやすいフィードバックを返す。
+- 各エラーの実装コードは、折り畳み（`コード例`）の中にある。
 
 ## 2. エラー分類
 
@@ -15,89 +17,92 @@
 
 #### 実装詳細
 
-```dart
-// メールアドレスバリデーター
-validator: (value) {
-  if (value == null || value.isEmpty) {
-    return 'メールアドレスを入力してください';
-  }
-  return null;
-}
+??? example "コード例（15 行）"
+    ```dart
+    // メールアドレスバリデーター
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'メールアドレスを入力してください';
+      }
+      return null;
+    }
 
-// パスワードバリデーター  
-validator: (value) {
-  if (value == null || value.isEmpty) {
-    return 'パスワードを入力してください';
-  }
-  return null;
-}
-```
+    // パスワードバリデーター  
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'パスワードを入力してください';
+      }
+      return null;
+    }
+    ```
 
 ### 2.2 認証エラー（サーバーサイド）
 
 #### 2.2.1 メール・パスワード認証エラー
 
-```dart
-Future<void> _handleAuthenticationByEmailAndPassword() async {
-  try {
-    await widget.authService.signInWithEmailAndPassword(
-      _emailController.text,
-      _passwordController.text,
-    );
-  } on PlatformException catch (e) {
-    widget.onLoadingStateChanged(false);
-    if (kDebugMode) {
-      print('ログイン処理でエラー発生: $e');
+??? example "コード例（17 行）"
+    ```dart
+    Future<void> _handleAuthenticationByEmailAndPassword() async {
+      try {
+        await widget.authService.signInWithEmailAndPassword(
+          _emailController.text,
+          _passwordController.text,
+        );
+      } on PlatformException catch (e) {
+        widget.onLoadingStateChanged(false);
+        if (kDebugMode) {
+          print('ログイン処理でエラー発生: $e');
+        }
+        widget.showSnackBar('認証処理に失敗しました(メールアドレス)');
+      } catch (err) {
+        widget.onLoadingStateChanged(false);
+        widget.showSnackBar('$err:認証処理に失敗(メールアドレス)');
+      }
     }
-    widget.showSnackBar('認証処理に失敗しました(メールアドレス)');
-  } catch (err) {
-    widget.onLoadingStateChanged(false);
-    widget.showSnackBar('$err:認証処理に失敗(メールアドレス)');
-  }
-}
-```
+    ```
 
 #### 2.2.2 Google認証エラー
 
-```dart
-Future<void> _handleAuthenticationByGoogle(BuildContext context) async {
-  onLoadingStateChanged(true);
-  try {
-    if (email != null) {
-      await authService.signOutWithEmailAndPassword();
-      showSnackBar('サインアウトしました。');
-    } else {
-      // ブラウザを開いて Google OAuth 認証（コールバックは app.dart で処理）
-      await authService.signInWithGoogleOAuth();
-      // ブラウザが開いたのでローディングを解除（認証完了はディープリンクで処理）
-      if (context.mounted) {
-        onLoadingStateChanged(false);
+??? example "コード例（30 行）"
+    ```dart
+    Future<void> _handleAuthenticationByGoogle(BuildContext context) async {
+      onLoadingStateChanged(true);
+      try {
+        if (email != null) {
+          await authService.signOutWithEmailAndPassword();
+          showSnackBar('サインアウトしました。');
+        } else {
+          // ブラウザを開いて Google OAuth 認証（コールバックは app.dart で処理）
+          await authService.signInWithGoogleOAuth();
+          // ブラウザが開いたのでローディングを解除（認証完了はディープリンクで処理）
+          if (context.mounted) {
+            onLoadingStateChanged(false);
+          }
+          return;
+        }
+      } on PlatformException catch (e) {
+        if (context.mounted) {
+          onLoadingStateChanged(false);
+        }
+        if (kDebugMode) {
+          LoggerService.warn(email != null ? 'ログアウト処理でエラー発生: $e' : 'ログイン処理でエラー発生: $e');
+        }
+        showSnackBar('認証処理に失敗しました(PlatformException)');
+      } catch (err) {
+        if (context.mounted) {
+          onLoadingStateChanged(false);
+        }
+        showSnackBar('$err:認証処理に失敗しました(OtherException)');
       }
-      return;
     }
-  } on PlatformException catch (e) {
-    if (context.mounted) {
-      onLoadingStateChanged(false);
-    }
-    if (kDebugMode) {
-      LoggerService.warn(email != null ? 'ログアウト処理でエラー発生: $e' : 'ログイン処理でエラー発生: $e');
-    }
-    showSnackBar('認証処理に失敗しました(PlatformException)');
-  } catch (err) {
-    if (context.mounted) {
-      onLoadingStateChanged(false);
-    }
-    showSnackBar('$err:認証処理に失敗しました(OtherException)');
-  }
-}
-```
+    ```
 
 ## 3. Google OAuth 固有エラー
 
 ### 3.1 ブラウザ起動エラー
 
-`signInWithGoogleOAuth()` は `supabase.auth.signInWithOAuth()` を呼び出してブラウザを起動します。
-ブラウザが起動できない場合（PlatformException）は呼び出し元でキャッチされます。
+- `signInWithGoogleOAuth()` は、`supabase.auth.signInWithOAuth()` を呼んでブラウザを起動する。
+- ブラウザが起動できない場合（`PlatformException`）は、呼び出し元でキャッチされる。
 
 ```dart
 Future<void> signInWithGoogleOAuth() async {
@@ -111,7 +116,7 @@ Future<void> signInWithGoogleOAuth() async {
 
 ### 3.2 OAuthコールバックタイムアウトエラー
 
-ブラウザでの認証後、アプリへのコールバックが5秒以内に完了しない場合：
+- 発生条件: ブラウザでの認証後、アプリへのコールバックが 5 秒以内に完了しない。
 
 ```dart
 final signedIn = await completer.future.timeout(
@@ -126,56 +131,59 @@ if (!signedIn) {
 
 ### 3.3 セッション未確立エラー
 
-`getSessionFromUrl()` の処理後もセッションが確立されない場合：
-- `onAuthStateChange` で `signedIn` または `tokenRefreshed` イベントを待機
-- 5秒タイムアウト後にセッションが未確立であればWarningログを出力
-- ユーザーは再度ログインを試みる必要がある
+- 発生条件: `getSessionFromUrl()` の処理後も、セッションが確立されない。
+- 動作:
+    - `onAuthStateChange` で、`signedIn` または `tokenRefreshed` イベントを待機する。
+    - 5 秒のタイムアウト後もセッションが未確立なら、Warning ログを出力する。
+    - ユーザーは、再度ログインを試みる必要がある。
 
 ## 4. 生体認証エラー（準備済み）
 
 ### 4.1 プラットフォーム例外処理
 
-```dart
-Future<void> _getAvailableBiometrics() async {
-  try {
-    // availableBiometrics = await auth.getAvailableBiometrics();
-  } on PlatformException catch (e) {
-    // availableBiometrics = <BiometricType>[];
-    print(e);
-  }
-  
-  if (!mounted) return;
-  
-  setState(() {
-    // _availableBiometrics = availableBiometrics;
-  });
-}
-```
+??? example "コード例（14 行）"
+    ```dart
+    Future<void> _getAvailableBiometrics() async {
+      try {
+        // availableBiometrics = await auth.getAvailableBiometrics();
+      } on PlatformException catch (e) {
+        // availableBiometrics = <BiometricType>[];
+        print(e);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        // _availableBiometrics = availableBiometrics;
+      });
+    }
+    ```
 
 ### 4.2 認証処理エラー
 
-```dart
-Future<void> _authenticateWithBiometrics() async {
-  try {
-    setState(() {
-      _isAuthenticating = true;
-      _authorized = 'Authenticating';
-    });
-    
-    // 生体認証処理
-    
-  } on PlatformException catch (e) {
-    print(e);
-    setState(() {
-      _isAuthenticating = false;
-      _authorized = 'Error - ${e.message}';
-    });
-    return;
-  }
-  
-  if (!mounted) return;
-}
-```
+??? example "コード例（20 行）"
+    ```dart
+    Future<void> _authenticateWithBiometrics() async {
+      try {
+        setState(() {
+          _isAuthenticating = true;
+          _authorized = 'Authenticating';
+        });
+
+        // 生体認証処理
+
+      } on PlatformException catch (e) {
+        print(e);
+        setState(() {
+          _isAuthenticating = false;
+          _authorized = 'Error - ${e.message}';
+        });
+        return;
+      }
+
+      if (!mounted) return;
+    }
+    ```
 
 ## 5. FCMトークン関連エラー
 
@@ -195,46 +203,49 @@ try {
 
 ### 5.2 トークン設定エラー
 
-```dart
-Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify) async {
-  final userId = supabase.auth.currentUser!.id;
-  
-  try {
-    await supabase.from(Tables.userFcmTokens).upsert({
-      'user_id': userId,
-      'fcm_token': fcmToken,
-      'is_notify': isNotify ? 1 : 0,
-    });
-  } catch (error) {
-    if (kDebugMode) {
-      print('FCMトークン設定エラー: $error');
+??? example "コード例（16 行）"
+    ```dart
+    Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify) async {
+      final userId = supabase.auth.currentUser!.id;
+
+      try {
+        await supabase.from(Tables.userFcmTokens).upsert({
+          'user_id': userId,
+          'fcm_token': fcmToken,
+          'is_notify': isNotify ? 1 : 0,
+        });
+      } catch (error) {
+        if (kDebugMode) {
+          print('FCMトークン設定エラー: $error');
+        }
+        rethrow;
+      }
     }
-    rethrow;
-  }
-}
-```
+    ```
 
 ## 6. 初期化エラー
 
 ### 6.1 生体認証初期化エラー
 
-```dart
-Future<void> _initializeBiometricAuth() async {
-  bool canCheckBiometrics = false;
-  try {
-    canCheckBiometrics = await auth.canCheckBiometrics;
-    final isDeviceSupported = await auth.isDeviceSupported();
-    canCheckBiometrics = canCheckBiometrics && isDeviceSupported;
-  } on PlatformException catch (e) {
-    canCheckBiometrics = false;
-    LoggerService.warn('生体認証チェックエラー: $e');
-  }
-  // エラー時は通常のログイン画面を表示（スキップして続行）
-}
-```
+??? example "コード例（12 行）"
+    ```dart
+    Future<void> _initializeBiometricAuth() async {
+      bool canCheckBiometrics = false;
+      try {
+        canCheckBiometrics = await auth.canCheckBiometrics;
+        final isDeviceSupported = await auth.isDeviceSupported();
+        canCheckBiometrics = canCheckBiometrics && isDeviceSupported;
+      } on PlatformException catch (e) {
+        canCheckBiometrics = false;
+        LoggerService.warn('生体認証チェックエラー: $e');
+      }
+      // エラー時は通常のログイン画面を表示（スキップして続行）
+    }
+    ```
 
-Supabaseセッションのチェックは `onAuthStateChange` で自動的に行われるため、
-`initializeGoogleSignIn()` のような明示的な初期化処理は不要です。
+!!! note "Supabase セッションのチェックに、明示的な初期化は不要"
+    - Supabase セッションのチェックは、`onAuthStateChange` で自動的に行われる。
+    - そのため、`initializeGoogleSignIn()` のような明示的な初期化処理は不要。
 
 ## 7. ユーザー状態関連エラー
 
@@ -368,7 +379,8 @@ void initState() {
 
 ### 12.1 自動リトライ機能
 
-現在の実装では自動リトライ機能はありませんが、将来的な実装に向けた考慮事項：
+!!! note "現在の実装に、自動リトライ機能はない"
+    将来的な実装に向けた、考慮事項を挙げる。
 
 - ネットワーク一時的なエラー時のリトライ
 - トークンリフレッシュ失敗時の再試行
@@ -384,7 +396,8 @@ void initState() {
 
 ### 13.1 エラー情報の収集
 
-現在は`print`文による基本的なログ出力のみ実装されています。本番環境では以下の検討が推奨されます：
+!!! warning "現在は `print` 文による基本的なログ出力のみ"
+    本番環境では、次の検討が推奨される。
 
 - Firebase Crashlyticsとの連携
 - カスタムログ収集システムの実装

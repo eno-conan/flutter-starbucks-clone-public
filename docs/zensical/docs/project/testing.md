@@ -2,10 +2,10 @@
 
 ## テスト戦略
 
-- **単体テスト** - ビジネスロジック、ユーティリティ関数
-- **ウィジェットテスト** - UI コンポーネント
-- **結合テスト** - 画面フロー、API連携
-- **Golden テスト** - UI回帰テスト
+- **単体テスト**: ビジネスロジック、ユーティリティ関数。
+- **ウィジェットテスト**: UI コンポーネント。
+- **結合テスト**: 画面フロー、API 連携。
+- **Golden テスト**: UI 回帰テスト。
 
 ### コード品質コマンド
 
@@ -23,17 +23,17 @@ fvm flutter test
 fvm flutter test --coverage
 ```
 
----
+### 学習予定のテストの書き方
 
-https://codelabs.developers.google.com/codelabs/flutter-app-testing?hl=ja
-
-上記リンクの内容にのっとり、以下テストの基本的な書き方を学習予定
-- プロバイダの単体テスト
-- ウィジェットのテスト
-- 統合テスト
-- パフォーマンステスト
+- 参照: <https://codelabs.developers.google.com/codelabs/flutter-app-testing?hl=ja>
+- 上記リンクの内容にのっとり、次のテストの基本的な書き方を学習する予定。
+    - プロバイダの単体テスト
+    - ウィジェットのテスト
+    - 統合テスト
+    - パフォーマンステスト
 
 ## テスト実行
+
 ```sh
 flutter test
 flutter test test/x.dart
@@ -41,9 +41,9 @@ flutter test test/x.dart
 
 ### 失敗の内容まで読みたいとき
 
-`flutter test` の出力は ok/ng が分かる程度で「何が NG だったか」を追いにくい。
-`scripts/run-tests.sh` は機械可読な JSON レポートを併産し、失敗の要点だけに
-圧縮したダイジェスト（テスト名 / 位置 / Expected / Actual / スタック / 失敗分類）を出す。
+- `flutter test` の出力は、ok / ng が分かる程度。「何が NG だったか」を追いにくい。
+- `scripts/run-tests.sh` は、機械可読な JSON レポートを併せて作り、失敗の要点だけに圧縮したダイジェストを出す。
+    - ダイジェストの内容: テスト名 / 位置 / Expected / Actual / スタック / 失敗分類。
 
 ```sh
 bash scripts/run-tests.sh                    # 単体・Widget テスト
@@ -56,12 +56,13 @@ bash scripts/run-tests.sh test/provider      # 対象を絞る
 | `build/reports/test.json` | `--file-reporter=json:` の生レポート |
 | `build/reports/digest.md` | 失敗ダイジェスト（CI の artifact 用） |
 
-詳細は [統合テストガイド](../flutter/integration-test-guide.md) の「失敗した理由を読み取る」を参照。
+- 詳細は [統合テストガイド](../flutter/integration-test-guide.md) の「失敗した理由を読み取る」を参照。
 
 ### CI での自動実行
 
-`.github/workflows/test.yml` が main への push と Pull Request で自動実行される。
-対象は**実機が要らない層（単体 / Widget）のみ**。統合テストは実機・エミュレータが必要なため含まない。
+- `.github/workflows/test.yml` が、main への push と Pull Request で自動実行される。
+- 対象は、**実機が要らない層（単体 / Widget）のみ**。
+- 統合テストは、実機・エミュレータが必要なため含まない。
 
 | ステップ | 内容 |
 |---|---|
@@ -69,54 +70,63 @@ bash scripts/run-tests.sh test/provider      # 対象を絞る
 | Analyze | `dart analyze --no-fatal-warnings`（error のみで落とす） |
 | Run tests | `bash scripts/run-tests.sh` |
 | Publish digest to job summary | 失敗ダイジェストを実行ページに出力 |
-| Upload test reports | `digest.md` / `test.json` を artifact 化（7日保持） |
+| Upload test reports | `digest.md` / `test.json` を artifact 化（7 日保持） |
 
-**失敗ダイジェストは実行ページの Summary で直接読める。** ログをダウンロードしなくても
-「何が NG だったか」と失敗の分類が分かる。
+!!! tip "失敗ダイジェストは、実行ページの Summary で直接読める"
+    ログをダウンロードしなくても、「何が NG だったか」と失敗の分類が分かる。
 
-`dart analyze` は `integration_test/` も対象に含む。`flutter test` は `test/` しか実行しないため、
-**統合テストのコードに対する構文・型チェックはこのステップが唯一の防衛線**になる。
+!!! warning "統合テストのコードへの構文・型チェックは、この解析ステップだけ"
+    - `dart analyze` は、`integration_test/` も対象に含む。
+    - `flutter test` は、`test/` しか実行しない。
+    - そのため、**統合テストのコードに対する構文・型チェックは、このステップが唯一の防衛線**になる。
 
-なお配布用の `app.yml`（APK ビルド + Firebase App Distribution）は手動実行のままで、
-このワークフローとは分離している。
+!!! note "配布用ワークフローとの分離"
+    配布用の `app.yml`（APK ビルド + Firebase App Distribution）は手動実行のまま。このワークフローとは分離している。
 
 ## カバレッジ出力
+
 - [参考記事](https://fredgrott.medium.com/lcov-on-windows-7c58dda07080)
+
 ```bash
 flutter test --coverage
 perl %GENHTML% -o coverage\html coverage\lcov.info
 ```
 
 ## IconやTextの複数検証
-あるKeyで取得した要素でIconが3つあり、各内容を検証したい。
-```dart
-final navigationSection =
-          find.byKey(ValueKey('top_page_navigation_section'));
-expect(navigationSection, findsOneWidget);
-// 各アイコンの検証
-final iconsFinder = find.descendant(
-  of: navigationSection,
-  matching: find.byType(Icon),
-);
-expect(iconsFinder, findsNWidgets(3));
-// 複数の要素について検証したい場合
-final actualIcons = iconsFinder
-    .evaluate()
-    .map((element) => element.widget as Icon)
-    .toList();
-expect(actualIcons[0].icon, Icons.confirmation_number_outlined);
-// 2つ目のアイコンの検証
-expect(actualIcons[1].icon, Icons.mail);
-expect(actualIcons[1].color, Colors.green);
-// 3つ目のアイコンの検証
-expect(actualIcons[2].icon, Icons.settings);
-```
+
+- 状況: ある Key で取得した要素に Icon が 3 つあり、各内容を検証したい。
+
+??? example "コード例（20 行）"
+    ```dart
+    final navigationSection =
+              find.byKey(ValueKey('top_page_navigation_section'));
+    expect(navigationSection, findsOneWidget);
+    // 各アイコンの検証
+    final iconsFinder = find.descendant(
+      of: navigationSection,
+      matching: find.byType(Icon),
+    );
+    expect(iconsFinder, findsNWidgets(3));
+    // 複数の要素について検証したい場合
+    final actualIcons = iconsFinder
+        .evaluate()
+        .map((element) => element.widget as Icon)
+        .toList();
+    expect(actualIcons[0].icon, Icons.confirmation_number_outlined);
+    // 2つ目のアイコンの検証
+    expect(actualIcons[1].icon, Icons.mail);
+    expect(actualIcons[1].color, Colors.green);
+    // 3つ目のアイコンの検証
+    expect(actualIcons[2].icon, Icons.settings);
+    ```
 
 ## Golden test
+
 - [大変参考になった記事](https://zenn.dev/and_ai/articles/03e4bd6736a24b)
 - [タグ付けによる実行時間短縮](https://codewithandrea.com/tips/unit-widget-test-tags-flutter/)
 
-テスト実行コマンド
+テスト実行コマンド:
+
 ```bash
 flutter test --update-goldens --tags=golden
 ```

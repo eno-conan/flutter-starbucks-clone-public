@@ -2,6 +2,8 @@
 
 ## プロジェクト構成
 
+- `lib/` 配下の構成。各ディレクトリの役割を、コメントに示す。
+
 ```
 lib/
 ├── app/                    # アプリケーション初期化
@@ -20,6 +22,9 @@ lib/
 ```
 
 ### Riverpod 3.0 実装例
+
+- `@riverpod` アノテーションで、Notifier を定義する。
+- `ConsumerWidget` から `ref.watch` で状態を読む。
 
 ```dart
 @riverpod
@@ -45,8 +50,6 @@ class LoginScreen extends ConsumerWidget {
   }
 }
 ```
-
----
 
 ## Provider 詳細
 
@@ -83,8 +86,6 @@ class LoginScreen extends ConsumerWidget {
 | `lib/provider/location_state_provider.dart` | `locationStateProvider` | — | GPS現在地 |
 | `lib/provider/connectivity_check_provider.dart` | `connectivityCheckProvider` | — | ネットワーク接続状態 |
 | `lib/provider/e_ticket_provider.dart` | `eTicketProvider` | — | Eチケット一覧 |
-
----
 
 ## Service 詳細
 
@@ -130,8 +131,6 @@ class LoginScreen extends ConsumerWidget {
 | `lib/core/services/logger_service.dart` | `LoggerService` | ロギング（info/warn/debug/error） |
 | `lib/core/services/performance_monitoring_service.dart` | — | パフォーマンス計測 |
 
----
-
 ## Repository 詳細
 
 | ファイル | 用途 |
@@ -143,52 +142,48 @@ class LoginScreen extends ConsumerWidget {
 | `lib/data/repository/e_ticket_repository.dart` | Eチケット (getUserAvailableTickets / getUserUsedTickets RPC) |
 | `lib/data/repository/user_fcm_tokens.dart` | FCMトークン管理 |
 
----
-
 ## RPC 定数一覧（lib/constants/supabase_rpcs.dart）
 
-| 定数名 | RPC名 | 用途 |
-|---|---|---|
-| `getTotalPointsWithExpirationFlagZero` | `get_total_points_with_expiration_flag_zero` | 有効ポイント合計取得 |
-| `getSelectStoreDriveThruStatus` | `get_select_store_drive_thru_status` | ドライブスルー対応確認 |
-| `getUserOrders` | `get_user_orders` | ユーザー注文一覧 |
-| `getStoreWaitTimes` | `get_store_wait_times` | 店舗待ち時間情報 |
-| `getNearbyStores` | `get_nearby_stores` | 近隣店舗取得 |
-| `getProductsWithSizesAndCategories` | `get_products_with_sizes_and_categories` | 商品一覧（サイズ・カテゴリ付き） |
-| `getProductById` | `get_product_by_id` | 商品詳細取得 |
-| `getCartDetails` | `get_cart_details` | カート詳細取得 |
-| `getCartWithStore` | `get_cart_with_store` | カート＋店舗情報 |
-| `getUsersOrdersWithFullDetails` | `get_users_orders_with_full_details` | 注文履歴（詳細付き） |
-| `createOrderWithDetails` | `create_order_with_details` | 注文作成（概要＋詳細一括） |
-| `handleStarAcquisition` | `handle_star_acquisition` | スター獲得計算 |
-| `useStarPoints` | `use_star_points` | スター利用残高確認 |
-| `getUserAvailableTickets` | `get_user_available_tickets` | 未使用チケット取得 |
-| `getUserUsedTickets` | `get_user_used_tickets` | 使用済みチケット取得 |
-| `getStoreOrders` | `get_store_order_list` | 店舗側注文一覧 |
-
----
+??? info "RPC 定数一覧（16 件）"
+    | 定数名 | RPC名 | 用途 |
+    |---|---|---|
+    | `getTotalPointsWithExpirationFlagZero` | `get_total_points_with_expiration_flag_zero` | 有効ポイント合計取得 |
+    | `getSelectStoreDriveThruStatus` | `get_select_store_drive_thru_status` | ドライブスルー対応確認 |
+    | `getUserOrders` | `get_user_orders` | ユーザー注文一覧 |
+    | `getStoreWaitTimes` | `get_store_wait_times` | 店舗待ち時間情報 |
+    | `getNearbyStores` | `get_nearby_stores` | 近隣店舗取得 |
+    | `getProductsWithSizesAndCategories` | `get_products_with_sizes_and_categories` | 商品一覧（サイズ・カテゴリ付き） |
+    | `getProductById` | `get_product_by_id` | 商品詳細取得 |
+    | `getCartDetails` | `get_cart_details` | カート詳細取得 |
+    | `getCartWithStore` | `get_cart_with_store` | カート＋店舗情報 |
+    | `getUsersOrdersWithFullDetails` | `get_users_orders_with_full_details` | 注文履歴（詳細付き） |
+    | `createOrderWithDetails` | `create_order_with_details` | 注文作成（概要＋詳細一括） |
+    | `handleStarAcquisition` | `handle_star_acquisition` | スター獲得計算 |
+    | `useStarPoints` | `use_star_points` | スター利用残高確認 |
+    | `getUserAvailableTickets` | `get_user_available_tickets` | 未使用チケット取得 |
+    | `getUserUsedTickets` | `get_user_used_tickets` | 使用済みチケット取得 |
+    | `getStoreOrders` | `get_store_order_list` | 店舗側注文一覧 |
 
 ## テーブル定数一覧（lib/constants/supabase_tables.dart）
 
-| 定数名 | テーブル名 | 用途 |
-|---|---|---|
-| `stores` | `stores` | 店舗情報 |
-| `userFcmTokens` | `user_fcm_tokens` | FCMトークン |
-| `preSignupUsers` | `pre_signup_users` | 仮登録会員情報 |
-| `userMailSettings` | `user_mail_settings` | メール設定 |
-| `userProfileDetails` | `user_profile_details` | ユーザー詳細情報 |
-| `userNickname` | `user_nickname` | ニックネーム |
-| `cards` | `cards` | スターバックスカード情報 |
-| `carts` | `carts` | カート概要 |
-| `cartsDetail` | `carts_detail` | カート詳細 |
-| `products` | `products` | 商品情報 |
-| `orders` | `orders` | 注文概要 |
-| `starAcquisitions` | `star_acquisitions` | スター獲得履歴 |
-| `starAggregations` | `star_aggregations` | スター集計 |
-| `campaignSettings` | `campaign_settings` | キャンペーン設定 |
-| `pocRealtime` | `poc_realtime` | リアルタイムPOC |
-
----
+??? info "テーブル定数一覧（15 件）"
+    | 定数名 | テーブル名 | 用途 |
+    |---|---|---|
+    | `stores` | `stores` | 店舗情報 |
+    | `userFcmTokens` | `user_fcm_tokens` | FCMトークン |
+    | `preSignupUsers` | `pre_signup_users` | 仮登録会員情報 |
+    | `userMailSettings` | `user_mail_settings` | メール設定 |
+    | `userProfileDetails` | `user_profile_details` | ユーザー詳細情報 |
+    | `userNickname` | `user_nickname` | ニックネーム |
+    | `cards` | `cards` | スターバックスカード情報 |
+    | `carts` | `carts` | カート概要 |
+    | `cartsDetail` | `carts_detail` | カート詳細 |
+    | `products` | `products` | 商品情報 |
+    | `orders` | `orders` | 注文概要 |
+    | `starAcquisitions` | `star_acquisitions` | スター獲得履歴 |
+    | `starAggregations` | `star_aggregations` | スター集計 |
+    | `campaignSettings` | `campaign_settings` | キャンペーン設定 |
+    | `pocRealtime` | `poc_realtime` | リアルタイムPOC |
 
 ## 画面ディレクトリ構成（主要）
 
