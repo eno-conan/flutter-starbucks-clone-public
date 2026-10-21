@@ -2,8 +2,8 @@
 
 ## 1. 概要
 
-このドキュメントは、Starbucksクローンアプリケーションの仮会員登録（Pre Sign Up）機能に関する仕様書です。
-ユーザーはメールアドレスを入力し、利用規約に同意することで仮会員登録メールを受信できます。
+- Starbucks クローンアプリの、仮会員登録（Pre Sign Up）機能の仕様書。
+- ユーザーがメールアドレスを入力し、利用規約に同意すると、仮会員登録メールを受信できる。
 
 ## 2. 主要コンポーネント
 
@@ -41,20 +41,20 @@ lib/constants/
 ### 3.1 画面フロー
 
 1. **メールアドレス入力**
-   - リアルタイムバリデーション機能
-   - 正規表現による形式チェック
+    - リアルタイムバリデーション機能
+    - 正規表現による形式チェック
 
 2. **利用規約同意**
-   - チェックボックスによる同意確認
-   - フォーム有効化条件
+    - チェックボックスによる同意確認
+    - フォーム有効化条件
 
 3. **重複チェック**
-   - データベースでの既存メール確認
-   - 重複時はエラーダイアログ表示
+    - データベースでの既存メール確認
+    - 重複時はエラーダイアログ表示
 
 4. **仮登録処理**
-   - 32桁セキュアトークン生成
-   - Supabaseテーブルへのデータ挿入
+    - 32桁セキュアトークン生成
+    - Supabaseテーブルへのデータ挿入
 
 ### 3.2 バリデーション機能
 
@@ -96,21 +96,23 @@ String createTokenValue() {
 ### 4.3 データフロー
 
 1. **重複チェック**
-   ```dart
-   final response = await supabase.rpc(
-     Rpcs.checkSignupEmailExists,
-     params: {'input_email': email},
-   );
-   ```
+
+    ```dart
+    final response = await supabase.rpc(
+      Rpcs.checkSignupEmailExists,
+      params: {'input_email': email},
+    );
+    ```
 
 2. **仮会員データ挿入**
-   ```dart
-   final response = await supabase
-     .from(Tables.preSignupUsers)
-     .insert(preSignupUsers.toJson())
-     .select()
-     .single();
-   ```
+
+    ```dart
+    final response = await supabase
+      .from(Tables.preSignupUsers)
+      .insert(preSignupUsers.toJson())
+      .select()
+      .single();
+    ```
 
 ## 5. UI/UX設計
 

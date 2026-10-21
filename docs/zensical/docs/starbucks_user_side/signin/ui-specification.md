@@ -76,43 +76,47 @@ Container(
 ### 2.2 フィールド仕様
 
 #### 2.2.1 メールアドレスフィールド
-```dart
-TextFormField(
-  key: Key('login_form_email'),
-  decoration: InputDecoration(
-    labelText: 'メールアドレス',
-    border: UnderlineInputBorder(),
-    focusedBorder: UnderlineInputBorder(
-      borderSide: BorderSide(color: MyColors.loginFormField)
+
+??? example "コード例（13 行）"
+    ```dart
+    TextFormField(
+      key: Key('login_form_email'),
+      decoration: InputDecoration(
+        labelText: 'メールアドレス',
+        border: UnderlineInputBorder(),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: MyColors.loginFormField)
+        )
+      ),
+      keyboardType: TextInputType.emailAddress,
+      validator: (value) => value?.isEmpty == true 
+        ? 'メールアドレスを入力してください' : null
     )
-  ),
-  keyboardType: TextInputType.emailAddress,
-  validator: (value) => value?.isEmpty == true 
-    ? 'メールアドレスを入力してください' : null
-)
-```
+    ```
 
 - **キーボードタイプ**: EmailAddress
 - **バリデーション**: 必須入力チェック
 - **フォーカス時**: カスタムカラーのアンダーライン
 
 #### 2.2.2 パスワードフィールド
-```dart
-TextFormField(
-  key: Key('login_form_password'),
-  decoration: InputDecoration(
-    labelText: 'パスワード',
-    border: UnderlineInputBorder(),
-    suffixIcon: GestureDetector(
-      onTap: _togglePasswordView,
-      child: Icon(_isHiddenPassword ? Icons.visibility : Icons.visibility_off)
+
+??? example "コード例（14 行）"
+    ```dart
+    TextFormField(
+      key: Key('login_form_password'),
+      decoration: InputDecoration(
+        labelText: 'パスワード',
+        border: UnderlineInputBorder(),
+        suffixIcon: GestureDetector(
+          onTap: _togglePasswordView,
+          child: Icon(_isHiddenPassword ? Icons.visibility : Icons.visibility_off)
+        )
+      ),
+      obscureText: _isHiddenPassword,
+      validator: (value) => value?.isEmpty == true 
+        ? 'パスワードを入力してください' : null
     )
-  ),
-  obscureText: _isHiddenPassword,
-  validator: (value) => value?.isEmpty == true 
-    ? 'パスワードを入力してください' : null
-)
-```
+    ```
 
 - **表示制御**: タップで表示/非表示切り替え
 - **バリデーション**: 必須入力チェック
@@ -120,19 +124,20 @@ TextFormField(
 
 ### 2.3 ログインボタン
 
-```dart
-FilledButton(
-  style: FilledButton.styleFrom(
-    backgroundColor: _isFormValid ? MyColors.greenButton : Colors.grey,
-    padding: EdgeInsets.symmetric(horizontal: 20)
-  ),
-  onPressed: _isFormValid ? _handleAuthentication : null,
-  child: Text('ログイン', style: TextStyle(
-    color: Colors.white,
-    fontWeight: FontWeight.w700
-  ))
-)
-```
+??? example "コード例（11 行）"
+    ```dart
+    FilledButton(
+      style: FilledButton.styleFrom(
+        backgroundColor: _isFormValid ? MyColors.greenButton : Colors.grey,
+        padding: EdgeInsets.symmetric(horizontal: 20)
+      ),
+      onPressed: _isFormValid ? _handleAuthentication : null,
+      child: Text('ログイン', style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w700
+      ))
+    )
+    ```
 
 - **サイズ**: 150x50
 - **有効時**: 緑色背景 (`MyColors.greenButton`)
@@ -159,23 +164,24 @@ Text(
 
 ### 3.1 ボタンデザイン
 
-```dart
-ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    elevation: 1,
-    backgroundColor: Colors.white,
-    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))
-  ),
-  child: Row(
-    children: [
-      Image.asset('assets/google_logo.png', height: 24),
-      SizedBox(width: 15),
-      Text('Googleログイン', fontSize: 16)
-    ]
-  )
-)
-```
+??? example "コード例（15 行）"
+    ```dart
+    ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        elevation: 1,
+        backgroundColor: Colors.white,
+        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))
+      ),
+      child: Row(
+        children: [
+          Image.asset('assets/google_logo.png', height: 24),
+          SizedBox(width: 15),
+          Text('Googleログイン', fontSize: 16)
+        ]
+      )
+    )
+    ```
 
 - **背景色**: 白色
 - **角の丸み**: 30px
@@ -185,27 +191,31 @@ ElevatedButton(
 
 ### 3.2 タップ時の動作
 
-ボタンをタップすると、`signInWithGoogleOAuth()` が呼び出されてブラウザが起動し、
-Google OAuth認証画面が表示されます。ブラウザが起動した時点でローディング表示は解除されます。
-認証完了後はアプリがディープリンク（`testingapp://callback` または `https://[domain]/callback`）を受信し、
-`app.dart` の `_handleOAuthCallback()` でセッションを確立してHome画面へ遷移します。
+1. ボタンをタップすると、`signInWithGoogleOAuth()` が呼び出される。
+2. ブラウザが起動し、Google OAuth 認証画面が表示される。
+3. ブラウザが起動した時点で、ローディング表示は解除される。
+4. 認証完了後、アプリがディープリンクを受信する。
+    - 開発: `testingapp://callback`
+    - 本番: `https://[domain]/callback`
+5. `app.dart` の `_handleOAuthCallback()` で、セッションを確立して Home 画面へ遷移する。
 
 ## 4. ローディング状態
 
 ### 4.1 全画面ローディング
 
-```dart
-Positioned.fill(
-  child: ColoredBox(
-    color: Colors.black38,
-    child: Center(
-      child: CircularProgressIndicator(
-        color: MyColors.circularProgressIndicatorColor
+??? example "コード例（10 行）"
+    ```dart
+    Positioned.fill(
+      child: ColoredBox(
+        color: Colors.black38,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: MyColors.circularProgressIndicatorColor
+          )
+        )
       )
     )
-  )
-)
-```
+    ```
 
 - **オーバーレイ**: 半透明黒背景
 - **インジケーター**: カスタムカラーの円形プログレス
@@ -227,21 +237,25 @@ Column(
 ## 5. レスポンシブ対応
 
 ### 5.1 画面サイズ対応
+
 - **パディング**: 水平15px
 - **固定要素**: ヘッダー高さ100px
 - **キーボード**: `resizeToAvoidBottomInset: false`
 
 ### 5.2 フォーカス管理
+
 - **フォーカス解除**: 認証処理時に`FocusScope.of(context).unfocus()`
 - **キーボード外観**: `keyboardAppearance: Brightness.light`
 
 ## 6. アクセシビリティ
 
 ### 6.1 キー識別子
+
 - メールフィールド: `Key('login_form_email')`
 - パスワードフィールド: `Key('login_form_password')`
 
 ### 6.2 フォーカス順序
+
 1. メールアドレスフィールド
 2. パスワードフィールド
 3. ログインボタン

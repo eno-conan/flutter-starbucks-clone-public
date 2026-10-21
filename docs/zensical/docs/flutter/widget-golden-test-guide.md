@@ -2,39 +2,40 @@
 
 ## 概要
 
-Golden Test（Visual Regression Test）は、Widget のスナップショット（PNG）を事前に記録し、
-以降の変更で見た目が壊れていないかを自動検証する手法です。
-
----
+- Golden Test（Visual Regression Test）は、Widget のスナップショット（PNG）を事前に記録する手法。
+- 以降の変更で、見た目が壊れていないかを自動検証する。
+- 各テストのコード例は、折り畳み（`コード例`）の中にある。
 
 ## `loadFonts()` パターン
 
-Golden Test では実際のフォントを読み込まないと日本語が豆腐（□□□）になります。
-テストファイルの先頭で `loadFonts()` を呼ぶことで正しいフォントを利用できます。
+!!! warning "実際のフォントを読み込まないと、日本語が豆腐（□□□）になる"
+    - Golden Test では、実際のフォントを読み込む必要がある。
+    - テストファイルの先頭で `loadFonts()` を呼ぶと、正しいフォントを使える。
 
-```dart
-import 'package:flutter/services.dart';
+??? example "コード例（19 行）"
+    ```dart
+    import 'package:flutter/services.dart';
 
-Future<void> loadFonts() async {
-  // MaterialIcons
-  final materialIcons = FontLoader('MaterialIcons')
-    ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
-  // NotoSansJP（日本語フォント）
-  final notoSansJp = FontLoader('NotoSansJP')
-    ..addFont(rootBundle.load('assets/fonts/NotoSansJP/NotoSansJP-Regular.otf'))
-    ..addFont(rootBundle.load('assets/fonts/NotoSansJP/NotoSansJP-Bold.otf'));
-  // Roboto
-  final roboto = FontLoader('Roboto')
-    ..addFont(rootBundle.load('assets/fonts/Roboto/Roboto-Regular.ttf'))
-    ..addFont(rootBundle.load('assets/fonts/Roboto/Roboto-Bold.ttf'));
+    Future<void> loadFonts() async {
+      // MaterialIcons
+      final materialIcons = FontLoader('MaterialIcons')
+        ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+      // NotoSansJP（日本語フォント）
+      final notoSansJp = FontLoader('NotoSansJP')
+        ..addFont(rootBundle.load('assets/fonts/NotoSansJP/NotoSansJP-Regular.otf'))
+        ..addFont(rootBundle.load('assets/fonts/NotoSansJP/NotoSansJP-Bold.otf'));
+      // Roboto
+      final roboto = FontLoader('Roboto')
+        ..addFont(rootBundle.load('assets/fonts/Roboto/Roboto-Regular.ttf'))
+        ..addFont(rootBundle.load('assets/fonts/Roboto/Roboto-Bold.ttf'));
 
-  await materialIcons.load();
-  await notoSansJp.load();
-  await roboto.load();
-}
-```
+      await materialIcons.load();
+      await notoSansJp.load();
+      await roboto.load();
+    }
+    ```
 
-**使用フォントパス**（`pubspec.yaml` に定義済みのパスを使用）:
+使用フォントパス（`pubspec.yaml` に定義済みのパスを使う）:
 
 | フォント名 | パス |
 |---|---|
@@ -43,8 +44,6 @@ Future<void> loadFonts() async {
 | NotoSansJP Bold | `assets/fonts/NotoSansJP/NotoSansJP-Bold.otf` |
 | Roboto Regular | `assets/fonts/Roboto/Roboto-Regular.ttf` |
 | Roboto Bold | `assets/fonts/Roboto/Roboto-Bold.ttf` |
-
----
 
 ## テスト実装パターン
 
@@ -63,35 +62,34 @@ class MockGoRouter extends Mock implements GoRouter {}
 Widget createScreen() => const ProviderScope(child: MaterialApp(home: Home()));
 ```
 
-Riverpod を使用している場合は `ProviderScope` でラップします。
+- Riverpod を使っている場合は、`ProviderScope` でラップする。
 
 ### テストケースの実装
 
-```dart
-testWidgets('Golden Test for Widget', (WidgetTester tester) async {
-  // 1. フォント読み込み（日本語を正しく表示するため必須）
-  await loadFonts();
+??? example "コード例（21 行）"
+    ```dart
+    testWidgets('Golden Test for Widget', (WidgetTester tester) async {
+      // 1. フォント読み込み（日本語を正しく表示するため必須）
+      await loadFonts();
 
-  // 2. 画面サイズを固定（iPhone 14 Pro の物理ピクセル）
-  tester.view.physicalSize = const Size(1179, 2556);
+      // 2. 画面サイズを固定（iPhone 14 Pro の物理ピクセル）
+      tester.view.physicalSize = const Size(1179, 2556);
 
-  // 3. シャドウを有効化（より実機に近いスクリーンショット）
-  debugDisableShadows = false;
+      // 3. シャドウを有効化（より実機に近いスクリーンショット）
+      debugDisableShadows = false;
 
-  await tester.pumpWidget(createScreen());
+      await tester.pumpWidget(createScreen());
 
-  // 4. ゴールデンファイルと比較（または生成）
-  await expectLater(
-    find.byType(Home),
-    matchesGoldenFile('goldens/top_page.png'),
-  );
+      // 4. ゴールデンファイルと比較（または生成）
+      await expectLater(
+        find.byType(Home),
+        matchesGoldenFile('goldens/top_page.png'),
+      );
 
-  // 5. シャドウの設定を元に戻す（他のテストへの影響を防ぐ）
-  debugDisableShadows = true;
-}, tags: 'golden');
-```
-
----
+      // 5. シャドウの設定を元に戻す（他のテストへの影響を防ぐ）
+      debugDisableShadows = true;
+    }, tags: 'golden');
+    ```
 
 ## 実行コマンド
 
@@ -107,13 +105,11 @@ flutter test test/path/to/widget_test.dart --tags golden --update-goldens
 flutter test test/path/to/widget_test.dart --tags golden
 ```
 
----
-
 ## `goldens/` フォルダの配置ルール
 
-- テストファイルと同じディレクトリに `goldens/` フォルダを作成する
-- 生成された PNG ファイルは git で管理する（`.gitignore` から除外）
-- ファイル名はテスト対象が分かる名前にする（例: `top_page.png`）
+- テストファイルと同じディレクトリに、`goldens/` フォルダを作成する。
+- 生成された PNG ファイルは、git で管理する（`.gitignore` から除外）。
+- ファイル名は、テスト対象が分かる名前にする（例: `top_page.png`）。
 
 ```
 test/
@@ -123,8 +119,6 @@ test/
       goldens/
         top_page.png        ← git 管理対象
 ```
-
----
 
 ## ハマりポイント
 

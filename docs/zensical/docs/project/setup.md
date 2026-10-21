@@ -3,7 +3,8 @@
 ## クイックスタート
 
 ### 必須要件
-- Flutter 3.47.7 (FVMでの管理推奨)
+
+- Flutter 3.47.7（FVM での管理を推奨）
 - Dart >=3.10.0
 - Android Studio / Xcode
 - Firebase プロジェクト
@@ -11,48 +12,51 @@
 
 ### セットアップ手順
 
-1. **リポジトリクローン**
-```bash
-git clone https://github.com/eno-conan/flutter-starbucks-clone.git
-cd flutter-starbucks-clone
-```
+1. **リポジトリをクローンする**
 
-2. **FVMセットアップ**
-```bash
-dart pub global activate fvm
-fvm install
-fvm use --force
-```
+    ```bash
+    git clone https://github.com/eno-conan/flutter-starbucks-clone.git
+    cd flutter-starbucks-clone
+    ```
 
-3. **依存関係インストール**
-```bash
-fvm flutter pub get
-```
+2. **FVM をセットアップする**
 
-4. **環境設定**
-```bash
-# Firebase設定
-flutterfire configure
+    ```bash
+    dart pub global activate fvm
+    fvm install
+    fvm use --force
+    ```
 
-# Supabase設定（環境変数）
-cp .env.example .env
-# .envファイルを編集してSupabase認証情報を追加
-```
+3. **依存関係をインストールする**
 
-5. **アプリ実行**
-```bash
-# デバッグ実行
-fvm flutter run
+    ```bash
+    fvm flutter pub get
+    ```
 
-# リリースビルド
-fvm flutter build apk --release
-```
+4. **環境設定をする**
 
----
+    ```bash
+    # Firebase設定
+    flutterfire configure
+
+    # Supabase設定（環境変数）
+    cp .env.example .env
+    # .envファイルを編集してSupabase認証情報を追加
+    ```
+
+5. **アプリを実行する**
+
+    ```bash
+    # デバッグ実行
+    fvm flutter run
+
+    # リリースビルド
+    fvm flutter build apk --release
+    ```
 
 ## Flutter SDKバージョン管理（FVM）
 
-このプロジェクトでは[FVM (Flutter Version Management)](https://fvm.app/)を使用してFlutter SDKバージョンを管理しています。
+- このプロジェクトでは、[FVM (Flutter Version Management)](https://fvm.app/) で、Flutter SDK のバージョンを管理している。
 
 ### FVMのインストール
 
@@ -77,7 +81,7 @@ fvm use --force
 
 ### Flutter コマンドの実行
 
-FVMをインストール後は、通常の`flutter`コマンドの代わりに`fvm flutter`を使用します：
+- FVM をインストールした後は、通常の `flutter` コマンドの代わりに、`fvm flutter` を使う。
 
 ```sh
 # 例：パッケージ取得
@@ -90,32 +94,36 @@ fvm flutter run
 fvm flutter build apk
 ```
 
-**エイリアス設定（推奨）**：
-頻繁に使用する場合は、シェルのエイリアスを設定すると便利です：
+!!! tip "エイリアス設定（推奨）"
+    頻繁に使う場合は、シェルのエイリアスを設定すると便利。
 
-```sh
-# ~/.bashrc または ~/.zshrc に追加
-alias flutter="fvm flutter"
-alias dart="fvm dart"
-```
+    ```sh
+    # ~/.bashrc または ~/.zshrc に追加
+    alias flutter="fvm flutter"
+    alias dart="fvm dart"
+    ```
 
 ### VS Code設定
 
-VS Codeでは、`.vscode/settings.json`に既にFVM設定が追加されているため、自動的にFVMのFlutter SDKを使用します。
-
-**固定されるFlutterバージョン**: `3.47.7`
+- `.vscode/settings.json` に、すでに FVM 設定が追加されている。
+- そのため、VS Code は自動的に FVM の Flutter SDK を使う。
+- **固定される Flutter バージョン**: `3.47.7`
 
 ## 依存関係管理
 
 ### 依存関係確認
-[関連issue](https://github.com/eno-conan/flutter-starbucks-clone/issues/163)
-何かパッケージの依存関係を確認したい場合は以下コマンドで情報収集。
+
+- 関連 Issue: [#163](https://github.com/eno-conan/flutter-starbucks-clone/issues/163)
+- パッケージの依存関係を確認したい場合は、次のコマンドで情報を収集する。
+
 ```sh
 flutter pub deps > deps.txt
 ```
 
 ### 依存関係上書き
-ローカル開発でenviedの修正版を使う場合、`pubspec_overrides.yaml`を作成してください：
+
+- ローカル開発で `envied` の修正版を使う場合は、`pubspec_overrides.yaml` を作成する。
+
 ```yaml
 dependency_overrides:
   envied:
@@ -124,27 +132,33 @@ dependency_overrides:
     path: /path/to/your/envied/packages/envied_generator
 ```
 
-**注意**: このファイルは`.gitignore`対象
+!!! note "このファイルは `.gitignore` 対象"
+    `pubspec_overrides.yaml` は、コミットされない。
 
 ## 環境変数の扱い
+
 - [参考記事](https://codewithandrea.com/articles/flutter-api-keys-dart-define-env-files/)
 - [Notion](https://www.notion.so/16b8580db1958025bc09e33accf7dcca)
 
 ## 各種シークレットの設定値
-- `SSL_SHA256_FINGER_PRINT`:App Distributionのドメインで証明書発行時のSHA256ハッシュ
-- `ANTHROPIC_API_KEY`:sk-xxx
-- `FIREBASE_APP_ID`:FirebaseのAPPID
-- `FIREBASE_HOSTING_DOMAIN`:{APPID}.web.app
-- `GOOGLE_CLIENT_ID`:Google cloudのページから「APIとサービス」 > 認証情報 > 種類がAndroidのもの
-- `GOOGLE_WEB_SERVER_CLIENT_ID`:Google cloudのページから「APIとサービス」 > 認証情報 > 種類がウェブアプリケーションのもの
-- `KEYSTORE_PASSWORD`:`android\key.properties`のパスワード
-- `KEY_ALIAS`:`android\key.properties`のエイリアス
-- `KEY_PASSWORD`:`android\key.properties`のパスワード
-- `MAPS_API_KEY`:Google cloudのページから「APIとサービス」 > 認証情報 > Google Map
-- `STARBUCKS_WEB_URL`:Vercel上にデプロイしたプロジェクトのURL
-- `SUPABASE_ANON_KEY`:Supabaseダッシュボードから取得
-- `SUPABASE_URL`:Supabaseダッシュボードから取得
-- `GOOGLE_SERVICES_JSON`:`android\app\google-services.json`をbase64でデコードした文字列
-- `FIREBASE_HOSTING_DEPLOY_SERVICE_ACCOUNT_JSON`:サービスアカウント：`only-firebasehosting-admin`のjsonファイル（`assetlinks.json`更新時に自動デプロイ）
-- `RELEASE_KEYSTORE`:`release.keystore`をbase64でデコードした文字列
-- `CREDENTIAL_FILE_CONTENT`:FirebaseサービスアカウントのJSONファイル（これはそのまま）
+
+??? info "シークレット一覧（17 件）"
+    | シークレット | 設定値 |
+    |---|---|
+    | `SSL_SHA256_FINGER_PRINT` | App Distribution のドメインで、証明書発行時の SHA256 ハッシュ |
+    | `ANTHROPIC_API_KEY` | `sk-xxx` |
+    | `FIREBASE_APP_ID` | Firebase の APP ID |
+    | `FIREBASE_HOSTING_DOMAIN` | `{APPID}.web.app` |
+    | `GOOGLE_CLIENT_ID` | Google Cloud のページから、「API とサービス」 > 認証情報 > 種類が Android のもの |
+    | `GOOGLE_WEB_SERVER_CLIENT_ID` | Google Cloud のページから、「API とサービス」 > 認証情報 > 種類がウェブアプリケーションのもの |
+    | `KEYSTORE_PASSWORD` | `android\key.properties` のパスワード |
+    | `KEY_ALIAS` | `android\key.properties` のエイリアス |
+    | `KEY_PASSWORD` | `android\key.properties` のパスワード |
+    | `MAPS_API_KEY` | Google Cloud のページから、「API とサービス」 > 認証情報 > Google Map |
+    | `STARBUCKS_WEB_URL` | Vercel 上にデプロイしたプロジェクトの URL |
+    | `SUPABASE_ANON_KEY` | Supabase ダッシュボードから取得 |
+    | `SUPABASE_URL` | Supabase ダッシュボードから取得 |
+    | `GOOGLE_SERVICES_JSON` | `android\app\google-services.json` を base64 でデコードした文字列 |
+    | `FIREBASE_HOSTING_DEPLOY_SERVICE_ACCOUNT_JSON` | サービスアカウント `only-firebasehosting-admin` の json ファイル（`assetlinks.json` 更新時に自動デプロイ） |
+    | `RELEASE_KEYSTORE` | `release.keystore` を base64 でデコードした文字列 |
+    | `CREDENTIAL_FILE_CONTENT` | Firebase サービスアカウントの JSON ファイル（これはそのまま） |

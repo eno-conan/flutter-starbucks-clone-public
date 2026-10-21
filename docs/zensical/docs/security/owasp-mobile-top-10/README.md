@@ -2,9 +2,9 @@
 
 ## 概要
 
-このリポジトリは、[OWASP Mobile Top 10](https://owasp.org/www-project-mobile-top-10/)の各項目をMarkdown形式でまとめたものです。
-
-OWASP Mobile Top 10は、モバイルアプリケーションにおける最も重要なセキュリティリスクを特定し、開発者やセキュリティ専門家がモバイルアプリのセキュリティを向上させるための指針を提供するプロジェクトです。
+- このリポジトリは、[OWASP Mobile Top 10](https://owasp.org/www-project-mobile-top-10/) の各項目を、Markdown 形式でまとめたもの。
+- OWASP Mobile Top 10 は、モバイルアプリケーションにおける最も重要なセキュリティリスクを特定するプロジェクト。
+- 開発者やセキュリティ専門家が、モバイルアプリのセキュリティを向上させるための指針を提供する。
 
 ## 目次
 
@@ -19,6 +19,6 @@ OWASP Mobile Top 10は、モバイルアプリケーションにおける最も�
 9. [M9: Insecure Data Storage（安全でないデータ保存）](./M9-Insecure_Data_Storage.md)
 10. [M10: Insufficient Cryptography（不十分な暗号化）](./M10-Insufficient_Cryptography.md)
 
----
-
-各項目の詳細については、上記のリンクから該当するMarkdownファイルをご参照ください。
+!!! tip "各項目の詳細"
+    上記のリンクから、該当する Markdown ファイルを参照する。
+    各ページは、OWASP の原文を載せている。

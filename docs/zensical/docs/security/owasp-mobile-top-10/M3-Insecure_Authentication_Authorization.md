@@ -1,51 +1,70 @@
 # [M3: Insecure Authentication/Authorization](https://owasp.org/www-project-mobile-top-10/2023-risks/m3-insecure-authentication-authorization.html)
 
-## Threat Agents
-**Application Specific**
+## Risk rating
 
-Threat agents that exploit authentication and authorization vulnerabilities typically do so through automated attacks that use available or custom-built tools.
+| Item | Value |
+|---|---|
+| Threat Agents | **Application Specific** |
+| Exploitability | **EASY** |
+| Prevalence | **COMMON** |
+| Detectability | **AVERAGE** |
+| Technical Impact | **SEVERE** |
+| Business Impact | **SEVERE** |
 
-## Attack Vectors
-**Exploitability: EASY**
+Each section below is OWASP's original text. The long descriptions are collapsed; open them as needed.
 
-Once the adversary understands the vulnerabilities in either the authentication or authorization scheme, they can exploit these weaknesses in one of two ways. They may either fake or bypass the authentication by directly submitting service requests to the mobile app's backend server, circumventing any direct interaction with the mobile app, or they can log into the application as a legitimate user after successfully passing the authentication control and then force-browse to a vulnerable endpoint to execute administrative functionality. Both exploitation methods are typically accomplished via mobile malware within the device or botnets owned by the attacker.
+??? info "Threat Agents"
+    Threat agents that exploit authentication and authorization vulnerabilities typically do so through automated attacks that use available or custom-built tools.
 
-## Security Weakness
-**Prevalence: COMMON**  
-**Detectability: AVERAGE**
+??? info "Attack Vectors"
+    - Once the adversary understands the vulnerabilities in either the authentication or authorization scheme, they can exploit these weaknesses in one of two ways.
+    - They may either fake or bypass the authentication by directly submitting service requests to the mobile app's backend server, circumventing any direct interaction with the mobile app, or they can log into the application as a legitimate user after successfully passing the authentication control and then force-browse to a vulnerable endpoint to execute administrative functionality.
+    - Both exploitation methods are typically accomplished via mobile malware within the device or botnets owned by the attacker.
 
-In order to test for poor authorization and authentication schemes in mobile apps, a number of strategies can be employed by testers. For authorization, testers can perform binary attacks against the mobile app and try to execute privileged functionality that should only be executable with a user of higher privilege, particularly while the mobile app is in 'offline' mode. Testers should also attempt to execute any privileged functionality using a low-privilege session token within the corresponding POST/GET requests for the sensitive functionality to the backend server.
+??? info "Security Weakness"
+    - In order to test for poor authorization and authentication schemes in mobile apps, a number of strategies can be employed by testers.
+    - For authorization, testers can perform binary attacks against the mobile app and try to execute privileged functionality that should only be executable with a user of higher privilege, particularly while the mobile app is in 'offline' mode.
+    - Testers should also attempt to execute any privileged functionality using a low-privilege session token within the corresponding POST/GET requests for the sensitive functionality to the backend server.
 
-Poor or missing authorization schemes can potentially allow an adversary to execute functionality they should not be entitled to using an authenticated but lower-privilege user of the mobile app. This risk of privilege escalation attack is heightened when authorization decisions are made within the mobile device instead of through a remote server, a scenario that can often arise due to the mobile requirements of offline usability.
+    - Poor or missing authorization schemes can potentially allow an adversary to execute functionality they should not be entitled to using an authenticated but lower-privilege user of the mobile app.
+    - This risk of privilege escalation attack is heightened when authorization decisions are made within the mobile device instead of through a remote server, a scenario that can often arise due to the mobile requirements of offline usability.
 
-In terms of poor authentication schemes, testers can undertake binary attacks against the mobile app while it's in 'offline' mode, aiming to bypass offline authentication and then execute functionality that should require offline authentication. Testers should also try to execute any backend server functionality anonymously by removing any session tokens from any POST/GET requests for the mobile app functionality.
+    - In terms of poor authentication schemes, testers can undertake binary attacks against the mobile app while it's in 'offline' mode, aiming to bypass offline authentication and then execute functionality that should require offline authentication.
+    - Testers should also try to execute any backend server functionality anonymously by removing any session tokens from any POST/GET requests for the mobile app functionality.
 
-Poor or missing authentication schemes can allow an adversary to anonymously execute functionality within the mobile app or the backend server used by the mobile app. These weaknesses in mobile app authentication are fairly common due to the mobile device's input form factor, which often encourages short passwords or 4-digit PINs.
+    - Poor or missing authentication schemes can allow an adversary to anonymously execute functionality within the mobile app or the backend server used by the mobile app.
+    - These weaknesses in mobile app authentication are fairly common due to the mobile device's input form factor, which often encourages short passwords or 4-digit PINs.
 
-Mobile apps face unique authentication requirements that can diverge from traditional web authentication schemes, largely due to their varying availability requirements. Unlike traditional web apps where users are expected to be online and authenticate in real-time with a backend server, mobile apps may need to fulfill uptime requirements that necessitate offline authentication due to the unreliability or unpredictability of mobile internet connections. This requirement can significantly impact the factors developers must consider when implementing mobile authentication.
+    - Mobile apps face unique authentication requirements that can diverge from traditional web authentication schemes, largely due to their varying availability requirements.
+    - Unlike traditional web apps where users are expected to be online and authenticate in real-time with a backend server, mobile apps may need to fulfill uptime requirements that necessitate offline authentication due to the unreliability or unpredictability of mobile internet connections.
+    - This requirement can significantly impact the factors developers must consider when implementing mobile authentication.
 
-## Technical Impacts
-**Impact: SEVERE**
+??? info "Technical Impacts"
+    - The technical impact of poor authorization and authentication in a system can be wide-ranging, significant, and similar, largely depending on the type of over-privileged functionality that is executed.
+    - When it comes to poor authorization, for instance, over-privileged execution of remote or local administration functionality may destroy systems or access to sensitive information.
 
-The technical impact of poor authorization and authentication in a system can be wide-ranging, significant, and similar, largely depending on the type of over-privileged functionality that is executed. When it comes to poor authorization, for instance, over-privileged execution of remote or local administration functionality may destroy systems or access to sensitive information.
+    - The technical repercussions of poor authentication occur when the solution is unable to identify the user performing an action request.
+    - This can immediately result in the inability to log or audit user activity since the user's identity cannot be established.
+    - This lack of identity verification contributes to an inability to detect the source of an attack, understand the nature of any underlying exploits, or devise strategies to prevent future attacks.
 
-The technical repercussions of poor authentication occur when the solution is unable to identify the user performing an action request. This can immediately result in the inability to log or audit user activity since the user's identity cannot be established. This lack of identity verification contributes to an inability to detect the source of an attack, understand the nature of any underlying exploits, or devise strategies to prevent future attacks.
+    - Moreover, failures in authentication can also expose underlying authorization failures.
+    - When authentication controls fail, the solution is unable to verify the user's identity, which is closely tied to a user's role and associated permissions.
+    - If an attacker can anonymously execute sensitive functionality, it indicates that the underlying code is not verifying the permissions of the user issuing the request for the action.
+    - Consequently, the anonymous execution of code underscores failures in both authentication and authorization controls.
 
-Moreover, failures in authentication can also expose underlying authorization failures. When authentication controls fail, the solution is unable to verify the user's identity, which is closely tied to a user's role and associated permissions. If an attacker can anonymously execute sensitive functionality, it indicates that the underlying code is not verifying the permissions of the user issuing the request for the action. Consequently, the anonymous execution of code underscores failures in both authentication and authorization controls.
+??? info "Business Impacts"
+    The business impact of poor authentication and authorization will typically result in the following at a minimum:
 
-## Business Impacts
-**Impact: SEVERE**
-
-The business impact of poor authentication and authorization will typically result in the following at a minimum:
-
-- Reputation Damage
-- Information Theft
-- Fraud
-- Unauthorized Access to Data
+    - Reputation Damage
+    - Information Theft
+    - Fraud
+    - Unauthorized Access to Data
 
 ## Am I Vulnerable To 'Insecure Authentication / Authorization'?
 
-Understanding the difference between authentication and authorization is paramount in evaluating mobile application security. Authentication identifies an individual, while authorization verifies if the identified individual has the necessary permissions for a particular action. These two aspects are closely related, as authorization checks should immediately follow mobile device request authentication.
+- Understanding the difference between authentication and authorization is paramount in evaluating mobile application security.
+- Authentication identifies an individual, while authorization verifies if the identified individual has the necessary permissions for a particular action.
+- These two aspects are closely related, as authorization checks should immediately follow mobile device request authentication.
 
 Insecure authorization can occur when an organization fails to authenticate an individual before executing a requested API endpoint from a mobile device, as it is virtually impossible to conduct authorization checks on an incoming request without an established caller's identity.
 
@@ -98,17 +117,31 @@ To avoid insecure authorization:
 
 The following scenarios showcase weak authentication or authorization controls in mobile apps:
 
-### Scenario #1: Hidden Service Requests
-Developers assume that only authenticated users will be able to generate a service request that the mobile app submits to its backend for processing. During the processing of the request, the server code does not verify that the incoming request is associated with a known user. Hence, adversaries submit service requests to the back-end service and anonymously execute functionality that affects legitimate users of the solution.
+??? example "Scenario #1: Hidden Service Requests"
+    - Developers assume that only authenticated users will be able to generate a service request that the mobile app submits to its backend for processing.
+    - During the processing of the request, the server code does not verify that the incoming request is associated with a known user.
+    - Hence, adversaries submit service requests to the back-end service and anonymously execute functionality that affects legitimate users of the solution.
 
-### Scenario #2: Interface Reliance
-Developers assume that only authorized users will be able to see the existence of a particular function on their mobile app. Hence, they expect that only legitimately authorized users will be able to issue the request for the service from their mobile devices. The back-end code that processes the request does not bother to verify that the identity associated with the request is entitled to execute the service. Hence, adversaries are able to perform remote administrative functionality using fairly low-privilege user accounts.
+??? example "Scenario #2: Interface Reliance"
+    - Developers assume that only authorized users will be able to see the existence of a particular function on their mobile app.
+    - Hence, they expect that only legitimately authorized users will be able to issue the request for the service from their mobile devices.
+    - The back-end code that processes the request does not bother to verify that the identity associated with the request is entitled to execute the service.
+    - Hence, adversaries are able to perform remote administrative functionality using fairly low-privilege user accounts.
 
-### Scenario #3: Usability Requirements
-Due to usability requirements, mobile apps allow for passwords that are 4 digits long. The server code correctly stores a hashed version of the password. However, due to the severely short length of the password, an adversary will be able to quickly deduce the original passwords using rainbow hash tables. If the password file (or data store) on the server is compromised, an adversary will be able to quickly deduce users' passwords.
+??? example "Scenario #3: Usability Requirements"
+    - Due to usability requirements, mobile apps allow for passwords that are 4 digits long.
+    - The server code correctly stores a hashed version of the password.
+    - However, due to the severely short length of the password, an adversary will be able to quickly deduce the original passwords using rainbow hash tables.
+    - If the password file (or data store) on the server is compromised, an adversary will be able to quickly deduce users' passwords.
 
-### Scenario #4: Insecure Direct Object Reference
-A user makes an API endpoint request to a backend REST API that includes an actor ID and an OAuth bearer token. The user includes their actor ID as part of the incoming URL and includes the access token as a standard header in the request. The backend verifies the presence of the bearer token but fails to validate the actor ID associated with the bearer token. As a result, the user can tweak the actor ID and attain the account information of other users as part of the REST API request.
+??? example "Scenario #4: Insecure Direct Object Reference"
+    - A user makes an API endpoint request to a backend REST API that includes an actor ID and an OAuth bearer token.
+    - The user includes their actor ID as part of the incoming URL and includes the access token as a standard header in the request.
+    - The backend verifies the presence of the bearer token but fails to validate the actor ID associated with the bearer token.
+    - As a result, the user can tweak the actor ID and attain the account information of other users as part of the REST API request.
 
-### Scenario #5: Transmission of LDAP roles
-A user makes an API endpoint request to a backend REST API that includes a standard oAuth bearer token along with a header that includes a list of LDAP groups that the user belongs to. The backend request validates the bearer token and then inspects the incoming LDAP groups for the right group membership before continuing on to the sensitive functionality. However, the backend system does not perform an independent validation of LDAP group membership and instead relies upon the incoming LDAP information coming from the user. The user can tweak the incoming header and report to be a member of any LDAP group arbitrarily and perform administrative functionality.
+??? example "Scenario #5: Transmission of LDAP roles"
+    - A user makes an API endpoint request to a backend REST API that includes a standard oAuth bearer token along with a header that includes a list of LDAP groups that the user belongs to.
+    - The backend request validates the bearer token and then inspects the incoming LDAP groups for the right group membership before continuing on to the sensitive functionality.
+    - However, the backend system does not perform an independent validation of LDAP group membership and instead relies upon the incoming LDAP information coming from the user.
+    - The user can tweak the incoming header and report to be a member of any LDAP group arbitrarily and perform administrative functionality.

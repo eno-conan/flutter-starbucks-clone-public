@@ -2,32 +2,30 @@
 
 ## 概要
 
-本ドキュメントは、Google Cloud Platform（GCP）の認証情報を安全に管理するためのガイドラインです。
-Maps API Key を中心に、以下の 3 点について手順を示します。
-
-1. **Secret Manager による認証情報管理**（CI ビルド時注入）
-2. **バンドルID（パッケージ名 + SHA-1）による API キー制限**
-3. **キーローテーション構成**
-
----
+- Google Cloud Platform（GCP）の認証情報を、安全に管理するためのガイドライン。
+- Maps API Key を中心に、次の 3 点の手順を示す。
+    1. **Secret Manager による認証情報管理**（CI ビルド時注入）。
+    2. **バンドル ID（パッケージ名 + SHA-1）による API キー制限**。
+    3. **キーローテーション構成**。
 
 ## 現状
 
 | 項目 | 現状 |
 |---|---|
-| APIキー保管 | GitHub Secrets（`MAPS_API_KEY`）|
+| API キー保管 | GitHub Secrets（`MAPS_API_KEY`） |
 | ビルド時注入 | `app.yml` → `secrets.properties` → Secrets Gradle Plugin |
-| バンドルID制限 | 設定済み（パッケージ名 + SHA-1 による制限を実施済み）|
-| キーローテーション | 手動（同じキーを使い続けている）|
-
----
+| バンドル ID 制限 | 設定済み（パッケージ名 + SHA-1 による制限を実施済み） |
+| キーローテーション | 手動（同じキーを使い続けている） |
 
 ## 1. Secret Manager による認証情報管理
 
 ### 目的
 
-GitHub Secrets に直接保管していた API キーを GCP Secret Manager へ移行し、
-アクセスログの記録・IAM による細かいアクセス制御・自動ローテーション連携を可能にする。
+- GitHub Secrets に直接保管していた API キーを、GCP Secret Manager へ移行する。
+- 次のことが可能になる。
+    - アクセスログの記録。
+    - IAM による細かいアクセス制御。
+    - 自動ローテーションとの連携。
 
 ### アーキテクチャ
 
@@ -40,9 +38,9 @@ GCP Secret Manager (MAPS_API_KEY) ← CI サービスアカウント
                                   → app.yml → secrets.properties → APK
 ```
 
-> **注意**: モバイルアプリから直接 Secret Manager を呼ぶ場合、
-> サービスアカウント鍵を APK に埋め込む本末転倒な問題が生じる。
-> そのため **CI パイプライン経由のビルド時注入**を採用する。
+!!! warning "モバイルアプリから直接 Secret Manager を呼ばない"
+    - モバイルアプリから直接呼ぶと、サービスアカウント鍵を APK に埋め込むことになる。本末転倒。
+    - そのため、**CI パイプライン経由のビルド時注入**を採用する。
 
 ### 実装手順
 
@@ -94,40 +92,39 @@ gcloud iam service-accounts keys create ci-sa-key.json \
 
 #### 5. `app.yml` を修正
 
-```yaml
-- name: Authenticate to Google Cloud
-  uses: google-github-actions/auth@v2
-  with:
-    credentials_json: ${{ secrets.GCP_SA_KEY }}
+??? example "コード例（17 行）"
+    ```yaml
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-- name: Fetch Maps API Key from Secret Manager
-  id: secrets
-  uses: google-github-actions/get-secretmanager-secrets@v2
-  with:
-    secrets: |-
-      MAPS_API_KEY:projects/<PROJECT_ID>/secrets/MAPS_API_KEY/versions/latest
+    - name: Fetch Maps API Key from Secret Manager
+      id: secrets
+      uses: google-github-actions/get-secretmanager-secrets@v2
+      with:
+        secrets: |-
+          MAPS_API_KEY:projects/<PROJECT_ID>/secrets/MAPS_API_KEY/versions/latest
 
-- name: Create secrets.properties
-  run: |
-    echo "MAPS_API_KEY=${{ steps.secrets.outputs.MAPS_API_KEY }}" >> android/secrets.properties
-    echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> android/secrets.properties
-    echo "FIREBASE_HOSTING_DOMAIN=${{ secrets.FIREBASE_HOSTING_DOMAIN }}" >> android/secrets.properties
-```
+    - name: Create secrets.properties
+      run: |
+        echo "MAPS_API_KEY=${{ steps.secrets.outputs.MAPS_API_KEY }}" >> android/secrets.properties
+        echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> android/secrets.properties
+        echo "FIREBASE_HOSTING_DOMAIN=${{ secrets.FIREBASE_HOSTING_DOMAIN }}" >> android/secrets.properties
+    ```
 
 ### メリット
 
-- アクセスログ（誰がいつキーを取得したか）が GCP に記録される
-- ローテーション後も CI は常に `versions/latest` を取得するため修正不要
-- Secret Manager の IAM で細かいアクセス制御が可能
-
----
+- アクセスログ（誰がいつキーを取得したか）が、GCP に記録される。
+- ローテーション後も、CI は常に `versions/latest` を取得するため、修正不要。
+- Secret Manager の IAM で、細かいアクセス制御ができる。
 
 ## 2. バンドルID（パッケージ名 + SHA-1）による API キー制限
 
 ### 目的
 
-Maps API Key を特定のアプリ（パッケージ名 + 署名証明書）からのみ使用可能に制限し、
-キーが漏洩しても第三者に悪用されないようにする。
+- Maps API Key を、特定のアプリ（パッケージ名 + 署名証明書）からのみ使えるように制限する。
+- キーが漏洩しても、第三者に悪用されないようにする。
 
 ### 設定場所
 
@@ -158,41 +155,38 @@ keytool -list -v \
 
 ### GCP コンソールでの設定手順
 
-1. **Application restrictions** を `Android apps` に変更
-2. **Add an item** で以下の組み合わせを追加
+1. **Application restrictions** を `Android apps` に変更する。
+2. **Add an item** で、次の組み合わせを追加する。
 
-| 環境 | Package Name | Fingerprint |
-|---|---|---|
-| Debug | com.example.testingapp | デバッグ証明書 SHA-1 |
-| Release | com.example.testingapp | リリース証明書 SHA-1 |
+    | 環境 | Package Name | Fingerprint |
+    |---|---|---|
+    | Debug | com.example.testingapp | デバッグ証明書 SHA-1 |
+    | Release | com.example.testingapp | リリース証明書 SHA-1 |
 
-3. **API restrictions** も設定：`Maps SDK for Android` のみに絞る
+3. **API restrictions** も設定する。`Maps SDK for Android` のみに絞る。
 
-```
-API restrictions → Restrict key → Maps SDK for Android にチェック
-```
+    ```
+    API restrictions → Restrict key → Maps SDK for Android にチェック
+    ```
 
-4. **Save** をクリック
+4. **Save** をクリックする。
 
-### 注意点
-
-- CI でビルドする場合は CI 環境の署名 SHA-1 も追加が必要
-- バンドルID制限と Secret Manager は独立して設定可能（並行実施 OK）
-- 制限変更後は反映まで数分かかる場合がある
-
----
+!!! tip "注意点"
+    - CI でビルドする場合は、CI 環境の署名 SHA-1 も追加が必要。
+    - バンドル ID 制限と Secret Manager は、独立して設定できる（並行実施 OK）。
+    - 制限を変更した後は、反映まで数分かかる場合がある。
 
 ## 3. キーローテーション構成
 
 ### 目的
 
-API キーを定期的に更新することで、漏洩リスクを最小限に抑える。
-Secret Manager を使った自動ローテーションを構成する。
+- API キーを定期的に更新して、漏洩リスクを最小限に抑える。
+- Secret Manager を使った、自動ローテーションを構成する。
 
 ### 推奨ローテーション周期
 
-- **通常運用**: 90 日以内（GCP Security 推奨）
-- **本番リリース前後**: 手動ローテーションを実施
+- **通常運用**: 90 日以内（GCP Security 推奨）。
+- **本番リリース前後**: 手動ローテーションを実施する。
 
 ### 自動ローテーションのアーキテクチャ
 
@@ -211,30 +205,31 @@ Cloud Functions（rotate-maps-api-key）
 
 ### Cloud Functions の処理フロー（疑似コード）
 
-```python
-def rotate_maps_api_key(event, context):
-    # 1. Maps API キーを新規作成
-    new_key = maps_client.create_api_key(project=PROJECT_ID)
+??? example "コード例（疑似コード）（17 行）"
+    ```python
+    def rotate_maps_api_key(event, context):
+        # 1. Maps API キーを新規作成
+        new_key = maps_client.create_api_key(project=PROJECT_ID)
 
-    # 2. Secret Manager に新バージョンとして追加
-    secret_client.add_secret_version(
-        parent=f"projects/{PROJECT_ID}/secrets/MAPS_API_KEY",
-        payload={"data": new_key.key_string.encode()}
-    )
+        # 2. Secret Manager に新バージョンとして追加
+        secret_client.add_secret_version(
+            parent=f"projects/{PROJECT_ID}/secrets/MAPS_API_KEY",
+            payload={"data": new_key.key_string.encode()}
+        )
 
-    # 3. 旧バージョン（latest-1）を無効化
-    secret_client.disable_secret_version(
-        name=f"projects/{PROJECT_ID}/secrets/MAPS_API_KEY/versions/<OLD_VERSION>"
-    )
+        # 3. 旧バージョン（latest-1）を無効化
+        secret_client.disable_secret_version(
+            name=f"projects/{PROJECT_ID}/secrets/MAPS_API_KEY/versions/<OLD_VERSION>"
+        )
 
-    # 4. 通知
-    notify_slack(f"Maps API Key rotated. New version created.")
-```
+        # 4. 通知
+        notify_slack(f"Maps API Key rotated. New version created.")
+    ```
 
 ### CI との連携
 
-- CI は常に `versions/latest` を参照するため、ローテーション後も変更不要
-- ローテーション完了後の次回 CI ビルドで自動的に新しいキーが使用される
+- CI は常に `versions/latest` を参照するため、ローテーション後も変更不要。
+- ローテーション完了後の次回 CI ビルドで、自動的に新しいキーが使われる。
 
 ### Cloud Scheduler の設定
 
@@ -249,8 +244,6 @@ gcloud scheduler jobs create pubsub rotate-maps-api-key-job \
   --message-body='{"action":"rotate","secret":"MAPS_API_KEY"}' \
   --project=<PROJECT_ID>
 ```
-
----
 
 ## セキュリティチェックリスト
 
@@ -270,8 +263,6 @@ gcloud scheduler jobs create pubsub rotate-maps-api-key-job \
 - [ ] GCP の Secret Manager アクセスログに不審なアクセスがないか
 - [ ] CI サービスアカウントの権限が最小限になっているか
 - [ ] 不要になった古いシークレットバージョンが無効化されているか
-
----
 
 ## 参考資料
 

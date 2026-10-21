@@ -2,7 +2,12 @@
 
 ## 1. 概要
 
-このドキュメントは、仮会員登録機能のソフトウェア設計原則、アーキテクチャパターン、コンポーネント設計について記載します。
+- 対象: 仮会員登録機能。
+- 記載内容:
+    - ソフトウェア設計原則
+    - アーキテクチャパターン
+    - コンポーネント設計
+- コード例は、折り畳み（`コード例`）の中にある。
 
 ## 2. アーキテクチャ設計
 
@@ -37,44 +42,37 @@
 
 ### 2.2 レイヤー分離原則
 
-#### UIレイヤー
-- **責任**: ユーザーインターフェースの表示と入力受付
-- **特徴**: Stateful/StatelessWidgetの適切な使い分け
-- **依存**: Business Logicレイヤーのみに依存
-
-#### Business Logicレイヤー
-- **責任**: アプリケーションのビジネスルールと状態管理
-- **特徴**: UIに依存しない純粋なロジック
-- **依存**: Data Layerのみに依存
-
-#### Data Layerレイヤー
-- **責任**: 外部データソースとの連携
-- **特徴**: Supabaseクライアントとデータモデル
-- **依存**: 外部ライブラリのみに依存
+| レイヤー | 責任 | 特徴 | 依存 |
+|---|---|---|---|
+| **UI** | ユーザーインターフェースの表示と入力受付 | Stateful / StatelessWidget の適切な使い分け | Business Logic レイヤーのみ |
+| **Business Logic** | アプリケーションのビジネスルールと状態管理 | UI に依存しない純粋なロジック | Data Layer のみ |
+| **Data Layer** | 外部データソースとの連携 | Supabase クライアントとデータモデル | 外部ライブラリのみ |
 
 ## 3. コンポーネント設計
 
 ### 3.1 Widgetアーキテクチャパターン
 
 #### 3.1.1 Composition over Inheritance
-```dart
-// ✅ 良い例：コンポジションによる設計
-class PreSignUp extends StatefulWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: const [
-            _Header(),    // 独立したコンポーネント
-            _Form(),      // 独立したコンポーネント
-          ]
-        )
-      ),
-    );
-  }
-}
-```
+
+??? example "コード例（16 行）"
+    ```dart
+    // ✅ 良い例：コンポジションによる設計
+    class PreSignUp extends StatefulWidget {
+      @override
+      Widget build(BuildContext context) {
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: const [
+                _Header(),    // 独立したコンポーネント
+                _Form(),      // 独立したコンポーネント
+              ]
+            )
+          ),
+        );
+      }
+    }
+    ```
 
 #### 3.1.2 Single Responsibility Principle
 - **_Header**: ページタイトル表示のみ
@@ -84,22 +82,24 @@ class PreSignUp extends StatefulWidget {
 ### 3.2 状態管理パターン
 
 #### 3.2.1 Local State Management
-```dart
-class _FormState extends State<_Form> {
-  // 単一責任の状態変数
-  final TextEditingController _emailController = TextEditingController();
-  bool _isAgreed = false;
-  String? _emailError;
-  bool _isFormValid = false;
-  
-  // 状態更新の単一エントリーポイント
-  void _updateFormValidity() {
-    setState(() {
-      _isFormValid = _isEmailValid(_emailController.text) && _isAgreed;
-    });
-  }
-}
-```
+
+??? example "コード例（14 行）"
+    ```dart
+    class _FormState extends State<_Form> {
+      // 単一責任の状態変数
+      final TextEditingController _emailController = TextEditingController();
+      bool _isAgreed = false;
+      String? _emailError;
+      bool _isFormValid = false;
+
+      // 状態更新の単一エントリーポイント
+      void _updateFormValidity() {
+        setState(() {
+          _isFormValid = _isEmailValid(_emailController.text) && _isAgreed;
+        });
+      }
+    }
+    ```
 
 #### 3.2.2 状態の不変性
 - 状態変更は必ず`setState()`内で実行
@@ -120,22 +120,24 @@ class TokenFactory {
 ```
 
 ### 4.2 Strategy Pattern（バリデーション）
-```dart
-abstract class ValidationStrategy {
-  bool validate(String input);
-  String? getErrorMessage();
-}
 
-class EmailValidationStrategy implements ValidationStrategy {
-  @override
-  bool validate(String input) {
-    return RegExp(r'^.+@.+\..+$').hasMatch(input);
-  }
-  
-  @override
-  String? getErrorMessage() => '不正なメールアドレス';
-}
-```
+??? example "コード例（バリデーション）（14 行）"
+    ```dart
+    abstract class ValidationStrategy {
+      bool validate(String input);
+      String? getErrorMessage();
+    }
+
+    class EmailValidationStrategy implements ValidationStrategy {
+      @override
+      bool validate(String input) {
+        return RegExp(r'^.+@.+\..+$').hasMatch(input);
+      }
+
+      @override
+      String? getErrorMessage() => '不正なメールアドレス';
+    }
+    ```
 
 ### 4.3 Observer Pattern（状態監視）
 ```dart
@@ -151,38 +153,31 @@ void initState() {
 
 ### 5.1 エラー分類
 
-#### 5.1.1 User Input Errors
-- **バリデーションエラー**: フォーム入力検証
-- **UI表示**: リアルタイムエラーメッセージ
-- **回復方法**: ユーザー入力修正
-
-#### 5.1.2 System Errors
-- **ネットワークエラー**: API通信失敗
-- **UI表示**: ダイアログまたはスナックバー
-- **回復方法**: リトライ機能
-
-#### 5.1.3 Business Logic Errors
-- **重複データエラー**: メールアドレス重複
-- **UI表示**: 専用エラーダイアログ
-- **回復方法**: 異なるデータ入力
+| 分類 | エラー | UI 表示 | 回復方法 |
+|---|---|---|---|
+| **User Input Errors** | バリデーションエラー（フォーム入力検証） | リアルタイムのエラーメッセージ | ユーザーが入力を修正する |
+| **System Errors** | ネットワークエラー（API 通信失敗） | ダイアログまたはスナックバー | リトライ機能 |
+| **Business Logic Errors** | 重複データエラー（メールアドレス重複） | 専用のエラーダイアログ | 異なるデータを入力する |
 
 ### 5.2 エラー処理パターン
-```dart
-// Result型パターン
-sealed class Result<T> {
-  const Result();
-}
 
-class Success<T> extends Result<T> {
-  const Success(this.data);
-  final T data;
-}
+??? example "コード例（14 行）"
+    ```dart
+    // Result型パターン
+    sealed class Result<T> {
+      const Result();
+    }
 
-class Failure<T> extends Result<T> {
-  const Failure(this.error);
-  final String error;
-}
-```
+    class Success<T> extends Result<T> {
+      const Success(this.data);
+      final T data;
+    }
+
+    class Failure<T> extends Result<T> {
+      const Failure(this.error);
+      final String error;
+    }
+    ```
 
 ## 6. セキュリティ設計
 
@@ -267,19 +262,21 @@ abstract class SignupPlugin {
 ```
 
 ### 9.2 設定駆動設計
-```dart
-class SignupConfig {
-  const SignupConfig({
-    this.tokenLength = 32,
-    this.emailValidationPattern = r'^.+@.+\..+$',
-    this.maxRetryCount = 3,
-  });
-  
-  final int tokenLength;
-  final String emailValidationPattern;
-  final int maxRetryCount;
-}
-```
+
+??? example "コード例（11 行）"
+    ```dart
+    class SignupConfig {
+      const SignupConfig({
+        this.tokenLength = 32,
+        this.emailValidationPattern = r'^.+@.+\..+$',
+        this.maxRetryCount = 3,
+      });
+
+      final int tokenLength;
+      final String emailValidationPattern;
+      final int maxRetryCount;
+    }
+    ```
 
 ## 10. 国際化・ローカライゼーション設計
 
@@ -301,18 +298,20 @@ class SignupStrings {
 ## 11. モニタリング・ロギング設計
 
 ### 11.1 ログレベル設計
-```dart
-enum LogLevel { debug, info, warning, error, critical }
 
-class Logger {
-  static void log(LogLevel level, String message, [Object? error]) {
-    if (kDebugMode) {
-      print('${level.name.toUpperCase()}: $message');
-      if (error != null) print('Error: $error');
+??? example "コード例（10 行）"
+    ```dart
+    enum LogLevel { debug, info, warning, error, critical }
+
+    class Logger {
+      static void log(LogLevel level, String message, [Object? error]) {
+        if (kDebugMode) {
+          print('${level.name.toUpperCase()}: $message');
+          if (error != null) print('Error: $error');
+        }
+      }
     }
-  }
-}
-```
+    ```
 
 ### 11.2 ユーザー行動追跡
 - フォーム入力開始
@@ -324,25 +323,13 @@ class Logger {
 
 ### 12.1 SOLID原則
 
-#### Single Responsibility Principle
-- 各Widgetは単一の責任を持つ
-- 各関数は単一の機能を実装
-
-#### Open/Closed Principle
-- バリデーション機能の拡張可能性
-- 新しいエラーハンドリングの追加容易性
-
-#### Liskov Substitution Principle
-- Widget階層での適切な継承
-- インターフェースの一貫性
-
-#### Interface Segregation Principle
-- 必要な機能のみを公開
-- 不要な依存関係の排除
-
-#### Dependency Inversion Principle
-- 抽象への依存
-- 具象クラスへの直接依存回避
+| 原則 | 適用 |
+|---|---|
+| **Single Responsibility** | 各 Widget は単一の責任を持つ。各関数は単一の機能を実装する |
+| **Open/Closed** | バリデーション機能を拡張できる。新しいエラーハンドリングを追加しやすい |
+| **Liskov Substitution** | Widget 階層で適切に継承する。インターフェースに一貫性がある |
+| **Interface Segregation** | 必要な機能のみを公開する。不要な依存関係を排除する |
+| **Dependency Inversion** | 抽象に依存する。具象クラスへの直接依存を避ける |
 
 ### 12.2 DRY原則
 - 共通ロジックの関数化

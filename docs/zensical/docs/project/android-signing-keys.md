@@ -1,13 +1,9 @@
 # Android 署名鍵の管理
 
-Android の署名鍵は **利用者ごとではなく配布経路ごと**に変わる。パスキー（WebAuthn）と App Links は
-どちらも「このドメインはこの署名鍵のアプリを信頼する」という宣言に依存しているため、
-配布経路を増やすたびに鍵の登録が必要になる。
-
-関連: [Issue #924](https://github.com/eno-conan/flutter-starbucks-clone/issues/924) /
-[パスキー導入設計](../starbucks_user_side/signin/passkey-design.md)
-
----
+- Android の署名鍵は、**利用者ごとではなく、配布経路ごと**に変わる。
+- パスキー（WebAuthn）と App Links は、どちらも「このドメインは、この署名鍵のアプリを信頼する」という宣言に依存している。
+- そのため、配布経路を増やすたびに、鍵の登録が必要になる。
+- 関連: [Issue #924](https://github.com/eno-conan/flutter-starbucks-clone/issues/924) / [パスキー導入設計](../starbucks_user_side/signin/passkey-design.md)
 
 ## 1. 配布経路ごとの有効な鍵
 
@@ -29,17 +25,15 @@ Google: upload key を検証 → 剥がす → app signing key で再署名
 ユーザー: app signing key で署名された APK を受け取る
 ```
 
-**登録すべきは app signing key の SHA-256 であって upload key ではない。**
-取り違えると「手元の release ビルドでは動くが Play 経由だと動かない」という切り分けの難しい事故になる。
-
-確認場所: Play Console → テストとリリース → 設定 → アプリの署名
-（「アプリ署名鍵の証明書」と「アップロード鍵の証明書」の SHA-256 が両方表示される）
-
----
+!!! danger "登録すべきは app signing key の SHA-256（upload key ではない）"
+    - 取り違えると、「手元の release ビルドでは動くが、Play 経由だと動かない」という、切り分けの難しい事故になる。
+    - 確認場所: Play Console → テストとリリース → 設定 → アプリの署名。
+    - 「アプリ署名鍵の証明書」と「アップロード鍵の証明書」の SHA-256 が、両方表示される。
 
 ## 2. `assetlinks.json` に登録している鍵
 
-`public/.well-known/assetlinks.json` は 2 つの relation を持ち、**それぞれ別の鍵集合を持てる**。
+- `public/.well-known/assetlinks.json` は、2 つの relation を持つ。
+- **それぞれ別の鍵集合を持てる。**
 
 | relation | 用途 | 未登録時の症状 |
 |---|---|---|
@@ -65,17 +59,17 @@ keytool -list -v -keystore android/debug.keystore -alias androiddebugkey -storep
 keytool -list -v -keystore <storeFile> -alias <keyAlias>
 ```
 
-CI がビルドした APK の署名鍵は、`app.yml` の **Verify APK signing certificate** ステップが
-毎回ログに出す。`assetlinks.json` に未登録なら警告が出る。
+!!! tip "CI がビルドした APK の署名鍵"
+    - `app.yml` の **Verify APK signing certificate** ステップが、毎回ログに出す。
+    - `assetlinks.json` に未登録なら、警告が出る。
 
 ### 開発者ごとの debug キーの扱い: **案A（チーム共通の debug keystore）を採用**
 
-Relying Party Origins は **上限 5 つ**で、`https://` に 1 つ使うため Android の鍵は最大 4 つ。
-debug 鍵を開発者ごとに登録すると 2〜3 人目で枯渇するため、**チーム共通の debug keystore を 1 本**用意し、
-それだけを登録する方針にした（Issue #924 4-1）。検討した代案は、開発用に別の Supabase プロジェクトを
-立てる案（環境分離としては健全だが運用コストが増える）。
-
-現在の使用状況は次のコマンドで確認できる。案A なら開発者が増えても **3/5 のまま**増えない。
+- Relying Party Origins は **上限 5 つ**。`https://` に 1 つ使うため、Android の鍵は最大 4 つ。
+- debug 鍵を開発者ごとに登録すると、2〜3 人目で枯渇する。
+- そのため、**チーム共通の debug keystore を 1 本**用意し、それだけを登録する方針にした（Issue #924 4-1）。
+- 検討した代案: 開発用に別の Supabase プロジェクトを立てる案。環境分離としては健全だが、運用コストが増える。
+- 現在の使用状況は、次のコマンドで確認できる。案A なら、開発者が増えても **3/5 のまま**増えない。
 
 ```bash
 FIREBASE_HOSTING_DOMAIN=<裸ドメイン> bash scripts/sync-rp-origins.sh
@@ -83,9 +77,10 @@ FIREBASE_HOSTING_DOMAIN=<裸ドメイン> bash scripts/sync-rp-origins.sh
 
 #### 開発者のセットアップ
 
-1. Google ドライブの共有ディレクトリから `debug.keystore` を取得する（配置場所は口頭・チャットで共有）
-2. リポジトリの `android/debug.keystore` に置く（`android/.gitignore` の `**/*.keystore` で除外済み。コミットしない）
-3. 取得したファイルが正しいか照合する
+1. Google ドライブの共有ディレクトリから、`debug.keystore` を取得する（配置場所は、口頭・チャットで共有）。
+2. リポジトリの `android/debug.keystore` に置く。
+    - `android/.gitignore` の `**/*.keystore` で除外済み。コミットしない。
+3. 取得したファイルが正しいか、照合する。
 
 ```bash
 keytool -list -v -keystore android/debug.keystore -alias androiddebugkey -storepass android
@@ -93,26 +88,24 @@ keytool -list -v -keystore android/debug.keystore -alias androiddebugkey -storep
 ```
 
 !!! tip "照合を飛ばさない"
+    - この運用で実際に起きるのは、鍵の盗難より「古いファイルを掴んでいて気づかない」こと。
+    - 症状は、400 `webauthn_verification_failed` という、原因の分かりにくいエラーになる。
+    - 上の SHA-256 と一致するかを最初に見れば、数十秒で切り分けられる。
 
-    この運用で実際に起きるのは鍵の盗難より「古いファイルを掴んでいて気づかない」で、
-    症状は 400 `webauthn_verification_failed` という原因の分かりにくいエラーになる。
-    上の SHA-256 と一致するかを最初に見れば数十秒で切り分けられる。
-
-`android/app/build.gradle` の `signingConfigs.debug` は、このファイルが**無ければ各自の
-`~/.android/debug.keystore` にフォールバックする**。未配置でも `flutter run` は通り、
-パスキーだけが動かない状態になる（ビルドが落ちて原因が分からない、を避けるため）。
+!!! note "`signingConfigs.debug` のフォールバック"
+    - `android/app/build.gradle` の `signingConfigs.debug` は、このファイルが**無ければ、各自の `~/.android/debug.keystore` にフォールバックする**。
+    - 未配置でも `flutter run` は通り、パスキーだけが動かない状態になる。
+    - 理由: ビルドが落ちて原因が分からない、を避けるため。
 
 #### 個人の debug 鍵から移行するときの後始末
 
-- 端末にある既存の debug ビルドは署名が変わるため上書きできない（`INSTALL_FAILED_UPDATE_INCOMPATIBLE`）。
-  一度アンインストールする
-- **旧 debug 鍵で登録したパスキーは使えなくなる**（オリジンが変わるため）。debug 環境で作った
-  パスキーは登録し直す
+- 端末にある既存の debug ビルドは、署名が変わるため上書きできない（`INSTALL_FAILED_UPDATE_INCOMPATIBLE`）。一度アンインストールする。
+- **旧 debug 鍵で登録したパスキーは使えなくなる**（オリジンが変わるため）。debug 環境で作ったパスキーは、登録し直す。
 
 #### 鍵を差し替えるときに更新する場所
 
-共有 debug keystore を作り直す・release 鍵を差し替える場合は、SHA が **3 箇所**に登録されている点に注意する。
-`assetlinks.json` だけ直すと Maps と Firebase が壊れる。
+- 共有 debug keystore を作り直す、または release 鍵を差し替える場合、SHA は **3 箇所**に登録されている。
+- `assetlinks.json` だけ直すと、Maps と Firebase が壊れる。
 
 | 登録先 | 形式 | 未更新時の症状 |
 |---|---|---|
@@ -120,18 +113,16 @@ keytool -list -v -keystore android/debug.keystore -alias androiddebugkey -storep
 | Firebase の Android アプリ | SHA-1 / SHA-256 | FCM・Firebase 認証まわりが動かない。`google-services.json` の再取得と `GOOGLE_SERVICES_JSON` シークレット更新も必要 |
 | Google Cloud の `MAPS_API_KEY` 制限 | SHA-1 | 地図が真っ白になる（[Google Cloud セキュリティ](google-cloud-security-guidelines.md)参照） |
 
----
-
 ## 3. 二重管理の同期（`scripts/sync-rp-origins.sh`）
 
-同じ鍵の情報を 2 箇所に**別形式で**持っている。
+- 同じ鍵の情報を、2 箇所に**別形式で**持っている。
 
 | 場所 | 形式 | 用途 |
 |---|---|---|
 | `public/.well-known/assetlinks.json` | `43:F2:CF:…`（16進・コロン区切り） | Digital Asset Links。OS がアプリとドメインの紐づけを検証する |
 | Supabase の Relying Party Origins | `android:apk-key-hash:Q_LPl-8e…`（生 32 バイトの base64url） | WebAuthn のオリジン検証 |
 
-片方だけ更新すると、エラーメッセージから原因を推測しにくい失敗になる。
+- 片方だけ更新すると、エラーメッセージから原因を推測しにくい失敗になる。
 
 | 更新漏れ | 症状 |
 |---|---|
@@ -140,12 +131,15 @@ keytool -list -v -keystore android/debug.keystore -alias androiddebugkey -storep
 
 ### 自動反映
 
-`main` へ `assetlinks.json` がマージされると `deploy-firebase-hosting.yml` が
-**Firebase Hosting へのデプロイ → Supabase の RP Origins 更新**の順で実行する。手作業は不要。
+- `main` へ `assetlinks.json` がマージされると、`deploy-firebase-hosting.yml` が、次の順で実行する。
+    1. **Firebase Hosting へのデプロイ**。
+    2. **Supabase の RP Origins 更新**。
+- 手作業は不要。
 
-Hosting デプロイの後に同期を置いているのは、同期に失敗しても Hosting のデプロイ自体は
-完了させるため。ズレたまま残った場合は同ワークフローを **手動実行（`workflow_dispatch`）** すれば
-`assetlinks.json` を変更しなくても再同期できる。
+!!! tip "ズレたまま残った場合"
+    - 同期をデプロイの後に置いているのは、同期に失敗しても、Hosting のデプロイ自体は完了させるため。
+    - ズレたまま残った場合は、同ワークフローを **手動実行（`workflow_dispatch`）** する。
+    - `assetlinks.json` を変更しなくても、再同期できる。
 
 ### 手動での確認・反映
 
@@ -168,20 +162,18 @@ bash scripts/sync-rp-origins.sh --apply
 | `SUPABASE_ACCESS_TOKEN` | [Management API のアクセストークン](https://supabase.com/dashboard/account/tokens) |
 | `SUPABASE_PROJECT_REF` | プロジェクト ref。未設定なら `SUPABASE_URL` から導出する |
 
-スクリプトは `get_login_creds` の鍵だけを読み、オリジンが上限 5 つを超える場合は
-反映せずに失敗する（黙って切り捨てるとどの鍵が落ちたか分からなくなるため）。
+- スクリプトは、`get_login_creds` の鍵だけを読む。
+- オリジンが上限 5 つを超える場合は、反映せずに失敗する（黙って切り捨てると、どの鍵が落ちたか分からなくなるため）。
 
 ### GitHub Secrets
 
-自動反映には `SUPABASE_ACCESS_TOKEN` の登録が必要。未登録の場合はワークフローが
-**警告を出して反映すべき値をログに表示するだけ**でスキップするので、その値を
-Supabase ダッシュボード（Authentication → Passkeys → Relying Party Origins）へ貼れば手動でも運用できる。
-
----
+- 自動反映には、`SUPABASE_ACCESS_TOKEN` の登録が必要。
+- 未登録の場合は、ワークフローが**警告を出して、反映すべき値をログに表示するだけ**でスキップする。
+- その値を、Supabase ダッシュボード（Authentication → Passkeys → Relying Party Origins）へ貼れば、手動でも運用できる。
 
 ## 4. Firebase App Distribution での配布
 
-`app.yml` を **手動実行（Actions → Flutter CI/CD Pipeline Starbucks Clone App → Run workflow）** する。
+- `app.yml` を **手動実行**する（Actions → Flutter CI/CD Pipeline Starbucks Clone App → Run workflow）。
 
 | 入力 | 既定 | 説明 |
 |---|---|---|
@@ -190,21 +182,22 @@ Supabase ダッシュボード（Authentication → Passkeys → Relying Party O
 | `distribute` | true | App Distribution へ配布する |
 | `release_notes` | 空 | 配布時のリリースノート。省略時はブランチ名とコミットハッシュ |
 
-配布されるのは `app-arm64-v8a-release.apk`（`--split-per-abi` の arm64 版）。
+- 配布されるのは、`app-arm64-v8a-release.apk`（`--split-per-abi` の arm64 版）。
 
 ### APK を GitHub Actions の Artifacts に置かない理由
 
-APK は 1 ファイル約 40MB あり、毎回 Artifacts に上げると Free プランのストレージ上限に到達する。
-成果物の受け渡しは Artifacts ではなく App Distribution に寄せているため、`app.yml` は
-意図的に `Upload APK` ステップを持たない。手元に APK が必要なときはローカルでビルドすること。
+- APK は 1 ファイル約 40MB ある。毎回 Artifacts に上げると、Free プランのストレージ上限に到達する。
+- 成果物の受け渡しは、Artifacts ではなく App Distribution に寄せている。
+- そのため、`app.yml` は意図的に `Upload APK` ステップを持たない。
+- 手元に APK が必要なときは、ローカルでビルドする。
 
 ### 鍵の観点での注意
 
-App Distribution は**アップロードした成果物の署名をそのまま配る（再署名しない）**。
-CI の `secrets.RELEASE_KEYSTORE` の鍵がそのままユーザー端末で有効な鍵になるため、
-その SHA-256 が `assetlinks.json` の `get_login_creds` に入っていないとパスキーが動かない。
-現在の release 鍵は `43:F2:CF:97:…` で登録済みのため、この経路の配布はそのまま動く。
-CI の **Verify APK signing certificate** ステップがこれを毎回照合し、未登録なら警告を出す。
+- App Distribution は、**アップロードした成果物の署名をそのまま配る（再署名しない）**。
+- CI の `secrets.RELEASE_KEYSTORE` の鍵が、そのままユーザー端末で有効な鍵になる。
+- その SHA-256 が `assetlinks.json` の `get_login_creds` に入っていないと、パスキーが動かない。
+- 現在の release 鍵は `43:F2:CF:97:…` で登録済み。この経路の配布は、そのまま動く。
+- CI の **Verify APK signing certificate** ステップが、これを毎回照合し、未登録なら警告を出す。
 
 ### 必要な GitHub Secrets
 
@@ -213,26 +206,22 @@ CI の **Verify APK signing certificate** ステップがこれを毎回照合�
 | `FIREBASE_APP_ID` | 配布先アプリの App ID |
 | `CREDENTIAL_FILE_CONTENT` | サービスアカウント JSON の中身。`roles/firebaseappdistro.admin` が必要 |
 
-配布先グループは `testers`（Firebase コンソール → App Distribution → テスターとグループ）。
-
----
+- 配布先グループは `testers`（Firebase コンソール → App Distribution → テスターとグループ）。
 
 ## 5. Play Store 導入時の手順
 
-まだ導入していない。始める時点で以下を実施する。
+!!! note "まだ導入していない"
+    始める時点で、次を実施する。
 
-1. Play Console で内部テストトラックにアプリを作成し、Play App Signing を有効にする
-2. **app signing key の SHA-256** を Play Console（テストとリリース → 設定 → アプリの署名）から控える
-   - upload key の SHA-256 ではない。ここを取り違えると Play 経由だけ動かなくなる
-3. その SHA-256 を `public/.well-known/assetlinks.json` の **両方の relation** に追加する
-4. `main` へマージする。`deploy-firebase-hosting.yml` が Hosting へ反映し、
-   Supabase の RP Origins も自動で更新される
-   - 上限 5 つに収まるか事前に `bash scripts/sync-rp-origins.sh` で確認する
-5. Play 経由でインストールした実機でパスキー登録が通ることを確認する
-6. `app.yml` の APK ビルドを AAB（`flutter build appbundle`）に切り替える
-   - App Distribution 用の APK ビルドと併存させるか、入力で切り替えるかはその時点で決める
-
----
+1. Play Console で内部テストトラックにアプリを作成し、Play App Signing を有効にする。
+2. **app signing key の SHA-256** を、Play Console（テストとリリース → 設定 → アプリの署名）から控える。
+    - upload key の SHA-256 ではない。ここを取り違えると、Play 経由だけ動かなくなる。
+3. その SHA-256 を、`public/.well-known/assetlinks.json` の **両方の relation** に追加する。
+4. `main` へマージする。`deploy-firebase-hosting.yml` が Hosting へ反映し、Supabase の RP Origins も自動で更新される。
+    - 上限 5 つに収まるか、事前に `bash scripts/sync-rp-origins.sh` で確認する。
+5. Play 経由でインストールした実機で、パスキー登録が通ることを確認する。
+6. `app.yml` の APK ビルドを、AAB（`flutter build appbundle`）に切り替える。
+    - App Distribution 用の APK ビルドと併存させるか、入力で切り替えるかは、その時点で決める。
 
 ## 6. トラブルシューティング
 
