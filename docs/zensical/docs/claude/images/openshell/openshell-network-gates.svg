@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="424" viewBox="0 0 960 424" role="img" aria-label="通信が外へ出るまでの 2 つの検査">
+<title>通信が外へ出るまでの 2 つの検査</title>
+<desc>サンドボックスからの通信は、プロキシで「接続の段（宛先とバイナリ）」と「リクエストの段（メソッドとパス）」を順に通った場合だけ許可される。git の openshell-poc への push は両方を通り、openshell-poc2 への push はリクエストの段で、curl は接続の段で拒否される。</desc>
+<defs><marker id="a-line" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="a-ok_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="a-ng_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="a-box_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/></marker></defs>
+<rect x="0.5" y="0.5" width="959" height="423" rx="12" fill="#ffffff" stroke="#d1d5db"/>
+<text x="24" y="36" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="start">通信する側（サンドボックスの中）</text>
+<text x="480" y="36" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">① 接続の段</text>
+<text x="480" y="54" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">宛先 × バイナリ</text>
+<text x="480" y="70" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">ログ NET:OPEN</text>
+<text x="670" y="36" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">② リクエストの段</text>
+<text x="670" y="54" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">メソッド × パス</text>
+<text x="670" y="70" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">ログ HTTP:…</text>
+<text x="863" y="36" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">結果</text>
+<rect x="14" y="88" width="368" height="290" rx="10" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="398" y="88" width="372" height="290" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="584" y="109" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">プロキシ（サンドボックスの外）</text>
+<rect x="26" y="121" width="344" height="58" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="198.0" y="145.1" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">git が github.com:443 へ</text>
+<text x="198.0" y="163.7" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace,'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">POST …/openshell-poc.git/git-receive-pack</text>
+<polyline points="370,150 465,150" fill="none" stroke="#374151" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="495,150 655,150" fill="none" stroke="#374151" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="685,150 788,150" fill="none" stroke="#16a34a" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-ok_s)"/>
+<circle cx="480" cy="150" r="13" fill="#16a34a"/>
+<polyline points="474,150 478,155 486,145" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="670" cy="150" r="13" fill="#16a34a"/>
+<polyline points="664,150 668,155 676,145" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480" y="184" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#166534" text-anchor="middle">宛先・バイナリとも許可</text>
+<text x="670" y="184" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#166534" text-anchor="middle">許可したパスと一致</text>
+<rect x="790" y="133" width="146" height="34" rx="17" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="863" y="155" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#166534" text-anchor="middle">許可</text>
+<text x="863" y="184" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace" font-size="11" fill="#6b7280" text-anchor="middle">HTTP:POST ALLOWED</text>
+<rect x="26" y="209" width="344" height="58" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="198.0" y="233.1" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">git が github.com:443 へ</text>
+<text x="198.0" y="251.7" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace,'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">POST …/openshell-poc2.git/git-receive-pack</text>
+<polyline points="370,238 465,238" fill="none" stroke="#374151" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="495,238 655,238" fill="none" stroke="#374151" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="685,238 788,238" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round" stroke-dasharray="4 4" marker-end="url(#a-box_s)"/>
+<circle cx="480" cy="238" r="13" fill="#16a34a"/>
+<polyline points="474,238 478,243 486,233" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="670" cy="238" r="13" fill="#dc2626"/>
+<path d="M665,233 L675,243 M665,243 L675,233" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+<text x="480" y="272" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#166534" text-anchor="middle">宛先・バイナリとも許可</text>
+<text x="670" y="272" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#991b1b" text-anchor="middle">パスが規則と不一致</text>
+<rect x="790" y="221" width="146" height="34" rx="17" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="863" y="243" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#991b1b" text-anchor="middle">拒否</text>
+<text x="863" y="272" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace" font-size="11" fill="#6b7280" text-anchor="middle">HTTP:POST DENIED</text>
+<rect x="26" y="297" width="344" height="58" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="198.0" y="321.1" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">curl が api.github.com:443 へ</text>
+<text x="198.0" y="339.7" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">TCP 接続を開こうとする</text>
+<polyline points="370,326 465,326" fill="none" stroke="#374151" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="495,326 655,326" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round" stroke-dasharray="4 4"/>
+<polyline points="685,326 788,326" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round" stroke-dasharray="4 4" marker-end="url(#a-box_s)"/>
+<circle cx="480" cy="326" r="13" fill="#dc2626"/>
+<path d="M475,321 L485,331 M475,331 L485,321" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+<circle cx="670" cy="326" r="13" fill="#fff" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="665" y1="326" x2="675" y2="326" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+<text x="480" y="360" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#991b1b" text-anchor="middle">curl は許可外</text>
+<text x="670" y="360" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">到達しない</text>
+<rect x="790" y="309" width="146" height="34" rx="17" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="863" y="331" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#991b1b" text-anchor="middle">拒否</text>
+<text x="863" y="360" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace" font-size="11" fill="#6b7280" text-anchor="middle">NET:OPEN DENIED</text>
+<text x="480" y="406" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" fill="#1f2937" text-anchor="middle">既定は全拒否。2 つの段を両方通った通信だけが、外へ出る</text>
+</svg>

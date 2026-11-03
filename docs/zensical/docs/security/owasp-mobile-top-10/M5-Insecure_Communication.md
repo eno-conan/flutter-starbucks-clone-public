@@ -1,56 +1,72 @@
 # M5: Insecure Communication
 
-## Threat Agents
-**Application Specific**
+## Risk rating
 
-Most modern mobile applications exchange data with one or more remote servers. When the data transmission takes place, it typically goes through the mobile device's carrier network and the internet, a threat agent listening on the wire can intercept and modify the data if it transmitted in plaintext or using a deprecated encryption protocol. Threat agents might have different motives such as stealing sensitive information, conducting espionage, identity theft and more. The following threat agents exist:
+| Item | Value |
+|---|---|
+| Threat Agents | **Application Specific** |
+| Exploitability | **EASY** |
+| Prevalence | **COMMON** |
+| Detectability | **AVERAGE** |
+| Technical Impact | **SEVERE** |
+| Business Impact | **MODERATE** |
 
-- An adversary that shares your local network (compromised or monitored Wi-Fi);
-- Rogue carrier or network devices (routers, cell towers, proxy's, etc); or
-- Malware on your mobile device.
+Each section below is OWASP's original text. The long descriptions are collapsed; open them as needed.
 
-## Attack Vectors
-**Exploitability: EASY**
+??? info "Threat Agents"
+    Most modern mobile applications exchange data with one or more remote servers. When the data transmission takes place, it typically goes through the mobile device's carrier network and the internet, a threat agent listening on the wire can intercept and modify the data if it transmitted in plaintext or using a deprecated encryption protocol. Threat agents might have different motives such as stealing sensitive information, conducting espionage, identity theft and more. The following threat agents exist:
 
-While modern applications do reply on cryptographic protocols such as SSL/TLS, they can sometimes have flaws in their implementations like:
+    - An adversary that shares your local network (compromised or monitored Wi-Fi);
+    - Rogue carrier or network devices (routers, cell towers, proxy's, etc); or
+    - Malware on your mobile device.
 
-- Using deprecated protocols and/or bad configuration settings;
-- Accepting bad ssl certificates (self-signed, revoked, expired, wrong host…); or
-- Inconsistency (having SSL/TLS only on select workflows such as authentication).
+??? info "Attack Vectors"
+    While modern applications do reply on cryptographic protocols such as SSL/TLS, they can sometimes have flaws in their implementations like:
 
-## Security Weakness
-**Prevalence: COMMON**  
-**Detectability: AVERAGE**
+    - Using deprecated protocols and/or bad configuration settings;
+    - Accepting bad ssl certificates (self-signed, revoked, expired, wrong host…); or
+    - Inconsistency (having SSL/TLS only on select workflows such as authentication).
 
-While modern mobile applications aim to protect network traffic, they often have inconsistencies in their implementation. These inconsistencies can lead to vulnerabilities that expose data and session IDs to interception. Just because an app uses transport security protocols doesn't mean it's implemented correctly. To identify basic flaws, you can observe the network traffic on the phone. However, detecting more subtle flaws requires a closer look at the application's design and configuration.
+??? info "Security Weakness"
+    - While modern mobile applications aim to protect network traffic, they often have inconsistencies in their implementation.
+    - These inconsistencies can lead to vulnerabilities that expose data and session IDs to interception.
+    - Just because an app uses transport security protocols doesn't mean it's implemented correctly.
+    - To identify basic flaws, you can observe the network traffic on the phone.
+    - However, detecting more subtle flaws requires a closer look at the application's design and configuration.
 
-## Technical Impacts
-**Impact: SEVERE**
+??? info "Technical Impacts"
+    This flaw can expose user data which might lead to account takeover, user impersonation, PII data leaks and more, for instance an attacker might intercept user credentials, session, 2FA tokens which can open the door for more elaborate attacks.
 
-This flaw can expose user data which might lead to account takeover, user impersonation, PII data leaks and more, for instance an attacker might intercept user credentials, session, 2FA tokens which can open the door for more elaborate attacks.
+??? info "Business Impacts"
+    At a minimum, interception of sensitive data through a communication channel will result in a privacy violation.
 
-## Business Impacts
-**Impact: MODERATE**
+    The violation of a user's confidentiality may result in:
 
-At a minimum, interception of sensitive data through a communication channel will result in a privacy violation.
-
-The violation of a user's confidentiality may result in:
-
-- Identity theft;
-- Fraud, or
-- Reputational Damage.
+    - Identity theft;
+    - Fraud, or
+    - Reputational Damage.
 
 ## Am I Vulnerable To 'Insecure Communication'?
 
-This risk covers all aspects of getting data from point A to point B, but doing it insecurely. It encompasses mobile-to-mobile communications, app-to-server communications, or mobile-to-something-else communications. This risk includes all communications technologies that a mobile device might use: TCP/IP, WiFi, Bluetooth/Bluetooth-LE, NFC, audio, infrared, GSM, 3G, SMS, etc.
+- This risk covers all aspects of getting data from point A to point B, but doing it insecurely.
+- It encompasses mobile-to-mobile communications, app-to-server communications, or mobile-to-something-else communications.
+- This risk includes all communications technologies that a mobile device might use: TCP/IP, WiFi, Bluetooth/Bluetooth-LE, NFC, audio, infrared, GSM, 3G, SMS, etc.
 
-All the TLS communications issues go here. All the NFC, Bluetooth, and WiFi issues go here.
+- All the TLS communications issues go here.
+- All the NFC, Bluetooth, and WiFi issues go here.
 
-The prominent characteristics include packaging up some kind of sensitive data and transmitting it into or out of the device. Some examples of sensitive data include encryption keys, passwords, private user information, account details, session tokens, documents, metadata, and binaries. The sensitive data can be coming to the device from a server, it can be coming from an app out to a server, or it might be going between the device and something else local (e.g., an NFC terminal or NFC card). The defining characteristic of this risk is the existence of two devices and some data passing between them.
+- The prominent characteristics include packaging up some kind of sensitive data and transmitting it into or out of the device.
+- Some examples of sensitive data include encryption keys, passwords, private user information, account details, session tokens, documents, metadata, and binaries.
+- The sensitive data can be coming to the device from a server, it can be coming from an app out to a server, or it might be going between the device and something else local (e.g., an NFC terminal or NFC card).
+- The defining characteristic of this risk is the existence of two devices and some data passing between them.
 
-If the data is being stored locally in the device itself, that's #Insecure Data. If the session details are communicated securely (e.g., via a strong TLS connection) but the session identifer itself is bad (perhaps it is predictable, low entropy, etc.), then that's an #Insecure Authentication problem, not a communication problem.
+- If the data is being stored locally in the device itself, that's #Insecure Data.
+- If the session details are communicated securely (e.g., via a strong TLS connection) but the session identifer itself is bad (perhaps it is predictable, low entropy, etc.), then that's an #Insecure Authentication problem, not a communication problem.
 
-The usual risks of insecure communication are around data integrity, data confidentiality, and origin integrity. If the data can be changed while in transit, without the change being detectable (e.g., via a man-in-the-middle attack) then that is a good example of this risk. If confidential data can be exposed, learned, or derived by observing the communications as it happens (i.e., eavesdropping) or by recording the conversation as it happens and attacking it later (offline attack), that's also an insecure communication problem. Failing to properly setup and validate a TLS connection (e.g., certificate checking, weak ciphers, other TLS configuration problems) are all here in insecure communication.
+- The usual risks of insecure communication are around data integrity, data confidentiality, and origin integrity.
+- If the data can be changed while in transit, without the change being detectable (e.g., via a man-in-the-middle attack) then that is a good example of this risk.
+- If confidential data can be exposed, learned, or derived by observing the communications as it happens (i.e., eavesdropping) or by recording the conversation as it happens and attacking it later (offline attack), that's also an insecure communication problem.
+- Failing to properly setup and validate a TLS connection (e.g., certificate checking, weak ciphers, other TLS configuration problems) are all here in insecure communication.
 
 ## How Do I Prevent 'Insecure Communication'?
 
@@ -90,22 +106,25 @@ Default classes in the latest version of iOS handle SSL cipher strength negotiat
 
 There are a few common scenarios that penetration testers frequently discover when inspecting a mobile app's communication security:
 
-### Lack of certificate inspection
+??? example "Lack of certificate inspection"
+    - The mobile app and an endpoint successfully connect and perform a TLS handshake to establish a secure channel.
+    - However, the mobile app fails to inspect the certificate offered by the server and the mobile app unconditionally accepts any certificate offered to it by the server.
+    - This destroys any mutual authentication capability between the mobile app and the endpoint.
+    - The mobile app is susceptible to man-in-the-middle attacks through a TLS proxy.
 
-The mobile app and an endpoint successfully connect and perform a TLS handshake to establish a secure channel. However, the mobile app fails to inspect the certificate offered by the server and the mobile app unconditionally accepts any certificate offered to it by the server. This destroys any mutual authentication capability between the mobile app and the endpoint. The mobile app is susceptible to man-in-the-middle attacks through a TLS proxy.
+??? example "Weak handshake negotiation"
+    - The mobile app and an endpoint successfully connect and negotiate a cipher suite as part of the connection handshake.
+    - The client successfully negotiates with the server to use a weak cipher suite that results in weak encryption that can be easily decrypted by the adversary.
+    - This jeopardizes the confidentiality of the channel between the mobile app and the endpoint.
 
-### Weak handshake negotiation
+??? example "Privacy information leakage"
+    - The mobile app transmits personally identifiable information to an endpoint via non-secure channels instead of over SSL/TLS.
+    - This jeopardizes the confidentiality of any privacy-related data between the mobile app and the endpoint.
 
-The mobile app and an endpoint successfully connect and negotiate a cipher suite as part of the connection handshake. The client successfully negotiates with the server to use a weak cipher suite that results in weak encryption that can be easily decrypted by the adversary. This jeopardizes the confidentiality of the channel between the mobile app and the endpoint.
+??? example "Credential information leakage"
+    - The mobile app transmits user credentials to an endpoint via non-secure channels instead of over SSL/TLS.
+    - This allows an adversary to intercept those credentials in cleartext.
 
-### Privacy information leakage
-
-The mobile app transmits personally identifiable information to an endpoint via non-secure channels instead of over SSL/TLS. This jeopardizes the confidentiality of any privacy-related data between the mobile app and the endpoint.
-
-### Credential information leakage
-
-The mobile app transmits user credentials to an endpoint via non-secure channels instead of over SSL/TLS. This allows an adversary to intercept those credentials in cleartext.
-
-### Two-Factor authentication bypass
-
-The mobile app receives a session identifier from an endpoint via non-secure channels instead of over SSL/TLS. This allows an adversary to bypass two-factor authentication by using the intercepted session identifier.
+??? example "Two-Factor authentication bypass"
+    - The mobile app receives a session identifier from an endpoint via non-secure channels instead of over SSL/TLS.
+    - This allows an adversary to bypass two-factor authentication by using the intercepted session identifier.

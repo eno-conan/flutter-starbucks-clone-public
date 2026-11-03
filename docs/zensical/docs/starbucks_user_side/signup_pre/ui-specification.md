@@ -2,7 +2,9 @@
 
 ## 1. 概要
 
-このドキュメントは、仮会員登録画面のUI/UX仕様に関する詳細を記載します。
+- 対象: 仮会員登録画面。
+- 内容: UI / UX 仕様の詳細。
+- 各コンポーネントの実装コードは、折り畳み（`コード例`）の中にある。
 
 ## 2. 画面構成
 
@@ -142,18 +144,20 @@ if (_emailController.text.isNotEmpty)
 ### 5.1 重複メールエラー
 
 #### デザイン仕様
-```dart
-Dialog(
-  insetPadding: const EdgeInsets.symmetric(horizontal: 16),
-  child: Container(
-    decoration: BoxDecoration(
-      color: Colors.white, 
-      borderRadius: BorderRadius.circular(16)
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
-  ),
-)
-```
+
+??? example "コード例（10 行）"
+    ```dart
+    Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white, 
+          borderRadius: BorderRadius.circular(16)
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+      ),
+    )
+    ```
 
 #### 内容構成
 - **タイトル**: 「エラーが発生しました。」（フォントサイズ: 24）
@@ -172,7 +176,7 @@ Scaffold(
   resizeToAvoidBottomInset: false,
 )
 ```
-- **設定**: キーボード表示時にコンテンツを上に押し上げない
+- **設定**: キーボード表示時に、コンテンツを上に押し上げない
 - **目的**: OverPixel防止、UI固定
 
 ### 6.2 セーフエリア対応
@@ -229,6 +233,5 @@ SafeArea(child: Column(children: const [_Header(), _Form()]))
 
 ## 10. 関連ドキュメント
 
-- [フロー図（BPMN）](./flow.md)
 - [概要仕様書](./overview.md)
-- [設計仕様書](./design-specification.md)
+- [設計書 0004: 会員登録](../../design/0004-member-registration.md)

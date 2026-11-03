@@ -1,40 +1,47 @@
 # [M1: Improper Credential Usage](https://owasp.org/www-project-mobile-top-10/2023-risks/m1-improper-credential-usage.html)
 
-## Threat Agents
-**Application Specific**
+## Risk rating
 
-Threat agents exploiting hardcoded credentials and improper credential usage in mobile applications can include automated attacks using publicly available or custom-built tools. Such agents could potentially locate and exploit hardcoded credentials or exploit weaknesses due to improper credential usage.
+| Item | Value |
+|---|---|
+| Threat Agents | **Application Specific** |
+| Exploitability | **EASY** |
+| Prevalence | **COMMON** |
+| Detectability | **EASY** |
+| Technical Impact | **SEVERE** |
+| Business Impact | **SEVERE** |
 
-## Attack Vectors
-**Exploitability: EASY**
+Each section below is OWASP's original text. The long descriptions are collapsed; open them as needed.
 
-Adversaries can exploit vulnerabilities in both hardcoded credentials and improper credential usage. Once these vulnerabilities are identified, an attacker can use hardcoded credentials to gain unauthorized access to sensitive functionalities of the mobile app. They can also misuse credentials, for instance by gaining access through improperly validated or stored credentials, thereby bypassing the need for legitimate access.
+??? info "Threat Agents"
+    - Threat agents exploiting hardcoded credentials and improper credential usage in mobile applications can include automated attacks using publicly available or custom-built tools.
+    - Such agents could potentially locate and exploit hardcoded credentials or exploit weaknesses due to improper credential usage.
 
-## Security Weakness
-**Prevalence: COMMON**  
-**Detectability: EASY**
+??? info "Attack Vectors"
+    - Adversaries can exploit vulnerabilities in both hardcoded credentials and improper credential usage.
+    - Once these vulnerabilities are identified, an attacker can use hardcoded credentials to gain unauthorized access to sensitive functionalities of the mobile app.
+    - They can also misuse credentials, for instance by gaining access through improperly validated or stored credentials, thereby bypassing the need for legitimate access.
 
-Poor implementation of credential management, such as using hardcoded credentials and improper handling, can lead to severe security weaknesses. A comprehensive security testing process should aim to identify these issues. For instance, security testers should attempt to identify hardcoded credentials within the mobile app's source code or within any configuration files.
+??? info "Security Weakness"
+    - Poor implementation of credential management, such as using hardcoded credentials and improper handling, can lead to severe security weaknesses.
+    - A comprehensive security testing process should aim to identify these issues.
+    - For instance, security testers should attempt to identify hardcoded credentials within the mobile app's source code or within any configuration files.
 
-## Technical Impacts
-**Impact: SEVERE**
+??? info "Technical Impacts"
+    Poor credential management can lead to several significant technical impacts. Unauthorized users might gain access to sensitive information or functionality within the mobile app or its backend systems. This can lead to:
 
-Poor credential management can lead to several significant technical impacts. Unauthorized users might gain access to sensitive information or functionality within the mobile app or its backend systems. This can lead to:
+    - Data breaches
+    - Loss of user privacy
+    - Fraudulent activity
+    - Potential access to administrative functionality
 
-- Data breaches
-- Loss of user privacy
-- Fraudulent activity
-- Potential access to administrative functionality
+??? info "Business Impacts"
+    The business impact of poor credential management, including hardcoded credentials and improper credential usage, can be substantial:
 
-## Business Impacts
-**Impact: SEVERE**
-
-The business impact of poor credential management, including hardcoded credentials and improper credential usage, can be substantial:
-
-- Reputation Damage
-- Information Theft
-- Fraud
-- Unauthorized Access to Data
+    - Reputation Damage
+    - Information Theft
+    - Fraud
+    - Unauthorized Access to Data
 
 ## Am I Vulnerable To 'Improper Credential Usage'?
 
@@ -51,7 +58,8 @@ Avoiding insecure credential management involves not using hardcoded credentials
 
 ### Avoid Using Hardcoded Credentials
 
-Hardcoded credentials can be easily discovered by attackers and provide an easy access point for unauthorized users. Always avoid using hardcoded credentials in your mobile app's code or configuration files.
+- Hardcoded credentials can be easily discovered by attackers and provide an easy access point for unauthorized users.
+- Always avoid using hardcoded credentials in your mobile app's code or configuration files.
 
 ### Properly Handle User Credentials
 

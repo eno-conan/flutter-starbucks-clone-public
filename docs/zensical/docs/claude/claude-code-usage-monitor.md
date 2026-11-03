@@ -2,15 +2,14 @@
 
 ## 概要
 
-Claude Code Usage Monitor は、Claude Code の使用状況（トークン使用量、コストなど）をリアルタイムで監視できるツールです。
-
-公式リポジトリ: https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor
+- Claude Code Usage Monitor は、Claude Code の使用状況（トークン使用量、コストなど）を、リアルタイムで監視できるツール。
+- 公式リポジトリ: <https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor>
 
 ## インストール手順
 
 ### 前提条件
 
-- `uv` がインストールされていること
+- `uv` がインストールされていること。
 
 ```bash
 # uv のバージョン確認
@@ -27,7 +26,7 @@ uv tool install claude-monitor
 
 ## インストール確認
 
-インストール後、以下のコマンドで確認できます：
+- インストール後、次のコマンドで確認できる。
 
 ```bash
 # インストール済みツールの確認
@@ -50,15 +49,20 @@ claude-monitor --version
 
 ### 実行ファイルの場所
 
-`uv tool install` でインストールされた実行ファイルは以下の場所に配置されます：
-
+- `uv tool install` でインストールされた実行ファイルの場所。
 - Windows: `C:\Users\{ユーザー名}\.local\bin\claude-monitor.exe`
 
 ### PATH に追加されない場合の対処法
 
+| 方法 | 内容 | 向いている場面 |
+|---|---|---|
+| 1. 新しいターミナルを開く（推奨） | `uv tool update-shell` を実行する | まず試す |
+| 2. エイリアスを設定 | `.bashrc` にエイリアスを追加する | 現在のセッションでも使いたい |
+| 3. フルパスで実行 | 実行ファイルのパスを直接指定する | エイリアスが機能しない |
+
 #### 方法1: 新しいターミナルセッションを開く（推奨）
 
-`uv tool update-shell` を実行後、新しいターミナルを開くと自動的に PATH が更新されます。
+- `uv tool update-shell` を実行後、新しいターミナルを開くと、自動的に PATH が更新される。
 
 ```bash
 # PATH の更新（初回のみ）
@@ -70,7 +74,7 @@ claude-monitor --version
 
 #### 方法2: エイリアスを設定
 
-現在のセッションでも使えるように、`.bashrc` にエイリアスを追加します。
+- 現在のセッションでも使えるように、`.bashrc` にエイリアスを追加する。
 
 ```bash
 # .bashrc にエイリアスを追加
@@ -84,7 +88,7 @@ source ~/.bashrc
 
 #### 方法3: フルパスで実行
 
-エイリアスが機能しない場合は、フルパスで実行できます。
+- エイリアスが機能しない場合は、フルパスで実行できる。
 
 ```bash
 /c/Users/eno49/.local/bin/claude-monitor.exe
@@ -94,13 +98,15 @@ source ~/.bashrc
 
 ### 利用可能なコマンド
 
-Claude Code Usage Monitor は複数のコマンド名で起動できます：
+- 複数のコマンド名で起動できる。
 
-- `claude-monitor` - メインコマンド
-- `ccmonitor` - 短縮形
-- `cmonitor` - さらに短い形
-- `ccm` - 最短形
-- `claude-code-monitor` - 完全な名前
+| コマンド | 説明 |
+|---|---|
+| `claude-monitor` | メインコマンド |
+| `ccmonitor` | 短縮形 |
+| `cmonitor` | さらに短い形 |
+| `ccm` | 最短形 |
+| `claude-code-monitor` | 完全な名前 |
 
 ### 基本的な使用例
 
@@ -149,19 +155,20 @@ claude-monitor --plan custom --view session
 
 ### `command not found` エラーが出る場合
 
-1. **新しいターミナルを開く**
-   - `uv tool update-shell` を実行後、新しいターミナルセッションを開いてください。
+??? question "1. 新しいターミナルを開く"
+    - `uv tool update-shell` を実行後、新しいターミナルセッションを開く。
 
-2. **PATH を確認**
-   ```bash
-   echo "$PATH" | tr ':' '\n' | grep -i local
-   ```
-   `C:\Users\{ユーザー名}\.local\bin` が含まれているか確認してください。
+??? question "2. PATH を確認する"
+    - `C:\Users\{ユーザー名}\.local\bin` が含まれているか確認する。
 
-3. **フルパスで実行**
-   ```bash
-   /c/Users/eno49/.local/bin/claude-monitor.exe
-   ```
+    ```bash
+    echo "$PATH" | tr ':' '\n' | grep -i local
+    ```
+
+??? question "3. フルパスで実行する"
+    ```bash
+    /c/Users/eno49/.local/bin/claude-monitor.exe
+    ```
 
 ### インストール場所の確認
 

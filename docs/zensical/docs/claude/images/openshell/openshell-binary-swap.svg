@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="424" viewBox="0 0 960 424" role="img" aria-label="コマンド名だけの許可は、実体の差し替えで破れる">
+<title>コマンド名だけの許可は、実体の差し替えで破れる</title>
+<desc>A: コマンド名だけで許可すると、エージェントが curl の実体を書き換えたあとで curl を実行しても、名前が curl なので許可され、別の処理が走る。B: この環境では /usr が読み込み専用なので、書き換えの時点で拒否される。</desc>
+<defs><marker id="a-line" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="a-ok_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="a-ng_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="a-box_s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/></marker></defs>
+<rect x="0.5" y="0.5" width="959" height="423" rx="12" fill="#ffffff" stroke="#d1d5db"/>
+<rect x="14" y="14" width="932" height="200" rx="10" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="30" y="40" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="start">A. コマンド名だけで許可する場合（例: Bash(curl *)）</text>
+<rect x="14" y="228" width="932" height="182" rx="10" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="30" y="254" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="start">B. この環境: /usr が読み込み専用</text>
+<rect x="30" y="90" width="150" height="84" rx="8" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="105.0" y="117.9" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">エージェント</text>
+<text x="105.0" y="136.2" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">ファイルを書ける</text>
+<text x="105.0" y="155.2" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">コマンドも実行できる</text>
+<rect x="730" y="68" width="200" height="124" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="830.0" y="115.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace,'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#1f2937" text-anchor="middle">/usr/bin/curl</text>
+<text x="830.0" y="134.6" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#991b1b" text-anchor="middle">中身が別物に</text>
+<text x="830.0" y="153.2" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#991b1b" text-anchor="middle">→ 別の処理が走る</text>
+<rect x="400" y="128" width="170" height="52" rx="8" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="485.0" y="149.4" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">許可の判定</text>
+<text x="485.0" y="167.7" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">名前だけを見る</text>
+<polyline points="180,104 730,104" fill="none" stroke="#dc2626" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-ng_s)"/>
+<text x="455" y="94" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#f9fafb" stroke-width="4" stroke-linejoin="round" paint-order="stroke">① 実体を別の中身に書き換える</text>
+<polyline points="180,154 400,154" fill="none" stroke="#374151" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-line)"/>
+<text x="290" y="144" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#f9fafb" stroke-width="4" stroke-linejoin="round" paint-order="stroke">② curl … を実行</text>
+<polyline points="570,154 730,154" fill="none" stroke="#16a34a" stroke-width="2" stroke-linejoin="round" marker-end="url(#a-ok_s)"/>
+<text x="650" y="144" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#f9fafb" stroke-width="4" stroke-linejoin="round" paint-order="stroke">許可</text>
+<rect x="30" y="286" width="150" height="84" rx="8" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="105.0" y="313.9" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="14" font-weight="700" fill="#1f2937" text-anchor="middle">エージェント</text>
+<text x="105.0" y="332.2" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">ファイルを書ける</text>
+<text x="105.0" y="351.2" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">コマンドも実行できる</text>
+<rect x="730" y="286" width="200" height="84" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="830.0" y="323.1" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace,'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="13" font-weight="700" fill="#1f2937" text-anchor="middle">/usr/bin/curl</text>
+<text x="830.0" y="341.7" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#166534" text-anchor="middle">元の中身のまま</text>
+<polyline points="180,328 532,328" fill="none" stroke="#dc2626" stroke-width="2" stroke-linejoin="round"/>
+<text x="356" y="318" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#6b7280" text-anchor="middle" stroke="#f9fafb" stroke-width="4" stroke-linejoin="round" paint-order="stroke">① 書き換えを試みる</text>
+<rect x="536" y="292" width="8" height="72" rx="2" fill="#dc2626" stroke="#dc2626" stroke-width="1.5"/>
+<text x="540" y="388" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif" font-size="12" fill="#991b1b" text-anchor="middle">/usr は読み込み専用: 書き込みは拒否</text>
+</svg>

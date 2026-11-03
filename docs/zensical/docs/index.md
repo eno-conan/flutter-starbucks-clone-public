@@ -34,6 +34,7 @@ Claude Code を使った開発ワークフローとガイドライン。
 - [ワークフロー](claude/workflow.md)
 - [品質チェックリスト](claude/quality-checklist.md)
 - [スラッシュコマンドガイド](claude/slash-commands-guide.md)
+- [OpenShell（サンドボックスで Claude Code を動かす）](claude/openshell.md)
 
 ### アーキテクチャ
 

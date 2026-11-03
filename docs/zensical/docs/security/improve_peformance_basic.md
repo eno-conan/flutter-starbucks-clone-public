@@ -1,227 +1,379 @@
 # Flutterパフォーマンス最適化完全ガイド
 
-Flutterアプリは適切な実装により60fps以上の滑らかな動作を実現できますが、開発者が性能を維持するためのベストプラクティスを理解することが不可欠です。本レポートでは、パフォーマンス測定からFirebase監視、具体的な最適化手法、トラブルシューティングまで、実践的な最適化戦略を網羅的に解説します。**重要な原則は「測定してから最適化する」というメトリクス駆動のアプローチです。**プロファイルモードでの実機テストが必須で、デバッグモードでの測定は意図的に犠牲にされたパフォーマンスを示すため誤った結果を導きます。本ガイドでは、Flutter DevToolsによる詳細分析、Firebase Performance Monitoringによる本番監視、メモリリーク検出、起動時間改善、ビルドサイズ削減など、中級者から上級者向けの実践的テクニックを豊富なコード例とともに提供します。
+## 概要
+
+- Flutter アプリは、適切な実装で 60fps 以上の滑らかな動作を実現できる。
+- 性能を維持するには、開発者がベストプラクティスを理解していることが不可欠。
+- このガイドの範囲:
+    - パフォーマンス測定
+    - Firebase 監視
+    - 具体的な最適化手法
+    - トラブルシューティング
+- 対象は中級者から上級者。コード例を多く載せている（コードは折り畳み）。
+- 扱う手法:
+    - Flutter DevTools による詳細分析
+    - Firebase Performance Monitoring による本番監視
+    - メモリリーク検出
+    - 起動時間の改善
+    - ビルドサイズの削減
+
+!!! warning "原則: 測定してから最適化する（メトリクス駆動）"
+    - プロファイルモードでの実機テストが必須。
+    - デバッグモードでの測定は、意図的に犠牲にされたパフォーマンスを示す。そのため誤った結果を導く。
 
 ## パフォーマンス測定の基礎と環境セットアップ
 
-パフォーマンス最適化の第一歩は正確な測定環境の構築です。**必ずプロファイルモードで実機テストを実施**してください。デバッグモードはJIT(Just In Time)コンパイルを使用し、開発用のアサーションが有効なため、リリース時のパフォーマンスを反映しません。プロファイルモードはリリースと同じAOT(Ahead Of Time)コンパイルを使用しながら、パフォーマンストレースが有効なため、正確な測定が可能です。
+第一歩は、正確な測定環境を作ること。
 
-プロファイルモードの起動方法は環境により異なります。コマンドラインでは`flutter run --profile`、VS Codeではlaunch.jsonに`"flutterMode": "profile"`を設定、Android Studioでは「Run > Flutter Run main.dart in Profile Mode」を選択します。**エミュレータやシミュレータは絶対に使用せず**、ユーザーが使用する最も低スペックの実機でテストすることで、実際の使用環境での問題を早期に発見できます。
+!!! warning "必ずプロファイルモードで実機テストする"
+    - デバッグモード: JIT（Just In Time）コンパイルを使い、開発用のアサーションが有効。リリース時のパフォーマンスを反映しない。
+    - プロファイルモード: リリースと同じ AOT（Ahead Of Time）コンパイルを使いつつ、パフォーマンストレースが有効。正確に測れる。
+    - **エミュレータやシミュレータは絶対に使わない。**
+    - ユーザーが使う最も低スペックの実機でテストすると、実際の使用環境での問題を早期に見つけられる。
 
-目標となるパフォーマンス指標は明確です。**60fpsでは1フレームあたり約16ms、120fps対応デバイスでは約8.3msの描画時間**を維持する必要があります。この時間枠を超えるフレームは「ジャンク(jank)」と呼ばれ、ユーザーに視覚的なカクつきとして認識されます。パフォーマンスオーバーレイは最新300フレームの描画時間を2つのグラフで表示します。上部のグラフはRaster(GPU)スレッド、下部はUIスレッドを示し、16msを示す白線を超える赤いバーがジャンクフレームです。
+### プロファイルモードの起動方法
+
+| 環境 | 方法 |
+|---|---|
+| コマンドライン | `flutter run --profile` |
+| VS Code | `launch.json` に `"flutterMode": "profile"` を設定 |
+| Android Studio | 「Run > Flutter Run main.dart in Profile Mode」を選ぶ |
+
+### 目標となる指標
+
+- **60fps: 1 フレームあたり約 16ms**。
+- **120fps 対応デバイス: 約 8.3ms**。
+- この枠を超えたフレームは「ジャンク（jank）」。ユーザーには視覚的なカクつきとして見える。
+
+??? info "パフォーマンスオーバーレイの見方"
+    - 最新 300 フレームの描画時間を、2 つのグラフで表示する。
+    - 上: Raster（GPU）スレッド。下: UI スレッド。
+    - 16ms を示す白線を超える赤いバーが、ジャンクフレーム。
 
 ## Flutter DevToolsによる詳細なプロファイリング
 
-Flutter DevToolsはパフォーマンス分析の中核となるツールセットです。ブラウザベースのインターフェースで、Timeline View、Memory View、CPU Profiler、Network Profilerの4つの主要機能を提供します。プロファイルモードでアプリを起動すると、コンソールに表示されるDevToolsのURLからアクセスできます。
+- Flutter DevTools は、パフォーマンス分析の中核となるツールセット。
+- ブラウザベースで、次の 4 つの主要機能を提供する。
+    - Timeline View
+    - Memory View
+    - CPU Profiler
+    - Network Profiler
+- プロファイルモードで起動すると、コンソールに表示される DevTools の URL から開ける。
 
-**Timeline Viewの活用戦略**では、フレームレンダリングチャートでジャンクの発生パターンを特定します。赤色のオーバーレイが表示されるフレームが問題のあるフレームです。シェーダーコンパイルによるジャンクは濃い赤または黒で表示され、初回アニメーション時に数百ミリ秒のフリーズを引き起こす可能性があります。Flutter 3.10以降では新しいレンダリングエンジンImpellerがiOSでデフォルト化され、シェーダーコンパイルジャンクが大幅に軽減されました。実測データでは、Flutter 3.3.10で4.4msだったシェーダーコンパイル時間が、Flutter 3.10.6では完全に消失しています。
+### Timeline View の活用
 
-診断の基本フローは、まずUIグラフとGPUグラフのどちらに赤が表示されているかを確認することです。**UIグラフが赤い場合、Dartコードの実行が遅い**ことを示します。build()メソッドの処理が重い、不要なウィジェット再構築、同期的な重い計算などが原因です。CPU Profilerで具体的なボトルネックを特定します。**GPUグラフのみが赤い場合、レイヤーツリーのレンダリングが複雑すぎる**ことを示します。saveLayer()の呼び出し、複数オブジェクトの透明度処理、クリッピング、シャドウなどが原因です。両方が赤い場合は、まずUIスレッドから調査を開始します。
+- フレームレンダリングチャートで、ジャンクの発生パターンを特定する。
+- 赤色のオーバーレイが付いたフレームが、問題のあるフレーム。
+- シェーダーコンパイルによるジャンクは、濃い赤または黒で表示される。初回アニメーション時に数百ミリ秒のフリーズを起こしうる。
 
-**Memory Viewによるリーク検出**は、アプリの安定性にとって極めて重要です。メモリビューは500ms間隔で更新される時系列グラフを表示し、Dart/Flutterヒープ、ネイティブメモリ、RasterCache、RSS(Resident Set Size)を追跡します。メモリリーク検出には「Diff Snapshots」機能を使用します。機能実行前にスナップショットを取得し、機能を複数回実行した後にガベージコレクションを強制実行してから2回目のスナップショットを取得します。オブジェクト数や使用メモリが増加し続けるクラスがリークの疑いがあります。
+!!! success "Impeller でシェーダーコンパイルジャンクは大幅に軽減"
+    - Flutter 3.10 以降、新しいレンダリングエンジン Impeller が iOS でデフォルトになった。
+    - 実測: Flutter 3.3.10 で 4.4ms だったシェーダーコンパイル時間が、Flutter 3.10.6 では完全に消えた。
 
-一般的なメモリリークの原因は以下の通りです。**クローズされていないStreamとStreamSubscription**が最も頻繁で、dispose()メソッドでsubscription.cancel()を忘れると、ストリームがメモリに残り続けます。**コントローラの未破棄**も重要で、TextEditingController、AnimationController、ScrollControllerなどは必ずdispose()で破棄します。**クロージャによるコンテキストリーク**では、大きなオブジェクトを参照するクロージャが長時間存在すると、参照先オブジェクト全体がメモリに残ります。必要なデータだけを抽出してからクロージャを作成してください。**BuildContextの保持**も危険で、StatefulWidgetのステートフィールドにBuildContextを保存すると、ウィジェットのライフサイクルよりも長くコンテキストが残る可能性があります。
+### 診断の基本フロー
 
-メモリ管理のベストプラクティスとして、constコンストラクタの徹底使用で不要なオブジェクト生成を削減し、StatelessWidgetを優先することでメモリフットプリントを低減します。ListView.builderやGridView.builderによる遅延読み込みは大量のアイテムを扱う際に必須です。Singletonパターンによるインスタンスの再利用、dispose()でのサブスクリプションキャンセル、AutomaticKeepAliveClientMixinの慎重な使用が重要です。適切な破棄処理により**メモリ使用量を30-50%削減**でき、constウィジェットにより**リビルドパフォーマンスが15-25%向上**します。
+まず、UI グラフと GPU グラフのどちらに赤が出ているかを確認する。
+
+| 赤いグラフ | 意味 | 主な原因 |
+|---|---|---|
+| **UI グラフ** | Dart コードの実行が遅い | `build()` の処理が重い、不要なウィジェット再構築、同期的な重い計算。CPU Profiler でボトルネックを特定する |
+| **GPU グラフのみ** | レイヤーツリーのレンダリングが複雑すぎる | `saveLayer()` の呼び出し、複数オブジェクトの透明度処理、クリッピング、シャドウ |
+| 両方 | — | まず UI スレッドから調査する |
+
+### Memory View によるリーク検出
+
+- アプリの安定性にとって極めて重要。
+- 500ms 間隔で更新される時系列グラフを表示する。追跡するもの:
+    - Dart / Flutter ヒープ
+    - ネイティブメモリ
+    - RasterCache
+    - RSS（Resident Set Size）
+- リーク検出には「Diff Snapshots」を使う。
+    1. 機能を実行する前に、スナップショットを取る。
+    2. 機能を複数回実行する。
+    3. ガベージコレクションを強制実行する。
+    4. 2 回目のスナップショットを取る。
+- オブジェクト数や使用メモリが増え続けるクラスが、リークの疑い。
+
+### 一般的なメモリリークの原因
+
+- **クローズされていない Stream と StreamSubscription**（最も頻繁）。`dispose()` で `subscription.cancel()` を忘れると、ストリームがメモリに残り続ける。
+- **コントローラの未破棄。** `TextEditingController`・`AnimationController`・`ScrollController` などは、必ず `dispose()` で破棄する。
+- **クロージャによるコンテキストリーク。** 大きなオブジェクトを参照するクロージャが長く存在すると、参照先全体がメモリに残る。必要なデータだけを取り出してからクロージャを作る。
+- **BuildContext の保持。** `StatefulWidget` の State のフィールドに `BuildContext` を保存すると、ウィジェットのライフサイクルより長く残りうる。
+
+### メモリ管理のベストプラクティス
+
+- `const` コンストラクタを徹底して使い、不要なオブジェクト生成を減らす。
+- `StatelessWidget` を優先し、メモリフットプリントを下げる。
+- 大量のアイテムは、`ListView.builder` / `GridView.builder` で遅延読み込みする（必須）。
+- Singleton パターンでインスタンスを再利用する。
+- `dispose()` でサブスクリプションをキャンセルする。
+- `AutomaticKeepAliveClientMixin` は慎重に使う。
+
+!!! success "効果の目安"
+    - 適切な破棄処理で、**メモリ使用量を 30-50% 削減**できる。
+    - `const` ウィジェットで、**リビルドのパフォーマンスが 15-25% 向上**する。
 
 ## UI・レンダリングパフォーマンスの最適化テクニック
 
-ウィジェットの再構築最適化は、パフォーマンス改善の最も効果的なアプローチです。**constコンストラクタの徹底活用**が基本中の基本で、constで宣言されたウィジェットはキャッシュされ、一度も再構築されません。本番アプリでは、スクロール操作ごとに847回のリビルドが発生していたケースが、const使用により228回まで削減され、**73%の改善**を達成しています。
+ウィジェットの再構築の最適化は、パフォーマンス改善の最も効果的なアプローチ。
 
-```dart
-// アンチパターン: 毎フレーム再構築
-class MyWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: Text('静的テキスト'), // 不要な再構築
-    );
-  }
-}
+### `const` コンストラクタを徹底する
 
-// ベストプラクティス: constで最適化
-class MyWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: const Text('静的テキスト'), // キャッシュされ再構築なし
-    );
-  }
-}
-```
+- 基本中の基本。`const` で宣言したウィジェットはキャッシュされ、一度も再構築されない。
+- 実例（本番アプリ）: スクロール操作ごとに 847 回あったリビルドが、`const` の使用で 228 回になった（**73% の改善**）。
 
-analysis_options.yamlで`prefer_const_constructors`と`prefer_const_literals_to_create_immutables`のリントルールを有効化し、constを使用できる箇所を自動検出できます。日本の技術記事で強調されている重要な発見として、**クラス分けとconstの組み合わせ**が挙げられます。同じbuild()メソッド内にconstを記述しても、毎回「変わらない」かの判断コストが発生します。しかし、別クラスに抽出することで、Flutterは一度だけ判断すれば済み、パフォーマンスが大幅に向上します。
+??? example "コード例（19 行）"
+    ```dart
+    // アンチパターン: 毎フレーム再構築
+    class MyWidget extends StatelessWidget {
+      @override
+      Widget build(BuildContext context) {
+        return Container(
+          child: Text('静的テキスト'), // 不要な再構築
+        );
+      }
+    }
 
-**RepaintBoundaryによる再描画の隔離**は、ウィジェットツリーの一部を隔離して不要な再描画を防ぎます。複雑なグラフィックス、静的で変換・フェード処理されるシーン、独立してアニメーションするウィジェット、重いコンテンツのリストアイテムに効果的です。ただし、各RepaintBoundaryはオフスクリーンバッファを作成してメモリを消費するため、過度の使用は避け、プロファイルで改善を検証してください。
+    // ベストプラクティス: constで最適化
+    class MyWidget extends StatelessWidget {
+      @override
+      Widget build(BuildContext context) {
+        return Container(
+          child: const Text('静的テキスト'), // キャッシュされ再構築なし
+        );
+      }
+    }
+    ```
 
-```dart
-// ベストプラクティス: 高価なウィジェットを隔離
-Column(
-  children: [
-    RepaintBoundary(
-      child: ComplexChart(), // 自身のみ再描画
-    ),
-    StaticHeader(),
-    RepaintBoundary(
-      child: AnimatedWidget(), // アニメーションが兄弟に影響しない
-    ),
-  ],
-)
-```
+- `analysis_options.yaml` で `prefer_const_constructors` と `prefer_const_literals_to_create_immutables` を有効にすると、`const` にできる箇所を自動検出できる。
 
-**リビルドスコープの最小化**では、setStateが全体ツリーを再構築しないよう、ValueNotifierやChangeNotifierを活用します。以下の実装例では、カウンター更新時に高価なウィジェットを再構築せず、ValueListenableBuilderで囲まれたTextのみを更新します。
+!!! tip "クラス分けと const の組み合わせ（日本の技術記事で強調されている発見）"
+    - 同じ `build()` の中に `const` を書いても、毎回「変わらないか」の判断コストがかかる。
+    - 別クラスに抽出すると、Flutter は一度だけ判断すれば済む。パフォーマンスが大幅に向上する。
 
-```dart
-class _CounterPageState extends State<CounterPage> {
-  final _counter = ValueNotifier<int>(0);
-  
-  @override
-  void dispose() {
-    _counter.dispose();
-    super.dispose();
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          const ExpensiveBackgroundWidget(), // 再構築なし
-          ValueListenableBuilder<int>(
-            valueListenable: _counter,
-            builder: (context, value, child) => Text('$value'), // これだけ更新
+### RepaintBoundary による再描画の隔離
+
+- ウィジェットツリーの一部を隔離して、不要な再描画を防ぐ。
+- 効果的な対象:
+    - 複雑なグラフィックス
+    - 静的で、変換・フェード処理されるシーン
+    - 独立してアニメーションするウィジェット
+    - 重いコンテンツのリストアイテム
+- 注意: 各 `RepaintBoundary` はオフスクリーンバッファを作ってメモリを消費する。過度に使わず、プロファイルで改善を確かめる。
+
+??? example "コード例（12 行）"
+    ```dart
+    // ベストプラクティス: 高価なウィジェットを隔離
+    Column(
+      children: [
+        RepaintBoundary(
+          child: ComplexChart(), // 自身のみ再描画
+        ),
+        StaticHeader(),
+        RepaintBoundary(
+          child: AnimatedWidget(), // アニメーションが兄弟に影響しない
+        ),
+      ],
+    )
+    ```
+
+### リビルドスコープの最小化
+
+- `setState` がツリー全体を再構築しないよう、`ValueNotifier` や `ChangeNotifier` を使う。
+- 下の例では、カウンター更新時に高価なウィジェットを再構築せず、`ValueListenableBuilder` で囲んだ `Text` だけを更新する。
+
+??? example "コード例（28 行）"
+    ```dart
+    class _CounterPageState extends State<CounterPage> {
+      final _counter = ValueNotifier<int>(0);
+
+      @override
+      void dispose() {
+        _counter.dispose();
+        super.dispose();
+      }
+
+      @override
+      Widget build(BuildContext context) {
+        return Scaffold(
+          body: Column(
+            children: [
+              const ExpensiveBackgroundWidget(), // 再構築なし
+              ValueListenableBuilder<int>(
+                valueListenable: _counter,
+                builder: (context, value, child) => Text('$value'), // これだけ更新
+              ),
+              const ComplexChart(), // 再構築なし
+            ],
           ),
-          const ComplexChart(), // 再構築なし
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _counter.value++, // ターゲット更新
-      ),
-    );
-  }
-}
-```
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _counter.value++, // ターゲット更新
+          ),
+        );
+      }
+    }
+    ```
 
-AnimatedBuilderを使用する際は、childパラメータで高価なウィジェットをキャッシュし、毎フレーム再構築を避けます。アニメーション中、AnimatedBuilderはbuilder関数を毎フレーム呼び出しますが、childパラメータで渡されたウィジェットは一度だけ構築され、キャッシュから再利用されます。
+### AnimatedBuilder の `child` でキャッシュする
+
+- `AnimatedBuilder` は、アニメーション中に `builder` を毎フレーム呼ぶ。
+- `child` パラメータで渡したウィジェットは、一度だけ構築され、キャッシュから再利用される。
+- 高価なウィジェットは `child` で渡し、毎フレームの再構築を避ける。
 
 ## リストビューとスクロールの高速化戦略
 
-ListView.builderによる遅延読み込みは、大量のアイテムを扱う際の必須テクニックです。ListView(children: ...)は全アイテムを即座に生成しますが、ListView.builderは表示中のアイテムのみ(約10-15個)を生成します。10,000アイテムの場合、ListViewでは2-5秒のフリーズが発生しますが、ListView.builderでは1フレームあたり約16msで滑らかに表示されます。
+### `ListView.builder` による遅延読み込み
 
-```dart
-// アンチパターン: 10,000ウィジェットを即座に生成
-ListView(
-  children: List.generate(
-    10000,
-    (i) => ListTile(title: Text('Item $i')),
-  ),
-)
+- 大量のアイテムを扱うときの必須テクニック。
+- `ListView(children: ...)` は全アイテムを即座に生成する。`ListView.builder` は表示中のアイテムだけ（約 10-15 個）を生成する。
+- 10,000 アイテムの場合:
+    - `ListView`: 2-5 秒のフリーズ。
+    - `ListView.builder`: 1 フレームあたり約 16ms で滑らかに表示。
 
-// ベストプラクティス: 表示中のアイテムのみ生成
-ListView.builder(
-  itemCount: 10000,
-  itemBuilder: (context, index) => ListTile(
-    key: ValueKey(index), // パフォーマンスに重要
-    title: Text('Item $index'),
-  ),
-)
-```
-
-**itemExtentの指定は均一な高さのリストで劇的な改善**をもたらします。itemExtentなしでは、10,000アイテムのリストで末尾へのジャンプに約10秒かかりますが、itemExtentありでは瞬時に完了します。理由は、ScrollViewが子要素を測定せずにO(1)でスクロール位置を計算できるためです。
-
-```dart
-// itemExtentなし: 遅い、UIブロック
-ListView.builder(
-  itemCount: 10000,
-  itemBuilder: (context, index) => Container(
-    height: 200, // Flutterが各要素を測定
-    child: ListTile(title: Text('$index')),
-  ),
-)
-// 結果: 末尾へのジャンプに約10秒
-
-// itemExtentあり: 瞬時のスクロール
-ListView.builder(
-  itemCount: 10000,
-  itemExtent: 200, // 事前に既知のサイズ、O(1)計算
-  itemBuilder: (context, index) => ListTile(
-    title: Text('$index'),
-  ),
-)
-// 結果: 末尾へのジャンプが瞬時
-```
-
-日本の実践例では、**GridViewとshrinkWrap:trueの組み合わせがパフォーマンス問題を引き起こす**ケースが報告されています。shrinkWrap:trueを使用すると、GridViewが子要素に合わせて高さを調整するため、全要素が同時にビルドされ、遅延描画されません。解決策はCustomScrollViewとSliverGridの組み合わせです。
-
-```dart
-// アンチパターン: 遅延描画されない
-SingleChildScrollView(
-  child: Column(
-    children: [
-      GridView.builder(
-        shrinkWrap: true,  // これが問題
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: ...
+??? example "コード例（16 行）"
+    ```dart
+    // アンチパターン: 10,000ウィジェットを即座に生成
+    ListView(
+      children: List.generate(
+        10000,
+        (i) => ListTile(title: Text('Item $i')),
       ),
-    ],
-  ),
-)
+    )
 
-// ベストプラクティス: CustomScrollViewとSliverGrid
-CustomScrollView(
-  slivers: [
-    SliverToBoxAdapter(child: ListTile(...)),
-    SliverGrid(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => GridItem(items[index]),
-        childCount: items.length,
+    // ベストプラクティス: 表示中のアイテムのみ生成
+    ListView.builder(
+      itemCount: 10000,
+      itemBuilder: (context, index) => ListTile(
+        key: ValueKey(index), // パフォーマンスに重要
+        title: Text('Item $index'),
       ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+    )
+    ```
+
+### `itemExtent` の指定
+
+- 均一な高さのリストで、劇的に改善する。
+- 10,000 アイテムのリストで末尾へジャンプする時間:
+    - `itemExtent` なし: 約 10 秒。
+    - `itemExtent` あり: 瞬時。
+- 理由: `ScrollView` が子要素を測定せずに、O(1) でスクロール位置を計算できる。
+
+??? example "コード例（19 行）"
+    ```dart
+    // itemExtentなし: 遅い、UIブロック
+    ListView.builder(
+      itemCount: 10000,
+      itemBuilder: (context, index) => Container(
+        height: 200, // Flutterが各要素を測定
+        child: ListTile(title: Text('$index')),
       ),
-    ),
-  ],
-)
-```
+    )
+    // 結果: 末尾へのジャンプに約10秒
 
-**AutomaticKeepAliveによるスクロールパフォーマンス改善**は、複雑なスクロールシナリオで効果を発揮します。CyberAgentの実践例では、縦スクロール内に横スクロール(カルーセル)を配置した際、Pixel 6aでも60FPS以下に低下しました。AutomaticKeepAliveClientMixinを使用し、wantKeepAlive=trueに設定することで、一度生成されたRenderObjectを画面外でも保持し、再構築コストを削減します。
+    // itemExtentあり: 瞬時のスクロール
+    ListView.builder(
+      itemCount: 10000,
+      itemExtent: 200, // 事前に既知のサイズ、O(1)計算
+      itemBuilder: (context, index) => ListTile(
+        title: Text('$index'),
+      ),
+    )
+    // 結果: 末尾へのジャンプが瞬時
+    ```
 
-```dart
-ListView(
-  addAutomaticKeepAlives: true,  // これを有効化
-  children: children,
-);
+### GridView と `shrinkWrap: true` の組み合わせは避ける
 
-// 子WidgetのState
-class HogeChildState extends State with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-  
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);  // 重要: 必ず呼ぶ
-    return SomeWidget();
-  }
-}
-```
+- 日本の実践例で、パフォーマンス問題を起こすと報告されている。
+- `shrinkWrap: true` だと、`GridView` が子要素に合わせて高さを調整する。全要素が同時にビルドされ、遅延描画されない。
+- 解決策: `CustomScrollView` と `SliverGrid` を組み合わせる。
 
-ただし、wantKeepAlive=trueはメモリを消費し続けるため、動的にフラグをコントロールする必要があります。無限スクロールでは、チャンク処理によりRenderObjectをまとめて生成・破棄し、常時60FPSは無理でもカクつき頻度を大幅削減できます。
+??? example "コード例（28 行）"
+    ```dart
+    // アンチパターン: 遅延描画されない
+    SingleChildScrollView(
+      child: Column(
+        children: [
+          GridView.builder(
+            shrinkWrap: true,  // これが問題
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: ...
+          ),
+        ],
+      ),
+    )
+
+    // ベストプラクティス: CustomScrollViewとSliverGrid
+    CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(child: ListTile(...)),
+        SliverGrid(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => GridItem(items[index]),
+            childCount: items.length,
+          ),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+          ),
+        ),
+      ],
+    )
+    ```
+
+### AutomaticKeepAlive によるスクロール改善
+
+- 複雑なスクロールシナリオで効果がある。
+- CyberAgent の実践例: 縦スクロール内に横スクロール（カルーセル）を置くと、Pixel 6a でも 60FPS を下回った。
+- 対策: `AutomaticKeepAliveClientMixin` を使い、`wantKeepAlive = true` にする。一度生成した `RenderObject` を画面外でも保持し、再構築コストを減らす。
+
+??? example "コード例（16 行）"
+    ```dart
+    ListView(
+      addAutomaticKeepAlives: true,  // これを有効化
+      children: children,
+    );
+
+    // 子WidgetのState
+    class HogeChildState extends State with AutomaticKeepAliveClientMixin {
+      @override
+      bool get wantKeepAlive => true;
+
+      @override
+      Widget build(BuildContext context) {
+        super.build(context);  // 重要: 必ず呼ぶ
+        return SomeWidget();
+      }
+    }
+    ```
+
+!!! warning "`wantKeepAlive = true` はメモリを消費し続ける"
+    - そのため、フラグは動的にコントロールする必要がある。
+    - 無限スクロールでは、チャンク処理で `RenderObject` をまとめて生成・破棄する。常時 60FPS は無理でも、カクつきの頻度を大幅に減らせる。
 
 ## 画像最適化とキャッシング戦略
 
-Flutterはネットワーク画像を自動的にキャッシュしますが、設定可能な制限があります。デフォルトではmaximumSize=1000画像、maximumSizeBytes=100MBです。maxByteSizeより大きい画像はキャッシュされないため、制限を増やすか画像をリサイズします。
+### 画像キャッシュの上限
+
+- Flutter はネットワーク画像を自動でキャッシュするが、上限がある。
+- 既定値: `maximumSize` = 1000 画像、`maximumSizeBytes` = 100MB。
+- `maxByteSize` より大きい画像はキャッシュされない。上限を増やすか、画像をリサイズする。
 
 ```dart
 void main() {
   // グローバル画像キャッシュ設定
   PaintingBinding.instance.imageCache.maximumSize = 100; // 最大画像数
   PaintingBinding.instance.imageCache.maximumSizeBytes = 50 << 20; // 50MB
-  
+
   runApp(MyApp());
 }
 ```
 
-**cached_network_imageパッケージ**は、より高度なキャッシュ機能を提供します。初回ロードは通常のImage.networkと同速度ですが、2回目以降はキャッシュから瞬時(0ms vs 200-500ms)にロードされ、帯域幅を100%節約します。
+### cached_network_image
+
+- より高度なキャッシュ機能を提供するパッケージ。
+- 初回ロードは通常の `Image.network` と同じ速さ。
+- 2 回目以降はキャッシュから瞬時（0ms。通常は 200-500ms）にロードされ、帯域幅を 100% 節約できる。
 
 ```dart
 CachedNetworkImage(
@@ -234,7 +386,11 @@ CachedNetworkImage(
 )
 ```
 
-画像最適化のベストプラクティスとして、**適切なサイズの画像を配信**することが重要です。100x100のサムネイルに4K画像をロードすることは避け、サイズ別の画像をリクエストします。**画像圧縮**では、WebP形式がJPEG/PNGより25-35%小さく、CDNによるサーバーサイド最適化が効果的です。**重要な画像のプリキャッシュ**により、初回表示時の待ち時間を200-500ms改善できます。
+### 画像最適化のベストプラクティス
+
+- **適切なサイズの画像を配信する。** 100x100 のサムネイルに 4K 画像を読み込まず、サイズ別の画像をリクエストする。
+- **画像を圧縮する。** WebP は JPEG / PNG より 25-35% 小さい。CDN によるサーバーサイド最適化も効果的。
+- **重要な画像をプリキャッシュする。** 初回表示時の待ち時間を 200-500ms 改善できる。
 
 ```dart
 @override
@@ -245,84 +401,116 @@ void didChangeDependencies() {
 }
 ```
 
-日本のプロダクション環境での実測データでは、**flutter_image_compressパッケージによる圧縮で約90%のサイズ削減**(10MB→1MB)を達成しています。画像品質を80%に設定し、適切な解像度に調整することで、視覚的な劣化を最小限に抑えながら大幅なファイルサイズ削減が可能です。
+!!! success "日本のプロダクション環境での実測"
+    - `flutter_image_compress` による圧縮で、**約 90% のサイズ削減**（10MB → 1MB）。
+    - 画像品質を 80% にし、適切な解像度に調整すると、視覚的な劣化を抑えつつ大幅に小さくできる。
 
 ## アニメーションパフォーマンスの最適化
 
-**Opacityウィジェットをアニメーションで直接使用することは避けてください。**毎フレーム全サブツリーを再構築し、2-3倍遅くなります。代わりにFadeTransitionを使用します。
+### Opacity をアニメーションで直接使わない
 
-```dart
-// アンチパターン: 毎フレーム再構築
-AnimatedBuilder(
-  animation: controller,
-  builder: (context, child) => Opacity(
-    opacity: controller.value,
-    child: ExpensiveWidget(), // 毎フレーム再構築!
-  ),
-)
+- 毎フレーム全サブツリーを再構築し、2-3 倍遅くなる。
+- 代わりに `FadeTransition`（または `AnimatedOpacity`）を使う。
 
-// ベストプラクティス: FadeTransition
-FadeTransition(
-  opacity: Tween(begin: 0.0, end: 1.0).animate(controller),
-  child: ExpensiveWidget(), // 一度だけ構築
-)
+??? example "コード例（21 行）"
+    ```dart
+    // アンチパターン: 毎フレーム再構築
+    AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) => Opacity(
+        opacity: controller.value,
+        child: ExpensiveWidget(), // 毎フレーム再構築!
+      ),
+    )
 
-// または AnimatedOpacity
-AnimatedOpacity(
-  opacity: isVisible ? 1.0 : 0.0,
-  duration: Duration(milliseconds: 500),
-  child: ExpensiveWidget(),
-)
-```
+    // ベストプラクティス: FadeTransition
+    FadeTransition(
+      opacity: Tween(begin: 0.0, end: 1.0).animate(controller),
+      child: ExpensiveWidget(), // 一度だけ構築
+    )
 
-**saveLayer操作の回避**は、レンダリングパフォーマンスに直結します。saveLayer()はFlutterフレームワークで最も高価なメソッドの一つで、部分的に透明なOpacityウィジェット、ClipPath、ClipOval(可能な場合ClipRectを使用)、ColorFilter、ImageFilter、ShaderMaskが暗黙的にsaveLayerを呼び出します。
+    // または AnimatedOpacity
+    AnimatedOpacity(
+      opacity: isVisible ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 500),
+      child: ExpensiveWidget(),
+    )
+    ```
 
-```dart
-// アンチパターン: 複数の透明レイヤー
-Container(
-  color: Colors.black.withOpacity(0.5), // saveLayer
-  child: Container(
-    color: Colors.white.withOpacity(0.7), // 別のsaveLayer
-    child: Text('Text'),
-  ),
-)
+### saveLayer 操作を避ける
 
-// ベストプラクティス: 単一レイヤー
-Container(
-  color: Colors.grey, // 透明度なし
-  child: Text('Text'),
-)
-```
+- レンダリングパフォーマンスに直結する。
+- `saveLayer()` は Flutter フレームワークで最も高価なメソッドの 1 つ。
+- 次のものが、暗黙的に `saveLayer` を呼ぶ。
+    - 部分的に透明な `Opacity` ウィジェット
+    - `ClipPath`、`ClipOval`（可能なら `ClipRect` を使う）
+    - `ColorFilter`、`ImageFilter`
+    - `ShaderMask`
 
-日本の実践例では、**画面外で動くアニメーションがバッテリーを大量消費**するケースが報告されています。SingleChildScrollViewでCircularProgressIndicatorを使用すると、画面外でも常に回転し続け、30分で14%のバッテリー消費から90分で47%に悪化しました。ListView.builderによる遅延描画に変更することで、バッテリー寿命が3倍(90分で16%消費)に改善し、発熱もほぼなくなりました。
+??? example "コード例（14 行）"
+    ```dart
+    // アンチパターン: 複数の透明レイヤー
+    Container(
+      color: Colors.black.withOpacity(0.5), // saveLayer
+      child: Container(
+        color: Colors.white.withOpacity(0.7), // 別のsaveLayer
+        child: Text('Text'),
+      ),
+    )
+
+    // ベストプラクティス: 単一レイヤー
+    Container(
+      color: Colors.grey, // 透明度なし
+      child: Text('Text'),
+    )
+    ```
+
+!!! warning "画面外で動くアニメーションはバッテリーを大量に消費する（日本の実践例）"
+    - `SingleChildScrollView` の中で `CircularProgressIndicator` を使うと、画面外でも回り続ける。
+    - バッテリー消費: 30 分で 14% から、90 分で 47% に悪化した。
+    - `ListView.builder` による遅延描画に変えると、バッテリー寿命が 3 倍（90 分で 16% 消費）になり、発熱もほぼなくなった。
 
 ## メモリ管理と起動時間の改善
 
-アプリ起動時間の目標は、業界標準として**2秒以内のコールドローンチ**です。ユーザーの49%が2秒以内の起動を期待しています。起動プロセスは、Engine & Dart VM初期化、Dartアイソレート起動、main()実行、初回フレームレンダリングの順で進行します。
+### 起動時間の目標
 
-**main()での作業最小化**が最も効果的で、並列初期化により大幅な改善が可能です。実測データでは、**並列初期化により起動時間が76%改善**(2500ms→600ms)したケースがあります。
+- 業界標準は、**2 秒以内のコールドローンチ**。ユーザーの 49% が 2 秒以内の起動を期待している。
+- 起動プロセスの順序:
+    1. Engine と Dart VM の初期化
+    2. Dart アイソレートの起動
+    3. `main()` の実行
+    4. 初回フレームのレンダリング
 
-```dart
-// アンチパターン: 逐次初期化
-void main() async {
-  await initDatabase();
-  await initAnalytics();
-  await initPrefs();
-  runApp(MyApp());
-}
+### `main()` での作業を最小化する
 
-// ベストプラクティス: 並列初期化
-void main() async {
-  await Future.wait([
-    initDatabase(),
-    initAnalytics(),
-    initPrefs(),
-  ]);
-  runApp(MyApp());
-}
-```
+- 最も効果的。並列初期化で大幅に改善できる。
+- 実測: **並列初期化で起動時間が 76% 改善**（2500ms → 600ms）したケースがある。
 
-**非同期データローディング**では、FutureBuilderで初期化処理をUIブロックせずに実行します。重い計算は`compute()`関数でバックグラウンドアイソレートにオフロードし、UIの応答性を維持します。
+??? example "コード例（17 行）"
+    ```dart
+    // アンチパターン: 逐次初期化
+    void main() async {
+      await initDatabase();
+      await initAnalytics();
+      await initPrefs();
+      runApp(MyApp());
+    }
+
+    // ベストプラクティス: 並列初期化
+    void main() async {
+      await Future.wait([
+        initDatabase(),
+        initAnalytics(),
+        initPrefs(),
+      ]);
+      runApp(MyApp());
+    }
+    ```
+
+### 非同期データローディング
+
+- `FutureBuilder` で、初期化処理を UI をブロックせずに実行する。
+- 重い計算は `compute()` でバックグラウンドアイソレートに移し、UI の応答性を保つ。
 
 ```dart
 Future<MyData> parseJsonInBackground(String jsonStr) async {
@@ -333,24 +521,33 @@ Future<MyData> parseJsonInBackground(String jsonStr) async {
 MyData result = await compute(parseJsonInBackground, bigJsonString);
 ```
 
-**Deferred Components(遅延読み込み)**により、非クリティカルな機能のロードを遅延し、初回ロード時間を30-50%削減できます。
+### Deferred Components（遅延読み込み）
+
+- 非クリティカルな機能のロードを遅れさせ、初回ロード時間を 30-50% 減らせる。
 
 ```dart
 import 'package:my_app/heavy_feature.dart' deferred as heavyFeature;
 
 Future<void> openFeature(BuildContext context) async {
   await heavyFeature.loadLibrary();
-  Navigator.push(context, 
+  Navigator.push(context,
     MaterialPageRoute(builder: (_) => heavyFeature.Screen())
   );
 }
 ```
 
-起動パフォーマンスの測定には、`flutter run --profile --trace-startup`を使用し、build/start_up_info.jsonの「timeToFirstFrameMicros」を確認します。Firebase Performance Monitoringによる本番環境での継続的な監視も重要です。
+!!! tip "起動パフォーマンスの測り方"
+    - `flutter run --profile --trace-startup` を使い、`build/start_up_info.json` の `timeToFirstFrameMicros` を確認する。
+    - 本番環境では、Firebase Performance Monitoring で継続的に監視する。
 
 ## ビルドサイズの削減とアセット最適化
 
-**Tree Shakingはリリースビルドで自動的に実行**され、エントリーポイントから到達不可能なコードを削除します。フォントグリフも未使用文字が削除され、**MaterialIconsが1645KBから10KBへ99.3%削減**、**CupertinoIconsが283KBから1.5KBへ99.5%削減**される効果があります。
+### Tree Shaking
+
+- リリースビルドで自動的に実行される。エントリーポイントから到達できないコードを削除する。
+- フォントグリフも、未使用の文字が削除される。
+    - **MaterialIcons: 1645KB → 10KB**（99.3% 削減）。
+    - **CupertinoIcons: 283KB → 1.5KB**（99.5% 削減）。
 
 ```bash
 # Tree Shakingを有効化(リリースで自動)
@@ -362,7 +559,9 @@ flutter build apk --analyze-size
 flutter build ios --analyze-size
 ```
 
-**ABI別APK分割**により、ユニバーサルAPKの50MBから各ABI用の5MBへと**90%のサイズ削減**を実現します。
+### ABI 別 APK 分割
+
+- ユニバーサル APK の 50MB から、各 ABI 用の 5MB へ。**90% のサイズ削減**。
 
 ```bash
 # アーキテクチャ別の個別APKを生成
@@ -373,7 +572,10 @@ flutter build apk --split-per-abi
 # ABI別APK: 各5MB (90%削減)
 ```
 
-**App Bundle(推奨)**は、Google Playがデバイスごとに最適化されたAPKを生成し、ユニバーサルAPKと比較して**30-40%のサイズ削減**が典型的です。
+### App Bundle（推奨）
+
+- Google Play がデバイスごとに最適化された APK を生成する。
+- ユニバーサル APK と比べて、**30-40% のサイズ削減**が典型的。
 
 ```bash
 flutter build appbundle
@@ -382,224 +584,339 @@ flutter build appbundle
 # 典型的な削減率: ユニバーサルAPKより30-40%小さい
 ```
 
-アセット最適化では、画像フォーマットの選択が重要です。写真にはWebP(最高の圧縮率)またはJPEG、グラフィック/UIにはPNGまたはSVG、アイコンにはSVG(スケーラブルで極小)、アニメーションにはLottie JSON(GIFより小さい)を使用します。**WebP変換により25-35%の画像サイズ削減**、総最適化により**60-75%のサイズ削減**が可能です。
+### アセット最適化
 
-日本の実測データでは、**Android App Bundle利用で30-40%削減、WebP形式で約1/10のファイルサイズ、未使用リソース削除で18%のAPK容量削減**という実績が報告されています。
+画像フォーマットの選び方:
+
+| 用途 | フォーマット |
+|---|---|
+| 写真 | WebP（最高の圧縮率）または JPEG |
+| グラフィック / UI | PNG または SVG |
+| アイコン | SVG（スケーラブルで極小） |
+| アニメーション | Lottie JSON（GIF より小さい） |
+
+- **WebP 変換で 25-35% の画像サイズ削減**。総合的な最適化で **60-75% のサイズ削減**が可能。
+
+!!! success "日本の実測データ"
+    - Android App Bundle の利用: 30-40% 削減。
+    - WebP 形式: 約 1/10 のファイルサイズ。
+    - 未使用リソースの削除: APK 容量が 18% 削減。
 
 ## Firebase Performance Monitoringの実装と活用
 
-Firebase Performance Monitoringは、本番環境でのアプリパフォーマンスを追跡する公式サポートされた無料ツールです。アプリライフサイクルメトリクス(起動時間、ネットワークリクエスト)を自動収集し、特定コード監視用のカスタムトレースをサポートします。**重要な制限として、Flutterのアーキテクチャ上、個別Flutterスクリーンの自動画面レンダリングパフォーマンス監視は利用できません。**
+- 本番環境でのアプリのパフォーマンスを追跡する、公式サポートの無料ツール。
+- アプリライフサイクルのメトリクス（起動時間、ネットワークリクエスト）を自動収集する。
+- 特定のコードを監視するカスタムトレースにも対応する。
 
-セットアップは3ステップで完了します。`flutter pub add firebase_performance`でプラグインを追加し、`flutterfire configure`でFirebaseを設定し、アプリを再ビルドします。main.dartでの初期化コードは以下の通りです。
+!!! warning "重要な制限"
+    Flutter のアーキテクチャ上、個別の Flutter スクリーンについて、自動の画面レンダリングパフォーマンス監視は利用できない。
 
-```dart
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_performance/firebase_performance.dart';
-import 'firebase_options.dart';
+### セットアップ（3 ステップ）
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
-  // オプション: パフォーマンス収集の有効化/無効化
-  await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
-  
-  runApp(MyApp());
-}
-```
+1. `flutter pub add firebase_performance` でプラグインを追加する。
+2. `flutterfire configure` で Firebase を設定する。
+3. アプリを再ビルドする。
 
-検証のため、アプリをバックグラウンド/フォアグラウンド間で切り替え、画面遷移を行い、ネットワークリクエストをトリガーします。データは数分以内にFirebase Consoleのパフォーマンスダッシュボードに表示されます。
+`main.dart` での初期化コード:
 
-**カスタムトレースの実装**により、特定のタスク(画像ロード、データベースクエリなど)の時間を測定できます。デフォルトメトリックは継続時間で、カスタムメトリック(キャッシュヒット、メモリ警告など)を追加できます。
+??? example "コード例（3 ステップ）（15 行）"
+    ```dart
+    import 'package:firebase_core/firebase_core.dart';
+    import 'package:firebase_performance/firebase_performance.dart';
+    import 'firebase_options.dart';
 
-```dart
-Future<void> performHeavyOperation() async {
-  // トレースインスタンスを作成
-  final Trace trace = FirebasePerformance.instance.newTrace('heavy_operation_trace');
-  
-  // トレース開始
-  await trace.start();
-  
-  // 監視するコード
-  await someExpensiveOperation();
-  
-  // トレース停止
-  await trace.stop();
-}
-```
-
-日本の技術記事で紹介されている**traceWrapperユーティリティ**は、コード量を最小化しながらメトリクスを維持します。
-
-```dart
-/// 関数をラップして実行時間を測定
-Future<T> traceWrapper<T>(
-  String functionName,
-  Future<T> Function(Trace? trace, void Function(String name) recordTime)
-    function,
-) async {
-  final trace = Firebase.apps.isEmpty
-    ? null
-    : FirebasePerformance.instance.newTrace(functionName);
-  final startTime = DateTime.now();
-  unawaited(trace?.start());
-  var tempTime = 0;
-  T result;
-  
-  try {
-    result = await function(
-      trace,
-      (name) {
-        final time = DateTime.now().difference(startTime).inMilliseconds;
-        final diff = time - tempTime;
-        tempTime = time;
-        trace?.setMetric(name, diff);
-      },
-    );
-    trace?.putAttribute('success', 'true');
-  } catch (e) {
-    trace?.putAttribute('success', 'false');
-    rethrow;
-  } finally {
-    unawaited(trace?.stop());
-  }
-  
-  return result;
-}
-```
-
-使用例では、API リクエストとローカルデータベース保存の各処理時間を個別に記録できます。
-
-```dart
-void fetchAndSave(String postId) async {
-  traceWrapper("PostRepository.fetchAndSave",
-    (trace, recordTime) async {
-      // APIリクエスト実行
-      final httpClient = ref.read(httpClientProvider);
-      final response = 
-        await httpClient.get('https://jsonplaceholder.typicode.com/posts/1');
-      recordTime("api request");
-      
-      // ローカルデータベースに保存
-      final sharedPreferences = 
-        await ref.read(sharedPreferencesProvider.future);
-      await sharedPreferences.setString(
-        "post:${postId}", response.data.toString());
-      recordTime("save local database");
-    });
-}
-```
-
-**ネットワークリクエスト監視**では、標準HTTPライブラリは自動的に監視されますが、Dioパッケージは手動計装が必要です。日本の技術記事で詳細に解説されているDioインターセプター実装により、リクエスト/レスポンスサイズ、ステータスコード、カスタム属性を記録できます。
-
-```dart
-class PerformanceInterceptor extends Interceptor {
-  late final FirebasePerformance _performance = FirebasePerformance.instance;
-  
-  Future<void> onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    try {
-      if (Firebase.apps.isEmpty) return handler.next(options);
-      
-      // デバッグモードでメトリクス収集しない
-      // ブレークポイントで不正確なタイミングになる
-      // if (kDebugMode) return handler.next(options);
-      
-      // メトリクス作成
-      final metric = _performance.newHttpMetric(
-        options.uri.toString(),
-        switch (options.method) {
-          'GET' => HttpMethod.Get,
-          'POST' => HttpMethod.Post,
-          'PUT' => HttpMethod.Put,
-          'DELETE' => HttpMethod.Delete,
-          'PATCH' => HttpMethod.Patch,
-          _ => HttpMethod.Get,
-        },
+    Future<void> main() async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
       );
-      
-      await metric.start();
-      metric.requestPayloadSize = await _calculatePayloadSize(options.data);
-      options.extra['metric'] = metric;
-    } catch (e, s) {
-      logger.e('Failed to setup metrics.', error: e, stackTrace: s);
+
+      // オプション: パフォーマンス収集の有効化/無効化
+      await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+
+      runApp(MyApp());
     }
-    return handler.next(options);
-  }
-  
-  Future<void> onResponse(
-    Response response,
-    ResponseInterceptorHandler handler,
-  ) async {
-    handler.next(response);
-    
-    try {
-      if (Firebase.apps.isEmpty) return;
-      final metric = response.requestOptions.extra['metric'] as HttpMetric?;
-      if (metric == null) return;
-      
-      metric
-        ..responsePayloadSize = await _calculatePayloadSize(response.data)
-        ..httpResponseCode = response.statusCode ?? 0;
-      
-      await metric.stop();
-    } catch (e, s) {
-      logger.e('Failed to analyze metrics.', error: e, stackTrace: s);
+    ```
+
+- 検証の手順:
+    1. アプリをバックグラウンド / フォアグラウンドで切り替える。
+    2. 画面遷移を行う。
+    3. ネットワークリクエストを起こす。
+- データは数分以内に、Firebase Console のパフォーマンスダッシュボードに表示される。
+
+### カスタムトレース
+
+- 特定のタスク（画像ロード、データベースクエリなど）の時間を測れる。
+- 既定のメトリックは継続時間。カスタムメトリック（キャッシュヒット、メモリ警告など）も追加できる。
+
+??? example "コード例（13 行）"
+    ```dart
+    Future<void> performHeavyOperation() async {
+      // トレースインスタンスを作成
+      final Trace trace = FirebasePerformance.instance.newTrace('heavy_operation_trace');
+
+      // トレース開始
+      await trace.start();
+
+      // 監視するコード
+      await someExpensiveOperation();
+
+      // トレース停止
+      await trace.stop();
     }
-  }
-}
-```
+    ```
 
-**Firebase Consoleでのパフォーマンスデータ分析**では、ダッシュボードが重要なインサイトを提供します。メトリクスボード(上部セクション)で最大6つの主要メトリクスを追跡し、グラフィカルなトレンドと変化率を表示します。デフォルトで90パーセンタイルを表示し、調整可能です。色指標として、赤は負のパフォーマンストレンド(例:起動時間の増加)、緑は正のトレンド(例:ロード時間の減少)、グレーは中立または明確なトレンド方向なしを示します。
+### traceWrapper ユーティリティ
 
-トレーステーブル(下部セクション)には、カスタムトレース、ネットワークリクエスト、画面レンダリング(Flutterでは制限あり)のタブがあります。メトリック値または変化率でソート、トレース名をクリックして詳細表示、パーセンタイル(50th、90th、95th、99th)でフィルター、時間範囲選択(24時間、7日、30日、カスタム)が可能です。
+- 日本の技術記事で紹介されている。コード量を最小限にしながら、メトリクスを保てる。
+- 使用例では、API リクエストとローカルデータベース保存の各処理時間を、個別に記録できる。
 
-属性によるフィルタリングでは、アプリバージョン(リリース比較)、国(地域パフォーマンス)、デバイス(モデル固有の問題)、OSバージョン、ネットワークタイプ(WiFi、4G、5G)でセグメント化できます。分析フローの例として、ダッシュボードでネットワークレスポンス時間が遅いことに気づき、国属性でフィルター、最新値でソート、レスポンス時間が最も高い国を特定、選択した国をグラフにプロット、さらにデバイスフィルターを追加して深掘り分析します。
+??? example "コード例（34 行）"
+    ```dart
+    /// 関数をラップして実行時間を測定
+    Future<T> traceWrapper<T>(
+      String functionName,
+      Future<T> Function(Trace? trace, void Function(String name) recordTime)
+        function,
+    ) async {
+      final trace = Firebase.apps.isEmpty
+        ? null
+        : FirebasePerformance.instance.newTrace(functionName);
+      final startTime = DateTime.now();
+      unawaited(trace?.start());
+      var tempTime = 0;
+      T result;
 
-パーセンタイルの解説として、50th(P50)は中央値で、半数のユーザーがより良い/悪い体験をします。90th(P90)は90%のユーザーがより良いパフォーマンスを経験し、Android Vitals標準に準拠します。95th(P95)は上位5%の最悪パフォーマンス体験、99th(P99)は上位1%の最悪体験を示します。P50は典型的なユーザー体験の理解、P90はAndroid Vitals標準への準拠、P95/P99はエッジケースと最悪シナリオの特定に使用します。
+      try {
+        result = await function(
+          trace,
+          (name) {
+            final time = DateTime.now().difference(startTime).inMilliseconds;
+            final diff = time - tempTime;
+            tempTime = time;
+            trace?.setMetric(name, diff);
+          },
+        );
+        trace?.putAttribute('success', 'true');
+      } catch (e) {
+        trace?.putAttribute('success', 'false');
+        rethrow;
+      } finally {
+        unawaited(trace?.stop());
+      }
+
+      return result;
+    }
+    ```
+
+??? example "コード例（17 行）"
+    ```dart
+    void fetchAndSave(String postId) async {
+      traceWrapper("PostRepository.fetchAndSave",
+        (trace, recordTime) async {
+          // APIリクエスト実行
+          final httpClient = ref.read(httpClientProvider);
+          final response =
+            await httpClient.get('https://jsonplaceholder.typicode.com/posts/1');
+          recordTime("api request");
+
+          // ローカルデータベースに保存
+          final sharedPreferences =
+            await ref.read(sharedPreferencesProvider.future);
+          await sharedPreferences.setString(
+            "post:${postId}", response.data.toString());
+          recordTime("save local database");
+        });
+    }
+    ```
+
+### ネットワークリクエスト監視
+
+- 標準の HTTP ライブラリは、自動で監視される。
+- **Dio パッケージは手動の計装が必要。**
+- 日本の技術記事で詳しく解説されている Dio インターセプターを使うと、次を記録できる。
+    - リクエスト / レスポンスのサイズ
+    - ステータスコード
+    - カスタム属性
+
+??? example "コード例（57 行）"
+    ```dart
+    class PerformanceInterceptor extends Interceptor {
+      late final FirebasePerformance _performance = FirebasePerformance.instance;
+
+      Future<void> onRequest(
+        RequestOptions options,
+        RequestInterceptorHandler handler,
+      ) async {
+        try {
+          if (Firebase.apps.isEmpty) return handler.next(options);
+
+          // デバッグモードでメトリクス収集しない
+          // ブレークポイントで不正確なタイミングになる
+          // if (kDebugMode) return handler.next(options);
+
+          // メトリクス作成
+          final metric = _performance.newHttpMetric(
+            options.uri.toString(),
+            switch (options.method) {
+              'GET' => HttpMethod.Get,
+              'POST' => HttpMethod.Post,
+              'PUT' => HttpMethod.Put,
+              'DELETE' => HttpMethod.Delete,
+              'PATCH' => HttpMethod.Patch,
+              _ => HttpMethod.Get,
+            },
+          );
+
+          await metric.start();
+          metric.requestPayloadSize = await _calculatePayloadSize(options.data);
+          options.extra['metric'] = metric;
+        } catch (e, s) {
+          logger.e('Failed to setup metrics.', error: e, stackTrace: s);
+        }
+        return handler.next(options);
+      }
+
+      Future<void> onResponse(
+        Response response,
+        ResponseInterceptorHandler handler,
+      ) async {
+        handler.next(response);
+
+        try {
+          if (Firebase.apps.isEmpty) return;
+          final metric = response.requestOptions.extra['metric'] as HttpMetric?;
+          if (metric == null) return;
+
+          metric
+            ..responsePayloadSize = await _calculatePayloadSize(response.data)
+            ..httpResponseCode = response.statusCode ?? 0;
+
+          await metric.stop();
+        } catch (e, s) {
+          logger.e('Failed to analyze metrics.', error: e, stackTrace: s);
+        }
+      }
+    }
+    ```
+
+### Firebase Console でのデータ分析
+
+- **メトリクスボード（上部）**:
+    - 最大 6 つの主要メトリクスを追跡し、グラフでトレンドと変化率を表示する。
+    - 既定で 90 パーセンタイルを表示する（調整可能）。
+    - 色の意味:
+
+        | 色 | 意味 |
+        |---|---|
+        | 赤 | 負のトレンド（例: 起動時間の増加） |
+        | 緑 | 正のトレンド（例: ロード時間の減少） |
+        | グレー | 中立、または明確なトレンド方向なし |
+
+- **トレーステーブル（下部）**:
+    - タブ: カスタムトレース、ネットワークリクエスト、画面レンダリング（Flutter では制限あり）。
+    - メトリック値または変化率でソートできる。
+    - トレース名をクリックすると詳細を表示する。
+    - パーセンタイル（50th・90th・95th・99th）でフィルターできる。
+    - 時間範囲を選べる（24 時間・7 日・30 日・カスタム）。
+
+??? info "属性によるフィルタリングと分析フローの例"
+    - セグメント化できる属性:
+        - アプリバージョン（リリース比較）
+        - 国（地域パフォーマンス）
+        - デバイス（モデル固有の問題）
+        - OS バージョン
+        - ネットワークタイプ（WiFi、4G、5G）
+    - 分析フローの例:
+        1. ダッシュボードで、ネットワークのレスポンス時間が遅いことに気づく。
+        2. 国の属性でフィルターする。
+        3. 最新値でソートする。
+        4. レスポンス時間が最も高い国を特定する。
+        5. 選んだ国をグラフにプロットする。
+        6. デバイスフィルターを足して、さらに深掘りする。
+
+??? info "パーセンタイルの読み方"
+    | パーセンタイル | 意味 | 使いどころ |
+    |---|---|---|
+    | 50th（P50） | 中央値。半数のユーザーはこれより良い / 悪い体験をする | 典型的なユーザー体験の理解 |
+    | 90th（P90） | 90% のユーザーがこれより良いパフォーマンスを経験する。Android Vitals の標準に準拠 | Android Vitals 標準への準拠の確認 |
+    | 95th（P95） | 上位 5% の最悪のパフォーマンス体験 | エッジケースと最悪シナリオの特定 |
+    | 99th（P99） | 上位 1% の最悪の体験 | エッジケースと最悪シナリオの特定 |
 
 ## 一般的なパフォーマンス問題とトラブルシューティング
 
-**過度な再ビルドの診断と解決**では、ウィジェットが不必要に再構築され、パフォーマンスが低下します。症状として、DevToolsで高いウィジェット再ビルド回数、状態変化時のジャンク、小さな変更で全ウィジェットツリーが再構築されます。デバッグ技法として、Android StudioのWidget Rebuild Profiler(View > Tool Windows > Flutter Performance)を使用し、DevToolsで「Display widget rebuilds」チェックボックスを有効化、`debugRepaintRainbowEnabled = kDebugMode`で再描画を視覚化します。
+各問題を「症状 → 原因 → デバッグ → 解決策」で整理する。
 
-解決策として、constコンストラクタを可能な限り使用し、StreamBuilder、BlocBuilder、Providerで状態変化をウィジェットツリー下層にプッシュし、BlocBuilderのbuildWhenで再ビルドをフィルターし、ウィジェットを個別のStatelessWidgetに抽出し、RepaintBoundaryで隔離された再ビルドを実現し、keys(GlobalKey、ValueKey)を実装してウィジェットのアイデンティティを保持します。
+### 過度な再ビルド
 
-実践例として、BlocBuilderが全Columnを再構築する悪い例と、buildWhenでフィルターしてTextウィジェットのみ再構築する良い例があります。
+- **症状:**
+    - DevTools で、ウィジェットの再ビルド回数が多い。
+    - 状態が変わるとジャンクが出る。
+    - 小さな変更で、ウィジェットツリー全体が再構築される。
+- **デバッグ技法:**
+    - Android Studio の Widget Rebuild Profiler（View > Tool Windows > Flutter Performance）。
+    - DevTools で「Display widget rebuilds」を有効にする。
+    - `debugRepaintRainbowEnabled = kDebugMode` で再描画を視覚化する。
+- **解決策:**
+    - `const` コンストラクタを可能な限り使う。
+    - `StreamBuilder`・`BlocBuilder`・`Provider` で、状態変化をウィジェットツリーの下層に押し下げる。
+    - `BlocBuilder` の `buildWhen` で、再ビルドをフィルターする。
+    - ウィジェットを個別の `StatelessWidget` に抽出する。
+    - `RepaintBoundary` で、再ビルドを隔離する。
+    - キー（`GlobalKey`・`ValueKey`）で、ウィジェットのアイデンティティを保つ。
+- 実践例: `BlocBuilder` が `Column` 全体を再構築する悪い例と、`buildWhen` でフィルターして `Text` だけを再構築する良い例。
 
-```dart
-// 悪い例 - Column全体を再構築
-BlocBuilder<ProfileCubit, ProfileState>(
-  builder: (context, profileState) {
-    return Column(children: [
-      Text(profileState.profile.name),
+??? example "コード例（23 行）"
+    ```dart
+    // 悪い例 - Column全体を再構築
+    BlocBuilder<ProfileCubit, ProfileState>(
+      builder: (context, profileState) {
+        return Column(children: [
+          Text(profileState.profile.name),
+          CreatePostForm(),
+          Posts(),
+        ]);
+      },
+    )
+
+    // 良い例 - Textウィジェットのみ再構築
+    Column(children: [
+      BlocBuilder<ProfileCubit, ProfileState>(
+        buildWhen: (previous, current) =>
+          previous.profile.name != current.profile.name,
+        builder: (context, profileState) {
+          return Text(profileState.profile.name);
+        },
+      ),
       CreatePostForm(),
       Posts(),
-    ]);
-  },
-)
+    ])
+    ```
 
-// 良い例 - Textウィジェットのみ再構築
-Column(children: [
-  BlocBuilder<ProfileCubit, ProfileState>(
-    buildWhen: (previous, current) => 
-      previous.profile.name != current.profile.name,
-    builder: (context, profileState) {
-      return Text(profileState.profile.name);
-    },
-  ),
-  CreatePostForm(),
-  Posts(),
-])
-```
+### メモリリーク
 
-**メモリリークの検出**では、オブジェクトが必要以上にメモリに残り、徐々にメモリが増加して最終的にクラッシュします。一般的な原因は、クローズされていないStreamとStreamController、破棄されていないコントローラ(TextEditingController、AnimationController)、削除されていないリスナー、大きなオブジェクトを参照するグローバル変数、大きなオブジェクトをキャプチャするクロージャ、適切にキャッシュ/破棄されていない画像、クローズされていないBLoCインスタンスです。
-
-デバッグ技法として、DevTools Memory Viewでヒープスナップショットを分析、「Diff Snapshots」機能でインタラクション前後のスナップショットを比較、メモリグラフで徐々に増加するパターンを監視、Profile Memoryタブでクラス別のオブジェクト数を確認、テストでleak_tracker_flutter_testingパッケージを有効化、ImageCacheの肥大化をチェックします。
-
-解決策として、dispose()メソッドで必ずコントローラを破棄し、close()メソッドでBLoCインスタンスをクローズし、AutomaticKeepAliveClientMixinを慎重に使用し、画像キャッシングを最適化(maximumSizeとmaximumSizeBytesを調整)し、短命オブジェクトへのグローバル/静的参照を避けます。
+- **症状:** オブジェクトが必要以上にメモリに残り、徐々にメモリが増えて、最終的にクラッシュする。
+- **一般的な原因:**
+    - クローズされていない `Stream` と `StreamController`。
+    - 破棄されていないコントローラ（`TextEditingController`・`AnimationController`）。
+    - 削除されていないリスナー。
+    - 大きなオブジェクトを参照するグローバル変数。
+    - 大きなオブジェクトをキャプチャするクロージャ。
+    - 適切にキャッシュ / 破棄されていない画像。
+    - クローズされていない BLoC インスタンス。
+- **デバッグ技法:**
+    - DevTools Memory View で、ヒープスナップショットを分析する。
+    - 「Diff Snapshots」で、操作の前後のスナップショットを比べる。
+    - メモリグラフで、徐々に増えるパターンを監視する。
+    - Profile Memory タブで、クラス別のオブジェクト数を確認する。
+    - テストで `leak_tracker_flutter_testing` パッケージを有効にする。
+    - `ImageCache` の肥大化をチェックする。
+- **解決策:**
+    - `dispose()` で、必ずコントローラを破棄する。
+    - `close()` で、BLoC インスタンスをクローズする。
+    - `AutomaticKeepAliveClientMixin` を慎重に使う。
+    - 画像キャッシュを最適化する（`maximumSize` と `maximumSizeBytes` を調整）。
+    - 短命なオブジェクトへの、グローバル / 静的参照を避ける。
 
 ```dart
 @override
@@ -611,68 +928,218 @@ void dispose() {
 }
 ```
 
-実践事例として、日本の技術記事では**ImpellerのメモリリークによるOut of Memory問題**が報告されています。症状は画面遷移ごとに数百MB単位でメモリ増加、10問で3GB突破してOut of Memoryです。原因はImpellerのバグ(DecorationImageでAssetImageを使用)で、imageCache.clear()、AssetImage.evict()、手動ガベージコレクション、MemoryImageへの変更など、試したが効果がなかった方法も詳細に記録されています。最終的な解決策は、AndroidManifest.xmlで`io.flutter.embedding.android.EnableImpeller`をfalseに設定するか、実行時に`flutter run --no-impeller`を使用することでした。
+??? example "実践事例: Impeller のメモリリークによる Out of Memory（日本の技術記事）"
+    - 症状: 画面遷移のたびに数百 MB 単位でメモリが増え、10 問で 3GB を超えて Out of Memory になった。
+    - 原因: Impeller のバグ（`DecorationImage` で `AssetImage` を使用）。
+    - 試したが効果がなかった方法（記事に詳しく記録されている）:
+        - `imageCache.clear()`
+        - `AssetImage.evict()`
+        - 手動のガベージコレクション
+        - `MemoryImage` への変更
+    - 最終的な解決策（どちらか）:
+        - `AndroidManifest.xml` で `io.flutter.embedding.android.EnableImpeller` を `false` にする。
+        - 実行時に `flutter run --no-impeller` を使う。
 
-**低速スクロールの最適化**では、ListView/GridViewのパフォーマンスがスクロール中に低下し、FPSが60未満になります。一般的な原因は、ListView.builderを使用せず全アイテムを先行ビルド、リストアイテムの複雑なウィジェットツリー、最適化されていない大きな画像、クリッピング操作、適切な設定なしのネストされたListView、shrinkWrap:trueによる全リストビルド強制です。
+### 低速スクロール
 
-デバッグ技法として、パフォーマンスオーバーレイを監視(上段=UIスレッド、下段=GPU/Raster)し、DevTools Timelineで高価なビルド操作を特定し、「Track layouts」を有効化して過度なintrinsicパスをチェックし、フレームレンダリングチャートでジャンク(赤フレーム>16ms)を確認します。
+- **症状:** `ListView` / `GridView` のパフォーマンスがスクロール中に落ち、FPS が 60 を下回る。
+- **一般的な原因:**
+    - `ListView.builder` を使わず、全アイテムを先にビルドしている。
+    - リストアイテムのウィジェットツリーが複雑。
+    - 最適化されていない大きな画像。
+    - クリッピング操作。
+    - 適切な設定なしの、ネストされた `ListView`。
+    - `shrinkWrap: true` によって、全リストのビルドが強制される。
+- **デバッグ技法:**
+    - パフォーマンスオーバーレイを監視する（上段 = UI スレッド、下段 = GPU / Raster）。
+    - DevTools Timeline で、高価なビルド操作を特定する。
+    - 「Track layouts」を有効にして、過度な intrinsic パスをチェックする。
+    - フレームレンダリングチャートで、ジャンク（赤フレーム > 16ms）を確認する。
+- **解決策:**
+    - 遅延ロードには、必ず `ListView.builder` または `GridView.builder` を使う。
+    - 全アイテムが同じサイズなら、`itemExtent` を指定する。
+    - ネットワーク画像には `CachedNetworkImage` を使う。
+    - 画像サイズを最適化する（サムネイルに 4K 画像を読み込まない）。
+    - ネストされたスクロールには、`CustomScrollView` と Slivers を使う。
+    - `addAutomaticKeepAlives` を慎重に使う。
+    - 複雑なリストアイテムを、個別の `StatelessWidget` に抽出する。
+    - スクロールコールバックで `setState()` を避ける。
 
-解決策として、必ずListView.builderまたはGridView.builderを遅延ロードに使用し、全アイテムが同じサイズの場合itemExtentを提供し、ネットワーク画像にCachedNetworkImageを使用し、画像サイズを最適化(サムネイルに4K画像をロードしない)し、ネストされたスクロールにはCustomScrollViewとSliversを使用し、addAutomaticKeepAlivesを慎重に使用し、複雑なリストアイテムを個別のStatelessWidgetに抽出し、スクロールコールバックでsetState()を避けます。
+!!! example "CyberAgent のブログの事例: 縦 ListView 内の横 ListView による FPS 低下"
+    - 問題: ネストされた横 `ListView`（と縦 `ListView`）による FPS 低下。
+    - 解決策: 適切な `wantKeepAlive` 管理と、チャンクベースの破棄による `AutomaticKeepAlive` の使用。
+    - 結果: メモリの増加を抑えながら、60FPS を維持できた。
 
-CyberAgentのブログでは、**縦ListView内の横ListViewによるFPS低下**という実践事例があります。問題は、ネストされた横ListView内の縦ListViewによるFPS低下で、解決策は、適切なwantKeepAlive管理とチャンクベースの破棄によるAutomaticKeepAliveの使用です。結果として、メモリ増加を制御しながら60FPSを維持しました。
+### 低速起動（コールドローンチ）
 
-**低速起動(コールドローンチ)のトラブルシューティング**では、アプリが最初のフレーム表示まで2秒以上かかり、起動時に黒画面が表示されます。一般的な原因は、Flutterエンジン初期化のオーバーヘッド、起動時に構築される大きなウィジェットツリー、メインアイソレートでの重い同期操作、過度なプラグイン初期化、初回アニメーション時のシェーダーコンパイルです。
+- **症状:** 最初のフレームが出るまで 2 秒以上かかる。起動時に黒画面が出る。
+- **一般的な原因:**
+    - Flutter エンジン初期化のオーバーヘッド。
+    - 起動時に構築される大きなウィジェットツリー。
+    - メインアイソレートでの、重い同期操作。
+    - 過度なプラグイン初期化。
+    - 初回アニメーション時のシェーダーコンパイル。
+- **デバッグ技法:**
+    - `flutter run --profile --trace-startup` を使い、トレース出力の `timeToFirstFrameMicros` を確認する。
+    - DevTools Timeline で起動フレームをキャプチャし、「Framework initialization」と「First frame rasterized」のイベントを探す。
+    - 本番では Firebase Performance Monitoring で追跡する。
+    - Android Logcat で「Displayed」の時間を確認する。
+- **解決策:**
+    - `Future.delayed()` や `addPostFrameCallback()` で、重い初期化を遅らせる。
+    - `compute()` で、別アイソレートで JSON をパースする。
+    - 非クリティカルな機能に、deferred loading を使う。
+    - シェーダーをプリコンパイルする。
+    - プラグインとサービスを遅延ロードする。
+    - 目標: シンプルなアプリで 800ms 未満、複雑なアプリで 2 秒未満。
 
-デバッグ技法として、`flutter run --profile --trace-startup`を使用し、トレース出力で「timeToFirstFrameMicros」を確認し、DevTools Timelineで起動フレームをキャプチャし、「Framework initialization」と「First frame rasterized」イベントを探し、Firebase Performance Monitoringで本番追跡を使用し、Android Logcatで「Displayed」時間を確認します。
+??? example "コード例（コールドローンチ）（17 行）"
+    ```dart
+    // 悪い例 - 逐次初期化
+    void main() async {
+      await initDatabase();
+      await initAnalytics();
+      await initPrefs();
+      runApp(MyApp());
+    }
 
-解決策として、Future.delayed()やaddPostFrameCallback()で重い初期化を遅延し、compute()を使用して別アイソレートでJSONをパース、非クリティカル機能にdeferred loadingを使用、シェーダーをプリコンパイル、プラグインとサービスを遅延ロード、シンプルアプリで800ms未満、複雑アプリで2秒未満を目標にします。
+    // 良い例 - 並列初期化
+    void main() async {
+      await Future.wait([
+        initDatabase(),
+        initAnalytics(),
+        initPrefs(),
+      ]);
+      runApp(MyApp());
+    }
+    ```
 
-```dart
-// 悪い例 - 逐次初期化
-void main() async {
-  await initDatabase();
-  await initAnalytics();
-  await initPrefs();
-  runApp(MyApp());
-}
+### シェーダーコンパイルジャンク
 
-// 良い例 - 並列初期化
-void main() async {
-  await Future.wait([
-    initDatabase(),
-    initAnalytics(),
-    initPrefs(),
-  ]);
-  runApp(MyApp());
-}
-```
+- **症状:** 初回アニメーションが、シェーダーコンパイルでカクつく。
+- **手動でシェーダーをコンパイルする手順:**
+    1. 全アニメーションを実行しながら、アプリを動かす（`flutter run --profile --cache-sksl`）。
+    2. `M` キーを押して、シェーダーキャッシュを書き込む。
+    3. プリコンパイル済みのシェーダーでビルドする（`flutter build apk --bundle-sksl-path=flutter_01.sksl.json`）。
 
-**シェーダーコンパイルジャンクの解決**では、初回アニメーションがシェーダーコンパイルによりカクつきます。手動シェーダーコンパイルの手順は、全アニメーションを実行してアプリを実行(`flutter run --profile --cache-sksl`)、'M'キーを押してシェーダーキャッシュを書き込み、プリコンパイルされたシェーダーでビルド(`flutter build apk --bundle-sksl-path=flutter_01.sksl.json`)です。Flutter 3.10以降の解決策として、Impellerレンダリングエンジン(iOSでデフォルト)がシェーダーコンパイルジャンクを排除します。Performance Viewで赤/黒のShader Compilationバーが表示されないことを確認でき、Flutter 3.10.6以降で自動的に有効化されています。
+!!! success "Flutter 3.10 以降の解決策: Impeller"
+    - Impeller レンダリングエンジン（iOS でデフォルト）が、シェーダーコンパイルジャンクを排除する。
+    - Flutter 3.10.6 以降で、自動的に有効になっている。
+    - Performance View で、赤 / 黒の Shader Compilation バーが出ないことを確認できる。
 
 ## 実践的なベストプラクティスとアンチパターン
 
-**推奨される実践方法**として、constコンストラクタを可能な限り使用し、20アイテム以上のリストにはListView.builderを使用し、均一なリストアイテムにはitemExtentを指定し、高価な静的ウィジェットにはRepaintBoundaryを使用し、cached_network_imageで画像をキャッシュし、OpacityではなくFadeTransitionを使用し、実機のリリースモードでプロファイルし、ウィジェットをメソッドではなくクラスに分割し、スコープ付き更新にValueNotifier/ChangeNotifierを使用し、コントローラとストリームを破棄します。
+### 推奨される実践方法
 
-**避けるべきアンチパターン**として、アニメーションでOpacityを使用せず(FadeTransitionを使用)、必要でない限りsaveLayerを使用せず、全子要素を事前にListViewで作成せず、ListViewでshrinkWrap:trueを使用せず、同期操作でUIスレッドをブロックせず、不必要にoperator ==をオーバーライドせず、デバッグモードでパフォーマンステストをせず、深くネストされたウィジェットツリーを使用せず、重要な画像のプリキャッシュを忘れず、DevToolsプロファイラーの警告を無視しません。
+- `const` コンストラクタを可能な限り使う。
+- 20 アイテム以上のリストには `ListView.builder` を使う。
+- 均一なリストアイテムには `itemExtent` を指定する。
+- 高価な静的ウィジェットには `RepaintBoundary` を使う。
+- `cached_network_image` で画像をキャッシュする。
+- `Opacity` ではなく `FadeTransition` を使う。
+- 実機のリリースモード（プロファイル）で測る。
+- ウィジェットは、メソッドではなくクラスに分割する。
+- スコープ付き更新に `ValueNotifier` / `ChangeNotifier` を使う。
+- コントローラとストリームを破棄する。
 
-**測定値とベンチマーク**として、公式Flutterソースと本番アプリからの実測データがあります。SkSLウォームアップ(Moto G4)は90ms最悪フレームから40msへ56%高速化、SkSLウォームアップ(iPhone 4s)は300ms最悪フレームから80msへ73%高速化、constウィジェットはスクロールあたり847再ビルドから228再ビルドへ73%削減、ListView.builderは10,000アイテムのロードに10秒から1秒未満へ10倍高速化、itemExtentは末尾へのジャンプが10秒から瞬時へ100倍高速化、cached_network_imageは500msリロードから0ms(キャッシュ済み)へ瞬時化、FadeTransition vs Opacityは32ms/フレームから12ms/フレームへ2.7倍高速化という結果が得られています。
+### 避けるべきアンチパターン
 
-**日本語リソースの独自視点**として、実測データの豊富さ(具体的なデバイス名での測定、バッテリー消費の時系列データ、メモリ使用量の具体的数値)、実プロダクション環境での問題(ネットスーパーアプリでのGridView問題、動画配信アプリでのバッテリー問題、クイズアプリでのメモリリーク)、企業エンジニアリングブログの質(CyberAgent、DELISH KITCHEN、Future Architect)、最新バージョンへの対応(Flutter 3.10のImpeller導入効果の実測、Flutter 3.27の最新パフォーマンス向上施策)、トラブルシューティングの詳細(試行錯誤の過程を詳細に記録、失敗した方法も含めて記載)があります。
+- アニメーションで `Opacity` を使わない（`FadeTransition` を使う）。
+- 必要でない限り、`saveLayer` を使わない。
+- `ListView` で、全子要素を事前に作らない。
+- `ListView` で `shrinkWrap: true` を使わない。
+- 同期操作で UI スレッドをブロックしない。
+- 不必要に `operator ==` をオーバーライドしない。
+- デバッグモードでパフォーマンステストをしない。
+- 深くネストされたウィジェットツリーを使わない。
+- 重要な画像のプリキャッシュを忘れない。
+- DevTools プロファイラーの警告を無視しない。
+
+### 測定値とベンチマーク
+
+公式の Flutter ソースと、本番アプリでの実測データ。
+
+| 対象 | 変化 | 効果 |
+|---|---|---|
+| SkSL ウォームアップ（Moto G4） | 最悪フレーム 90ms → 40ms | 56% 高速化 |
+| SkSL ウォームアップ（iPhone 4s） | 最悪フレーム 300ms → 80ms | 73% 高速化 |
+| `const` ウィジェット | スクロールあたり 847 → 228 再ビルド | 73% 削減 |
+| `ListView.builder` | 10,000 アイテムのロード 10 秒 → 1 秒未満 | 10 倍高速化 |
+| `itemExtent` | 末尾へのジャンプ 10 秒 → 瞬時 | 100 倍高速化 |
+| `cached_network_image` | 500ms のリロード → 0ms（キャッシュ済み） | 瞬時化 |
+| `FadeTransition` vs `Opacity` | 32ms/フレーム → 12ms/フレーム | 2.7 倍高速化 |
+
+??? info "日本語リソースの独自視点"
+    - **実測データが豊富:** 具体的なデバイス名での測定、バッテリー消費の時系列データ、メモリ使用量の具体的な数値。
+    - **実プロダクションでの問題:**
+        - ネットスーパーアプリでの `GridView` の問題。
+        - 動画配信アプリでのバッテリーの問題。
+        - クイズアプリでのメモリリーク。
+    - **企業エンジニアリングブログの質:** CyberAgent、DELISH KITCHEN、Future Architect。
+    - **最新バージョンへの対応:**
+        - Flutter 3.10 の Impeller 導入効果の実測。
+        - Flutter 3.27 の最新のパフォーマンス向上施策。
+    - **トラブルシューティングの詳細:** 試行錯誤の過程を詳しく記録し、失敗した方法も載せている。
 
 ## アクションアイテムと実装チェックリスト
 
-**プロファイリング前の準備**として、プロファイルモードでビルド、物理デバイスでテスト、最低スペックのターゲットデバイスを使用、他のアプリを閉じる、パフォーマンスベースラインを確立します。
+### プロファイリング前の準備
 
-**プロファイリング中の実施事項**として、特定のユーザーフローを記録、前後のスナップショットを取得、再現手順をメモ、複数のサンプルをキャプチャ、所見を文書化します。
+- [ ] プロファイルモードでビルドする。
+- [ ] 物理デバイスでテストする。
+- [ ] 最低スペックのターゲットデバイスを使う。
+- [ ] 他のアプリを閉じる。
+- [ ] パフォーマンスのベースラインを確立する。
 
-**分析段階でのチェック**として、Timelineでジャンクを確認、CPUホットスポットをレビュー、メモリトレンドを調査、ネットワーク呼び出しを検査、最適化ターゲットを特定します。
+### プロファイリング中の実施事項
 
-**最適化実施時の優先順位**として、UIスレッドの問題を最初に修正、高価なメソッドを最適化、ウィジェット再ビルドを削減、画像を最適化、測定による改善の検証を行います。
+- [ ] 特定のユーザーフローを記録する。
+- [ ] 前後のスナップショットを取る。
+- [ ] 再現手順をメモする。
+- [ ] 複数のサンプルをキャプチャする。
+- [ ] 所見を文書化する。
 
-**継続的監視の設定**として、Firebase Performance Monitoringの統合、重要なカスタムトレースの追加、パフォーマンスアラートの設定、自動化されたパフォーマンステストの実装、リグレッション追跡のためのCI/CDパイプラインへの統合を行います。
+### 分析段階でのチェック
+
+- [ ] Timeline でジャンクを確認する。
+- [ ] CPU のホットスポットをレビューする。
+- [ ] メモリのトレンドを調べる。
+- [ ] ネットワーク呼び出しを検査する。
+- [ ] 最適化のターゲットを特定する。
+
+### 最適化の優先順位
+
+1. UI スレッドの問題を最初に直す。
+2. 高価なメソッドを最適化する。
+3. ウィジェットの再ビルドを減らす。
+4. 画像を最適化する。
+5. 測定によって、改善を検証する。
+
+### 継続的監視の設定
+
+- [ ] Firebase Performance Monitoring を統合する。
+- [ ] 重要なカスタムトレースを追加する。
+- [ ] パフォーマンスアラートを設定する。
+- [ ] 自動化されたパフォーマンステストを実装する。
+- [ ] リグレッション追跡のため、CI/CD パイプラインに統合する。
 
 ## 結論と今後の展望
 
-Flutterパフォーマンス最適化には、**プロファイルモードでの実機テスト、DevToolsの徹底活用、最適化階層の理解(過度な再ビルドを最初に修正、次にメモリリーク、その後レンダリング問題)、プラットフォーム認識(iOSとAndroidの違いを理解)、プロアクティブな監視(自動化されたパフォーマンステストによる早期リグレッション検出)**が必要です。フレームワークはデフォルトでパフォーマンスが高いですが、本番品質のアプリケーションには一般的な落とし穴とデバッグツールに対する開発者の認識が不可欠です。
+Flutter のパフォーマンス最適化に必要なこと:
 
-本レポートで解説した技法を実践することで、60fps以上の滑らかな体験を提供し、メモリ使用量を30-50%削減し、起動時間を76%改善し、ビルドサイズを60-75%削減できます。DevToolsとFirebase Performance Monitoringの強力な機能を活用し、規律あるプロファイリング手法により、開発者は多様なデバイスで高パフォーマンスなFlutterアプリケーションを構築できます。継続的な測定と改善のサイクルを確立し、ユーザーに最高の体験を提供してください。
+- **プロファイルモードでの実機テスト。**
+- **DevTools の徹底活用。**
+- **最適化の階層を理解する。** 過度な再ビルドを最初に直し、次にメモリリーク、その後にレンダリング問題。
+- **プラットフォームを意識する。** iOS と Android の違いを理解する。
+- **プロアクティブな監視。** 自動化されたパフォーマンステストで、リグレッションを早期に検出する。
+
+!!! note "フレームワークは既定で高性能"
+    ただし、本番品質のアプリには、一般的な落とし穴とデバッグツールへの、開発者の理解が不可欠。
+
+このガイドの技法を実践した場合に見込める効果:
+
+- 60fps 以上の滑らかな体験を提供できる。
+- メモリ使用量を 30-50% 削減できる。
+- 起動時間を 76% 改善できる。
+- ビルドサイズを 60-75% 削減できる。
+
+DevTools と Firebase Performance Monitoring を活用し、継続的に測定して改善するサイクルを確立する。
