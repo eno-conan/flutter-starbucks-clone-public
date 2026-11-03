@@ -4,9 +4,11 @@
 
 ### 1.1 サポートする認証方式
 
-1. **メールアドレス・パスワード認証** (Supabase)
-2. **Googleアカウント認証** (Supabase OAuth)
-3. **生体認証** (実装済み)
+| # | 認証方式 | 基盤 |
+|---|---|---|
+| 1 | **メールアドレス・パスワード認証** | Supabase |
+| 2 | **Google アカウント認証** | Supabase OAuth |
+| 3 | **生体認証**（実装済み） | `local_auth` |
 
 ### 1.2 認証プロバイダー
 
@@ -72,38 +74,39 @@ sequenceDiagram
 
 ### 3.2 実装詳細
 
-```dart
-Future<void> _handleAuthenticationByEmailAndPassword() async {
-  FocusScope.of(context).unfocus(); // キーボードを閉じる
-  widget.onLoadingStateChanged(true);
+??? example "コード例（30 行）"
+    ```dart
+    Future<void> _handleAuthenticationByEmailAndPassword() async {
+      FocusScope.of(context).unfocus(); // キーボードを閉じる
+      widget.onLoadingStateChanged(true);
 
-  try {
-    final String? userData = await widget.authService.retrieveLoginUser();
-    
-    if (userData != null) {
-      // 既にログイン済みの場合はログアウト
-      await widget.authService.signOutWithEmailAndPassword();
-      widget.showSnackBar('サインアウトしました。');
-    } else {
-      // ログイン処理
-      await widget.authService.signInWithEmailAndPassword(
-        _emailController.text,
-        _passwordController.text,
-      );
+      try {
+        final String? userData = await widget.authService.retrieveLoginUser();
+
+        if (userData != null) {
+          // 既にログイン済みの場合はログアウト
+          await widget.authService.signOutWithEmailAndPassword();
+          widget.showSnackBar('サインアウトしました。');
+        } else {
+          // ログイン処理
+          await widget.authService.signInWithEmailAndPassword(
+            _emailController.text,
+            _passwordController.text,
+          );
+        }
+
+        widget.onLoginSuccess();
+        widget.onLoadingStateChanged(false);
+
+      } on PlatformException catch (e) {
+        widget.onLoadingStateChanged(false);
+        widget.showSnackBar('認証処理に失敗しました(メールアドレス)');
+      } catch (err) {
+        widget.onLoadingStateChanged(false);
+        widget.showSnackBar('$err:認証処理に失敗(メールアドレス)');
+      }
     }
-    
-    widget.onLoginSuccess();
-    widget.onLoadingStateChanged(false);
-    
-  } on PlatformException catch (e) {
-    widget.onLoadingStateChanged(false);
-    widget.showSnackBar('認証処理に失敗しました(メールアドレス)');
-  } catch (err) {
-    widget.onLoadingStateChanged(false);
-    widget.showSnackBar('$err:認証処理に失敗(メールアドレス)');
-  }
-}
-```
+    ```
 
 ### 3.3 AuthServiceでの処理
 
@@ -168,103 +171,106 @@ Future<void> signInWithGoogleOAuth() async {
 
 #### 4.2.2 GoogleLoginButton でのハンドリング
 
-```dart
-Future<void> _handleAuthenticationByGoogle(BuildContext context) async {
-  onLoadingStateChanged(true);
-  try {
-    if (email != null) {
-      await authService.signOutWithEmailAndPassword();
-      showSnackBar('サインアウトしました。');
-    } else {
-      // ブラウザを開いて Google OAuth 認証（コールバックは app.dart で処理）
-      await authService.signInWithGoogleOAuth();
-      // ブラウザが開いたのでローディングを解除（認証完了はディープリンクで処理）
-      if (context.mounted) {
-        onLoadingStateChanged(false);
+??? example "コード例（27 行）"
+    ```dart
+    Future<void> _handleAuthenticationByGoogle(BuildContext context) async {
+      onLoadingStateChanged(true);
+      try {
+        if (email != null) {
+          await authService.signOutWithEmailAndPassword();
+          showSnackBar('サインアウトしました。');
+        } else {
+          // ブラウザを開いて Google OAuth 認証（コールバックは app.dart で処理）
+          await authService.signInWithGoogleOAuth();
+          // ブラウザが開いたのでローディングを解除（認証完了はディープリンクで処理）
+          if (context.mounted) {
+            onLoadingStateChanged(false);
+          }
+          return;
+        }
+      } on PlatformException catch (e) {
+        if (context.mounted) {
+          onLoadingStateChanged(false);
+        }
+        showSnackBar('認証処理に失敗しました(PlatformException)');
+      } catch (err) {
+        if (context.mounted) {
+          onLoadingStateChanged(false);
+        }
+        showSnackBar('$err:認証処理に失敗しました(OtherException)');
       }
-      return;
     }
-  } on PlatformException catch (e) {
-    if (context.mounted) {
-      onLoadingStateChanged(false);
-    }
-    showSnackBar('認証処理に失敗しました(PlatformException)');
-  } catch (err) {
-    if (context.mounted) {
-      onLoadingStateChanged(false);
-    }
-    showSnackBar('$err:認証処理に失敗しました(OtherException)');
-  }
-}
-```
+    ```
 
 #### 4.2.3 OAuthコールバック処理（app.dart）
 
-```dart
-/// OAuth コールバックを処理してHome画面へ遷移
-Future<void> _handleOAuthCallback(Uri uri) async {
-  try {
-    // supabase_flutter の内部リスナーが先に処理している場合は例外が出るが無視する
-    await Supabase.instance.client.auth.getSessionFromUrl(uri);
-  } catch (e) {
-    // エラーは無視（内部リスナーが処理済みの場合）
-  }
-
-  // セッションが即時確立された場合はホームへ遷移
-  final session = Supabase.instance.client.auth.currentSession;
-  if (session != null) {
-    _navigateToHome();
-  } else {
-    // セッションがまだ反映されていない場合は onAuthStateChange を一度だけ待つ
-    final completer = Completer<bool>();
-    final subscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (!completer.isCompleted &&
-          (data.event == AuthChangeEvent.signedIn ||
-              data.event == AuthChangeEvent.tokenRefreshed)) {
-        completer.complete(true);
+??? example "コード例（app.dart）（35 行）"
+    ```dart
+    /// OAuth コールバックを処理してHome画面へ遷移
+    Future<void> _handleOAuthCallback(Uri uri) async {
+      try {
+        // supabase_flutter の内部リスナーが先に処理している場合は例外が出るが無視する
+        await Supabase.instance.client.auth.getSessionFromUrl(uri);
+      } catch (e) {
+        // エラーは無視（内部リスナーが処理済みの場合）
       }
-    });
-    final signedIn = await completer.future.timeout(
-      const Duration(seconds: 5),
-      onTimeout: () => false,
-    );
-    await subscription.cancel();
-    if (signedIn) {
-      _navigateToHome();
-    } else {
-      LoggerService.warn('OAuth session が存在しません');
+
+      // セッションが即時確立された場合はホームへ遷移
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        _navigateToHome();
+      } else {
+        // セッションがまだ反映されていない場合は onAuthStateChange を一度だけ待つ
+        final completer = Completer<bool>();
+        final subscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+          if (!completer.isCompleted &&
+              (data.event == AuthChangeEvent.signedIn ||
+                  data.event == AuthChangeEvent.tokenRefreshed)) {
+            completer.complete(true);
+          }
+        });
+        final signedIn = await completer.future.timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => false,
+        );
+        await subscription.cancel();
+        if (signedIn) {
+          _navigateToHome();
+        } else {
+          LoggerService.warn('OAuth session が存在しません');
+        }
+      }
     }
-  }
-}
-```
+    ```
 
 ## 5. 生体認証フロー（準備済み）
 
 ### 5.1 準備されている実装
 
-```dart
-// コメントアウト状態の生体認証コード
-Future<void> _authenticateWithBiometrics() async {
-  bool authenticated = false;
-  try {
-    setState(() {
-      _isAuthenticating = true;
-      _authorized = 'Authenticating';
-    });
-    
-    // authenticated = await auth.authenticate(
-    //   localizedReason: '指紋認証を行ってください',
-    //   options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
-    // );
-    
-    if (authenticated && mounted) {
-      _navigateToHome();
+??? example "コード例（21 行）"
+    ```dart
+    // コメントアウト状態の生体認証コード
+    Future<void> _authenticateWithBiometrics() async {
+      bool authenticated = false;
+      try {
+        setState(() {
+          _isAuthenticating = true;
+          _authorized = 'Authenticating';
+        });
+
+        // authenticated = await auth.authenticate(
+        //   localizedReason: '指紋認証を行ってください',
+        //   options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
+        // );
+
+        if (authenticated && mounted) {
+          _navigateToHome();
+        }
+      } on PlatformException catch (e) {
+        // エラーハンドリング
+      }
     }
-  } on PlatformException catch (e) {
-    // エラーハンドリング
-  }
-}
-```
+    ```
 
 ### 5.2 生体認証チェック機能
 
@@ -317,62 +323,65 @@ String getUserId() {
 
 ### 7.1 FCMトークン設定
 
-```dart
-Future<void> setFcmTokenAndNotifySetting(
-  String fcmToken,
-  bool isNotify, {
-  required String deviceId,
-  String? deviceName,
-}) async {
-  final userId = supabase.auth.currentUser?.id;
-  if (userId == null) {
-    LoggerService.warn('FCMトークン登録: ユーザーが未ログインのためスキップ');
-    return;
-  }
-  final status = isNotify ? 1 : 0;
-  await supabase.from(Tables.userFcmTokens).upsert({
-    'user_id': userId,
-    'device_id': deviceId,
-    'device_name': deviceName,
-    'fcm_token': fcmToken,
-    'is_notify': status,
-  }, onConflict: 'user_id,device_id');
-}
-```
+??? example "コード例（20 行）"
+    ```dart
+    Future<void> setFcmTokenAndNotifySetting(
+      String fcmToken,
+      bool isNotify, {
+      required String deviceId,
+      String? deviceName,
+    }) async {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) {
+        LoggerService.warn('FCMトークン登録: ユーザーが未ログインのためスキップ');
+        return;
+      }
+      final status = isNotify ? 1 : 0;
+      await supabase.from(Tables.userFcmTokens).upsert({
+        'user_id': userId,
+        'device_id': deviceId,
+        'device_name': deviceName,
+        'fcm_token': fcmToken,
+        'is_notify': status,
+      }, onConflict: 'user_id,device_id');
+    }
+    ```
 
 ### 7.2 トークンリフレッシュ
 
-```dart
-FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
-  final deviceId = await DeviceIdService().getDeviceId();
-  final deviceName = await DeviceIdService().getDeviceName();
-  await _authService.setFcmTokenAndNotifySetting(
-    fcmToken,
-    true,
-    deviceId: deviceId,
-    deviceName: deviceName,
-  );
-});
-```
+??? example "コード例（10 行）"
+    ```dart
+    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
+      final deviceId = await DeviceIdService().getDeviceId();
+      final deviceName = await DeviceIdService().getDeviceName();
+      await _authService.setFcmTokenAndNotifySetting(
+        fcmToken,
+        true,
+        deviceId: deviceId,
+        deviceName: deviceName,
+      );
+    });
+    ```
 
 ## 8. ログアウトフロー
 
 ### 8.1 ログアウト処理（統一）
 
-メール・パスワード認証とGoogle認証のログアウトは `signOutWithEmailAndPassword()` に統一されています。
+- メール・パスワード認証と Google 認証のログアウトは、`signOutWithEmailAndPassword()` に統一されている。
 
-```dart
-Future<void> signOutWithEmailAndPassword() async {
-  try {
-    // サインアウト前にCrashlyticsのユーザー識別子をクリア
-    await _clearCrashlyticsUser();
+??? example "コード例（統一）（10 行）"
+    ```dart
+    Future<void> signOutWithEmailAndPassword() async {
+      try {
+        // サインアウト前にCrashlyticsのユーザー識別子をクリア
+        await _clearCrashlyticsUser();
 
-    await supabase.auth.signOut();
-  } catch (error) {
-    rethrow;
-  }
-}
-```
+        await supabase.auth.signOut();
+      } catch (error) {
+        rethrow;
+      }
+    }
+    ```
 
 ### 8.2 デバイスFCMトークン付きログアウト
 
@@ -398,26 +407,28 @@ void initState() {
 
 ### 9.2 自動認証チェック
 
-```dart
-Future<void> _initializeBiometricAuth() async {
-  // 生体認証の可用性を確認
-  bool canCheckBiometrics = await auth.canCheckBiometrics;
-  final isDeviceSupported = await auth.isDeviceSupported();
-  canCheckBiometrics = canCheckBiometrics && isDeviceSupported;
+??? example "コード例（14 行）"
+    ```dart
+    Future<void> _initializeBiometricAuth() async {
+      // 生体認証の可用性を確認
+      bool canCheckBiometrics = await auth.canCheckBiometrics;
+      final isDeviceSupported = await auth.isDeviceSupported();
+      canCheckBiometrics = canCheckBiometrics && isDeviceSupported;
 
-  // 生体認証が利用可能かつ有効化・認証情報が保存済みの場合は自動ログイン
-  final biometricEnabled = await _isBiometricEnabled();
-  final hasStoredCredentials = await _hasStoredCredentials();
+      // 生体認証が利用可能かつ有効化・認証情報が保存済みの場合は自動ログイン
+      final biometricEnabled = await _isBiometricEnabled();
+      final hasStoredCredentials = await _hasStoredCredentials();
 
-  if (canCheckBiometrics && biometricEnabled && hasStoredCredentials) {
-    await _authenticateWithBiometrics();
-  }
-}
-```
+      if (canCheckBiometrics && biometricEnabled && hasStoredCredentials) {
+        await _authenticateWithBiometrics();
+      }
+    }
+    ```
 
-なお、Google OAuth認証のコールバックは `app.dart` の `_handleOAuthCallback()` で処理され、
-ログイン画面は `isAuthenticated()` のポーリングを行いません。
-Supabaseセッションは `onAuthStateChange` イベントで自動的に管理されます。
+!!! note "Google OAuth のコールバックは `app.dart` で処理する"
+    - コールバックは、`app.dart` の `_handleOAuthCallback()` で処理される。
+    - ログイン画面は、`isAuthenticated()` のポーリングを行わない。
+    - Supabase セッションは、`onAuthStateChange` イベントで自動的に管理される。
 
 ## 10. エラーハンドリング
 
@@ -450,16 +461,19 @@ void _navigateToHome() {
 ## 11. セキュリティ考慮事項
 
 ### 11.1 トークン管理
+
 - IDトークンとアクセストークンの適切な取り扱い
 - トークンの有効期限管理
 - 自動リフレッシュ機能
 
 ### 11.2 プラットフォームセキュリティ
+
 - Supabase OAuth 2.0準拠のGoogle認証
 - Supabaseによるセキュアな認証基盤
 - 生体認証（local_auth）による自動ログイン
 - OAuthコールバックURI検証（スキーム・ホスト）
 
 ### 11.3 エラー情報の適切な処理
+
 - デバッグモード時のみエラー詳細出力
 - ユーザーに対する適切なエラーメッセージ表示

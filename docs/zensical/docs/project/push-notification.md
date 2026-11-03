@@ -2,9 +2,8 @@
 
 ## 概要
 
-注文が「提供済み」になったタイミングで、FCM（Firebase Cloud Messaging）経由でユーザーに Push 通知を送る仕組み。Supabase Database Webhook → Edge Function → FCM v1 API の流れで動作する。
-
----
+- 注文が「提供済み」になったタイミングで、FCM（Firebase Cloud Messaging）経由で、ユーザーに Push 通知を送る仕組み。
+- 流れ: Supabase Database Webhook → Edge Function → FCM v1 API。
 
 ## 全体フロー
 
@@ -27,11 +26,10 @@ FCMトークン取得 → user_fcm_tokens テーブルへ upsert
   Push通知受信「受取番号:XX 商品のご用意ができました」
 ```
 
----
-
 ## FCMトークン登録フロー
 
-FCMトークンは `user_fcm_tokens` テーブルに `upsert`（複合キー `user_id, device_id` で競合解決）される。
+- FCM トークンは、`user_fcm_tokens` テーブルに `upsert` される。
+- 複合キー `user_id, device_id` で、競合を解決する。
 
 ### 登録タイミング
 
@@ -54,9 +52,10 @@ requestPermissionAfterLogin()          ← NotificationPermissionService
         → supabase.from('user_fcm_tokens').upsert({...}, onConflict: 'user_id,device_id')
 ```
 
-### 重要：Google OAuth ログインの特殊性
+### 重要: Google OAuth ログインの特殊性
 
-Google OAuth はブラウザ経由の認証のため、ログインフロー中ではなく、ディープリンクコールバック（`testingapp://callback`）で処理される。
+- Google OAuth は、ブラウザ経由の認証。
+- そのため、ログインフロー中ではなく、ディープリンクコールバック（`testingapp://callback`）で処理される。
 
 ```
 ログイン画面 → ブラウザ（Google認証）→ testingapp://callback
@@ -67,10 +66,10 @@ Google OAuth はブラウザ経由の認証のため、ログインフロー中�
     → セッション確立を確認後 → _navigateToHome() + requestPermissionAfterLogin()
 ```
 
-> **なぜ待機が必要か**  
-> Supabase Flutter が内部で非同期にセッションを確立するため、`getSessionFromUrl` 呼び出し直後は `currentSession` がまだ null になる競合状態が発生する。`onAuthStateChange.signedIn` を待機することで確実にセッション確立後に処理を行う。
-
----
+!!! note "なぜ待機が必要か"
+    - Supabase Flutter が、内部で非同期にセッションを確立する。
+    - そのため、`getSessionFromUrl` の呼び出し直後は、`currentSession` がまだ null になる競合状態が発生する。
+    - `onAuthStateChange.signedIn` を待機することで、確実にセッション確立後に処理を行う。
 
 ## user_fcm_tokens テーブル
 
@@ -84,18 +83,17 @@ Google OAuth はブラウザ経由の認証のため、ログインフロー中�
 | created_at | timestamptz | default now() |
 | updated_at | timestamptz | default now() |
 
-- 1ユーザーが複数デバイスを持てる（マルチデバイス対応）
-- `is_notify=0` のデバイスには通知しない（ユーザー設定で切り替え可能）
-
----
+- 1 ユーザーが、複数デバイスを持てる（マルチデバイス対応）。
+- `is_notify=0` のデバイスには、通知しない（ユーザー設定で切り替え可能）。
 
 ## Edge Function: pushNotify
 
-**場所**: `supabase_schema/supabase/functions/pushNotify/index.ts`
-
-**トリガー**: Supabase Database Webhook（orders テーブルの UPDATE）
+- **場所**: `supabase_schema/supabase/functions/pushNotify/index.ts`
+- **トリガー**: Supabase Database Webhook（orders テーブルの UPDATE）
 
 ### 動作条件
+
+- 提供ステータスが「未提供(0)」→「提供済(1)」に変わった場合のみ、通知する。
 
 ```typescript
 // 提供ステータスが「未提供(0)」→「提供済(1)」に変わった場合のみ通知
@@ -104,14 +102,12 @@ if (payload.old_record.provided_status == '0' && payload.record.provided_status 
 
 ### 処理フロー
 
-```
-1. orders.user_id で user_fcm_tokens を検索
-2. レコードなし → 404 を返して終了
-3. is_notify=1 かつ fcm_token が存在するデバイスを抽出
-4. 対象デバイスが 0 件 → 200 を返して終了（通知OFF）
-5. Google サービスアカウントで FCM アクセストークン取得
-6. 全対象デバイスに Promise.all で並列送信
-```
+1. `orders.user_id` で、`user_fcm_tokens` を検索する。
+2. レコードなし → 404 を返して終了する。
+3. `is_notify=1` かつ `fcm_token` が存在するデバイスを抽出する。
+4. 対象デバイスが 0 件 → 200 を返して終了する（通知 OFF）。
+5. Google サービスアカウントで、FCM アクセストークンを取得する。
+6. 全対象デバイスに、`Promise.all` で並列送信する。
 
 ### 通知内容
 
@@ -120,8 +116,6 @@ if (payload.old_record.provided_status == '0' && payload.record.provided_status 
 | title | `【受取番号:XX】` |
 | body | `商品のご用意ができました！お待ちしております` |
 | data.order_id | 注文ID |
-
----
 
 ## 関連ファイル一覧
 
@@ -136,24 +130,23 @@ if (payload.old_record.provided_status == '0' && payload.record.provided_status 
 | `supabase_schema/supabase/functions/pushNotify/index.ts` | Push 通知送信 Edge Function |
 | `supabase_schema/supabase/migrations/` | `user_fcm_tokens` テーブル定義（マルチデバイス対応済み） |
 
----
-
 ## トラブルシューティング
 
 ### Push 通知が届かない場合のチェックリスト
 
-1. **`user_fcm_tokens` にレコードが存在するか確認**  
-   Supabase Dashboard → Table Editor → `user_fcm_tokens` でユーザーの行を確認
+??? question "1. `user_fcm_tokens` にレコードが存在するか確認する"
+    - Supabase Dashboard → Table Editor → `user_fcm_tokens` で、ユーザーの行を確認する。
 
-2. **`is_notify` が 1 になっているか確認**  
-   `is_notify=0` の場合は通知OFF設定になっている
+??? question "2. `is_notify` が 1 になっているか確認する"
+    - `is_notify=0` の場合は、通知 OFF 設定になっている。
 
-3. **Edge Function のログを確認**  
-   Supabase Dashboard → Edge Functions → `pushNotify` → Logs  
-   `No records found for user_id` が出ていれば FCM トークン未登録が原因
+??? question "3. Edge Function のログを確認する"
+    - Supabase Dashboard → Edge Functions → `pushNotify` → Logs。
+    - `No records found for user_id` が出ていれば、FCM トークン未登録が原因。
 
-4. **OS の通知許可を確認**  
-   端末の設定 → アプリ → 通知が許可されているか
+??? question "4. OS の通知許可を確認する"
+    - 端末の設定 → アプリ → 通知が許可されているか。
 
-5. **FCM トークンの再登録**  
-   アプリを一度完全終了して再起動すると、`_initializeApp()` の起動時登録処理が走る
+??? question "5. FCM トークンを再登録する"
+    - アプリを一度完全終了して再起動する。
+    - `_initializeApp()` の起動時登録処理が走る。

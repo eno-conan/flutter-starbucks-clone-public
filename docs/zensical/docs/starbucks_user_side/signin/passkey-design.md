@@ -1,17 +1,15 @@
 # パスキー導入 設計書（ログイン認証フロー刷新）
 
-関連 Issue: [#807 認証関係のIssue](https://github.com/eno-conan/flutter-starbucks-clone/issues/807) / [#697 パスキー実装について](https://github.com/eno-conan/flutter-starbucks-clone/issues/697)
-
-影響度ティア: **critical**（`lib/services/**`・`pubspec.yaml`・`android/**`・`ios/**` を含む）
-→ 計画=Opus / 実装=Sonnet / 必須レビュー=code-reviewer + qa-agent + security-agent
-
----
+- 関連 Issue: [#807 認証関係のIssue](https://github.com/eno-conan/flutter-starbucks-clone/issues/807) / [#697 パスキー実装について](https://github.com/eno-conan/flutter-starbucks-clone/issues/697)
+- 影響度ティア: **critical**（`lib/services/**`・`pubspec.yaml`・`android/**`・`ios/**` を含む）
+    - 計画 = Opus / 実装 = Sonnet
+    - 必須レビュー = code-reviewer + qa-agent + security-agent
 
 ## 1. 背景と目的
 
 ### 1.1 現状のログイン体験
 
-現在のログイン画面（`lib/screens/starbucks_user_side/signin/login.dart`）は、以下の流れになっている。
+現在のログイン画面（`lib/screens/starbucks_user_side/signin/login.dart`）の流れ:
 
 ```
 初回:   メールアドレス・パスワード（または Google）でログイン
@@ -38,18 +36,18 @@
 
 ### 1.3 本設計のゴール
 
-- 指紋（生体）認証を **パスキー（WebAuthn）による本物のサーバ認証** に置き換える
-- 端末からパスワード原本を排除する
-- **FCM トークン登録・プッシュ通知を一切壊さない**（本設計の最重要制約）
-- 既存のメール・パスワード / Google ログインはフォールバックとして残す
+- 指紋（生体）認証を、**パスキー（WebAuthn）による本物のサーバ認証**に置き換える。
+- 端末からパスワード原本を排除する。
+- 既存のメール・パスワード / Google ログインは、フォールバックとして残す。
 
----
+!!! warning "最重要制約: FCM トークン登録・プッシュ通知を一切壊さない"
+    本設計で最も優先する制約。
 
 ## 2. 方式選定
 
 ### 2.1 結論: Supabase ネイティブ Passkey を採用する
 
-Issue #697 の PoC では Corbado（`corbado_auth`）を検証していたが、**本実装では採用しない。**
+- Issue #697 の PoC では Corbado（`corbado_auth`）を検証していたが、**本実装では採用しない。**
 
 | 観点 | Supabase ネイティブ Passkey | Corbado |
 |---|---|---|
@@ -59,30 +57,35 @@ Issue #697 の PoC では Corbado（`corbado_auth`）を検証していたが、
 | 追加依存 | `passkeys` プラグインのみ | `corbado_auth` + Corbado アカウント運用 |
 | 費用 | Supabase に内包 | 外部 SaaS の従量課金 |
 
-ユーザーからの最重要要件が「FCM トークンがこれまで通り機能すること」である以上、**認証プロバイダを Supabase から動かさない選択肢しかない。** Issue #697 の最終コメント「これは単体で別プロジェクト立ち上げた方がいいかも」とも整合する（Corbado 検証は別プロジェクトへ）。
+!!! success "決め手"
+    - ユーザーからの最重要要件は、「FCM トークンがこれまで通り機能すること」。
+    - よって、**認証プロバイダを Supabase から動かさない選択肢しかない。**
+    - Issue #697 の最終コメント「これは単体で別プロジェクト立ち上げた方がいいかも」とも整合する（Corbado 検証は別プロジェクトへ）。
 
 ### 2.2 利用可能なことの確認（2026-08 時点、ソース確認済み）
 
-Supabase Auth のパスキーは 2026-05-28 に **Beta** で提供開始された。Flutter クライアントは `supabase_flutter` **2.15.0 以降**で利用でき、本リポジトリの `pubspec.yaml` は既に `supabase_flutter: ^2.17.1` を指定しているため、**依存追加なしでサーバ側 API は使える。**
+- Supabase Auth のパスキーは、2026-05-28 に **Beta** で提供開始された。
+- Flutter クライアントは `supabase_flutter` **2.15.0 以降**で使える。
+- 本リポジトリの `pubspec.yaml` は、すでに `supabase_flutter: ^2.17.1` を指定している。**依存追加なしで、サーバ側 API は使える。**
+- 確認したソース: `supabase-flutter` リポジトリ `packages/supabase_flutter/lib/src/supabase_passkey.dart`
 
-確認したソース: `supabase-flutter` リポジトリ `packages/supabase_flutter/lib/src/supabase_passkey.dart`
+??? example "コード例（2026-08 時点、ソース確認済み）（14 行）"
+    ```dart
+    @experimental
+    extension AuthClientPasskey on AuthClient {
+      /// サインイン済みユーザーに新しいパスキーを登録する
+      Future<Passkey> registerPasskey(
+        PasskeyAuthenticatorInterface authenticator, {
+        String? friendlyName,
+      });
 
-```dart
-@experimental
-extension AuthClientPasskey on AuthClient {
-  /// サインイン済みユーザーに新しいパスキーを登録する
-  Future<Passkey> registerPasskey(
-    PasskeyAuthenticatorInterface authenticator, {
-    String? friendlyName,
-  });
-
-  /// パスキーでサインインする（既存セッション不要）
-  Future<AuthResponse> signInWithPasskey(
-    PasskeyAuthenticatorInterface authenticator, {
-    String? captchaToken,
-  });
-}
-```
+      /// パスキーでサインインする（既存セッション不要）
+      Future<AuthResponse> signInWithPasskey(
+        PasskeyAuthenticatorInterface authenticator, {
+        String? captchaToken,
+      });
+    }
+    ```
 
 低レベル API（`supabase.auth.passkey`）:
 
@@ -96,26 +99,28 @@ extension AuthClientPasskey on AuthClient {
 | `update({required String passkeyId, required String friendlyName})` | 表示名変更 |
 | `delete({required String passkeyId})` | 削除 |
 
-`supabase_flutter` は端末側の WebAuthn セレモニーを **自前で実装していない**。`PasskeyAuthenticatorInterface` の実装を呼び出し側が渡す設計になっているため、`passkeys` プラグインを追加する。
+- `supabase_flutter` は、端末側の WebAuthn セレモニーを **自前で実装していない**。
+- `PasskeyAuthenticatorInterface` の実装を呼び出し側が渡す設計になっているため、`passkeys` プラグインを追加する。
 
 ```yaml
 # pubspec.yaml に追加
 passkeys: ^2.22.3   # PasskeyAuthenticator implements PasskeyAuthenticatorInterface（2.21.0 以降）
 ```
 
-確認したソース: `corbado/flutter-passkeys` リポジトリ `packages/passkeys/passkeys/lib/authenticator.dart`
-（`class PasskeyAuthenticator implements PasskeyAuthenticatorInterface`）
+- 確認したソース: `corbado/flutter-passkeys` リポジトリ `packages/passkeys/passkeys/lib/authenticator.dart`（`class PasskeyAuthenticator implements PasskeyAuthenticatorInterface`）。
 
-> 注: `supabase_flutter` 2.17.1 時点では拡張の宣言が `extension GoTrueClientPasskey on GoTrueClient` になっている（`main` ブランチでは `AuthClient` へリネーム済み）。いずれも呼び出し側は `supabase.auth.signInWithPasskey(...)` で変わらないが、実装時にインストール済みバージョンのソースで最終確認すること。
+!!! note "`supabase_flutter` 2.17.1 時点での拡張の宣言"
+    - 2.17.1 では `extension GoTrueClientPasskey on GoTrueClient` になっている（`main` ブランチでは `AuthClient` へリネーム済み）。
+    - いずれも、呼び出し側は `supabase.auth.signInWithPasskey(...)` で変わらない。
+    - 実装時に、インストール済みバージョンのソースで最終確認する。
 
 ### 2.3 重要な仕様上の前提
 
-- **パスキーは「既存ユーザーに追加する認証手段」**であり、パスキー単体で新規ユーザーを作ることはできない。`registerPasskey()` はサインイン済み（非匿名）ユーザーを要求する。
-  → **この仕様が本設計の安全性を担保している。** ユーザーは必ず既存の `auth.users.id` を持ったままパスキーを追加するため、`user_id` が変化することはない。
+- **パスキーは「既存ユーザーに追加する認証手段」。** パスキー単体で、新規ユーザーを作ることはできない。
+    - `registerPasskey()` は、サインイン済み（非匿名）ユーザーを要求する。
+    - → **この仕様が、本設計の安全性を担保している。** ユーザーは必ず既存の `auth.users.id` を持ったままパスキーを追加するため、`user_id` が変化することはない。
 - サインインは **discoverable credentials（Resident Key）** を使う。ユーザーはメールアドレスを入力せず、OS のパスキー選択 UI から直接ログインできる。
-- Supabase 側で「Enable Passkey authentication」を有効化する必要がある（既定は無効）。
-
----
+- Supabase 側で「Enable Passkey authentication」を有効にする必要がある（既定は無効）。
 
 ## 3. 導入後の認証フロー
 
@@ -205,18 +210,17 @@ sequenceDiagram
 
 ### 3.4 Google 認証との関係
 
-Google ログインしたユーザーも、ログイン直後にパスキーを登録できる（`registerPasskey()` は「どうやってログインしたか」を問わない）。
-これにより、**現状「セッション切れ時にアカウント再選択が必要」だった Google ユーザーも、2 回目以降はパスキーで一発ログインできるようになる。** 1.2 の問題 #3 が解消される。
+- Google ログインしたユーザーも、ログイン直後にパスキーを登録できる（`registerPasskey()` は「どうやってログインしたか」を問わない）。
+- **現状「セッション切れ時にアカウント再選択が必要」だった Google ユーザーも、2 回目以降はパスキーで一発ログインできる。**
+- 1.2 の問題 #3 が解消される。
 
 ### 3.5 自動起動をやめる理由
 
-現状は画面表示と同時に指紋認証 UI を自動起動している（`_initializeBiometricAuth()`）。パスキーでは **ユーザー操作を起点にする**方針へ変更する。
-
-- OS のパスキー UI はモーダルで、意図せず出るとキャンセル操作を強いる
-- キャンセル例外のハンドリングが自動起動だと煩雑になる
-- 「メール・パスワードでログインしたいだけ」のユーザーの導線を塞がない
-
----
+- 現状は、画面表示と同時に指紋認証 UI を自動起動している（`_initializeBiometricAuth()`）。
+- パスキーでは、**ユーザー操作を起点にする**方針へ変える。理由:
+    - OS のパスキー UI はモーダルで、意図せず出るとキャンセル操作を強いる。
+    - キャンセル例外のハンドリングが、自動起動だと煩雑になる。
+    - 「メール・パスワードでログインしたいだけ」のユーザーの導線を塞がない。
 
 ## 4. 既存の生体認証まわりの廃止・移行
 
@@ -233,7 +237,7 @@ Google ログインしたユーザーも、ログイン直後にパスキーを�
 
 ### 4.2 移行処理（1 回だけ実行）
 
-アプリ起動時に、旧キーが残っていれば無条件で削除する。
+- アプリ起動時に、旧キーが残っていれば無条件で削除する。
 
 ```dart
 /// 旧 local_auth 方式で保存していたログイン情報を削除する（パスキー移行）
@@ -244,20 +248,25 @@ Future<void> purgeLegacyCredentials() async {
 }
 ```
 
-- 呼び出し位置: `AppInitializer.initializeApp()` 内（Supabase 初期化後）
-- **セッションには触らない。** `supabase_session`（`SecureSessionStorage` のキー）は削除対象外。これを消すと全ユーザーが強制ログアウトになり、FCM 再登録の嵐になる
+- 呼び出し位置: `AppInitializer.initializeApp()` 内（Supabase 初期化後）。
+
+!!! danger "セッションには触らない"
+    - `supabase_session`（`SecureSessionStorage` のキー）は、削除対象外。
+    - これを消すと、全ユーザーが強制ログアウトになり、FCM 再登録の嵐になる。
 
 ### 4.3 `local_auth` 依存の扱い
 
-`local_auth` の利用箇所は `login.dart` のみ。ただし将来的にアプリ再開時の再ロック（e チケット表示前の本人確認など）で使う可能性があるため、**pubspec からの削除は本対応のスコープ外**とし、未使用依存として残すか削除するかは実装フェーズ 4 で判断する。
-
----
+- `local_auth` の利用箇所は、`login.dart` のみ。
+- ただし将来、アプリ再開時の再ロック（e チケット表示前の本人確認など）で使う可能性がある。
+- そのため、**pubspec からの削除は本対応のスコープ外**とする。
+- 未使用依存として残すか削除するかは、実装フェーズ 4 で判断する。
 
 ## 5. FCM トークンを壊さないための設計（最重要）
 
 ### 5.1 なぜ壊れないのか
 
-`user_fcm_tokens` は `(user_id, device_id)` の複合主キーで、`user_id` は `supabase.auth.currentUser.id` を使っている。
+- `user_fcm_tokens` は、`(user_id, device_id)` の複合主キー。
+- `user_id` は、`supabase.auth.currentUser.id` を使っている。
 
 ```dart
 // lib/services/auth_service.dart
@@ -269,7 +278,8 @@ Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify, {
 }
 ```
 
-パスキーは既存 `auth.users` 行に紐づく追加認証手段なので、**`user_id` は変化しない。** よって既存の `user_fcm_tokens` 行はそのまま有効であり、パスキーログイン後の upsert は同じ行を更新する。
+- パスキーは、既存 `auth.users` 行に紐づく追加認証手段。よって **`user_id` は変化しない。**
+- 既存の `user_fcm_tokens` 行はそのまま有効。パスキーログイン後の upsert は、同じ行を更新する。
 
 ### 5.2 それでも壊れうるケースと対策
 
@@ -277,7 +287,7 @@ Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify, {
 |---|---|---|---|
 | 1 | パスキーでログインしたのに FCM トークンが登録されない | 現状 FCM 登録は「`_navigateToHome()` の中」「OAuth コールバック」「アプリ起動時」の **3 箇所に散在**している。パスキーログインの新経路がどれも通らないと登録が漏れる | **5.3 の一元化を実施する**（本設計の必須項目） |
 | 2 | 通知許可ダイアログが二重に出る / 遷移前に出る | `_navigateToHome()` が `context.go` の 1.5 秒後に許可要求している暫定実装 | 一元化にあわせて、遷移完了後に 1 回だけ走るようにする |
-| 3 | Android で `device_id` が端末ごとに一意になっておらず、FCMトークン登録が一意制約違反で失敗する | `DeviceIdService` が Android で `AndroidDeviceInfo.id`（= `android.os.Build.ID`）を返していた。これは **OSビルドの識別子**であり、同じビルドで動く全端末で同じ値になる。加えて `user_fcm_tokens_device_id_unique` が device_id をグローバルにユニークにしているため、テーブル全体で1ビルドあたり1行しか入らない | **既存バグ（別アカウントかどうかに関係なく発生する）**。フェーズ 3-b で対処済（5.4 参照） |
+| 3 | Android で `device_id` が端末ごとに一意になっておらず、FCM トークン登録が一意制約違反で失敗する | `DeviceIdService` が Android で `AndroidDeviceInfo.id`（= `android.os.Build.ID`）を返していた。これは **OS ビルドの識別子**であり、同じビルドで動く全端末で同じ値になる。加えて `user_fcm_tokens_device_id_unique` が device_id をグローバルにユニークにしているため、テーブル全体で 1 ビルドあたり 1 行しか入らない | **既存バグ（別アカウントかどうかに関係なく発生する）**。フェーズ 3-b で対処済（5.4 参照） |
 | 4 | ログアウトしても古いトークン行が残る | `signOutWithEmailAndPasswordAndDevice()`（トークン削除つき）に **呼び出し元が 1 つもない**。設定画面・店舗側画面はいずれも `signOutWithEmailAndPassword()` を呼んでいる | **既存バグ**。フェーズ 3-a で対処済（削除処理を `signOutWithEmailAndPassword()` 本体に取り込み、呼び出し側の書き忘れが起きない形にした） |
 | 5 | パスキー登録の生体認証 UI 中にアプリが一時停止し、復帰時に FCM 初期化が走らない | Android の Credential Manager は別 Activity を起こす | 登録は「ログイン完了 → FCM 登録済み」の**後**に行う順序を厳守（3.2 のシーケンス順） |
 
@@ -299,31 +309,46 @@ Future<void> setFcmTokenAndNotifySetting(String fcmToken, bool isNotify, {
       .listen((d) => notificationService.requestPermissionAfterLogin());
 ```
 
-**この設計により、認証手段が何であっても（メール・パスワード / Google / パスキー / 将来の追加手段）FCM トークン登録が自動的に走る。** 新しいログイン経路を足すたびに登録処理を書き足す必要がなくなり、5.2 #1 の事故が構造的に起きなくなる。
+!!! success "効果"
+    - 認証手段が何であっても（メール・パスワード / Google / パスキー / 将来の追加手段）、FCM トークン登録が自動で走る。
+    - 新しいログイン経路を足すたびに、登録処理を書き足す必要がなくなる。
+    - 5.2 #1 の事故が、構造的に起きなくなる。
 
 注意点:
 
-- `signedIn` は `tokenRefreshed` とは別イベントなので、リフレッシュのたびに upsert は走らない
-- `initialSession` はセッション復元時に発火するため、起動時登録（現 `_initializeApp` の分岐）を置き換えられる
-- upsert は冪等なので、多重発火しても行は壊れない
-- 既存の `FirebaseMessaging.instance.onTokenRefresh` リスナーは `login.dart` の `_setupAuthStateListener()` 内で **auth イベントごとに購読が増える**実装になっている（リスナー多重登録）。一元化時にアプリ起動時 1 回の購読へ修正する
+- `signedIn` は `tokenRefreshed` とは別イベント。リフレッシュのたびに upsert は走らない。
+- `initialSession` はセッション復元時に発火する。起動時登録（現 `_initializeApp` の分岐）を置き換えられる。
+- upsert は冪等なので、多重発火しても行は壊れない。
+- 既存の `FirebaseMessaging.instance.onTokenRefresh` リスナーは、`login.dart` の `_setupAuthStateListener()` 内で **auth イベントごとに購読が増える**実装になっている（リスナー多重登録）。
+    - 一元化の際に、アプリ起動時 1 回の購読へ修正する。
 
 ### 5.4 ついでに直す既存バグ（フェーズ 3）
 
-1. **ログアウト時のトークン削除**（実装済）: 呼び出し側を差し替えるのではなく、`signOutWithEmailAndPassword()` 自身がデバイスIDを解決してトークン行を削除するようにした。呼び出し側が削除を書き忘れる余地をなくすため。使われていなかった `signOutWithEmailAndPasswordAndDevice()` は削除した
-2. **`device_id` の是正**（実装済）: 問題は2層あり、両方を直す必要があった。
+3 件とも実装済み。
 
-   **(a) アプリ側 — device_id が端末ごとに一意でない（根本原因）**
+1. **ログアウト時のトークン削除**
+    - 呼び出し側を差し替えるのではなく、`signOutWithEmailAndPassword()` 自身がデバイス ID を解決して、トークン行を削除するようにした。
+    - 呼び出し側が削除を書き忘れる余地をなくすため。
+    - 使われていなかった `signOutWithEmailAndPasswordAndDevice()` は削除した。
+2. **`device_id` の是正**: 問題は 2 層あり、両方を直す必要があった。
+3. **古い device_id 行の自己修復**: 実行順序を守れなかった場合の保険。
 
-   `DeviceIdService` は Android で `AndroidDeviceInfo.id` を返していた。device_info_plus のドキュメントコメントは *"Either a changelist number, or a label like 'M4-rc20'"* とあるとおり、これは `android.os.Build.ID`（OSビルドの識別子）であって端末固有IDではない。`TQ3A.230805.001` のような値が同じOSビルドの全端末で共通になる。
+#### (a) アプリ側: device_id が端末ごとに一意でない（根本原因）
 
-   Android には信頼できる端末固有IDが存在しないため、**初回起動時に UUID v4 を生成してセキュアストレージへ永続化する**方式に変更した。iOS の `identifierForVendor` はベンダー単位・端末単位で一意なため従来どおり使う。
+- `DeviceIdService` は、Android で `AndroidDeviceInfo.id` を返していた。
+- device_info_plus のドキュメントコメントは *"Either a changelist number, or a label like 'M4-rc20'"*。つまり、これは `android.os.Build.ID`（OS ビルドの識別子）であって、端末固有 ID ではない。
+- `TQ3A.230805.001` のような値が、同じ OS ビルドの全端末で共通になる。
+- **対策:** Android には信頼できる端末固有 ID が存在しないため、**初回起動時に UUID v4 を生成して、セキュアストレージへ永続化する**方式に変更した。
+- iOS の `identifierForVendor` は、ベンダー単位・端末単位で一意なので、従来どおり使う。
 
-   **(b) DB側 — グローバルユニーク制約**
+#### (b) DB 側: グローバルユニーク制約
 
-   `user_fcm_tokens_device_id_unique` を削除し、複合主キー `(user_id, device_id)` のみで一意性を担保する。同一端末に複数ユーザーの行が並ぶが、`pushNotify` は `user_id` で絞るため送信先は正しい。
-
-   あわせて、更新されることのなくなった不正な device_id の行（Android の Build.ID、および 20260314000001 で付与した `legacy_<user_id>`）を削除する。該当ユーザーは次回アプリ起動時に `FcmTokenSyncService` が `initialSession` 契機で再登録するため、再ログインは不要。
+- `user_fcm_tokens_device_id_unique` を削除し、複合主キー `(user_id, device_id)` のみで一意性を担保する。
+- 同一端末に複数ユーザーの行が並ぶが、`pushNotify` は `user_id` で絞るため、送信先は正しい。
+- あわせて、更新されることのなくなった不正な device_id の行を削除する。
+    - Android の `Build.ID`。
+    - 20260314000001 で付与した `legacy_<user_id>`。
+- 該当ユーザーは、次回アプリ起動時に `FcmTokenSyncService` が `initialSession` を契機に再登録する。**再ログインは不要。**
 
 ```sql
 -- supabase_schema/supabase/migrations/20260819000001_fix_user_fcm_tokens_device_id.sql
@@ -333,19 +358,28 @@ DELETE FROM public.user_fcm_tokens
   WHERE device_id !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
 ```
 
-> ⚠️ 実行順序に注意。アプリ側 (a) をリリースする前にマイグレーションだけを流すと、同じ不正な device_id が入り直すため効果がない。
->
-> なお `user_id` 単独のインデックスは不要。複合主キー `(user_id, device_id)` の btree が先頭列で効くため、`pushNotify` の `user_id` 絞り込みはそのまま機能する。
+!!! warning "実行順序に注意"
+    アプリ側 (a) をリリースする**前**にマイグレーションだけを流すと、同じ不正な device_id が入り直すため、効果がない。
 
-3. **古い device_id 行の自己修復**（実装済）: 上記の実行順序を守れなかった場合（＝アプリ側のリリース前にマイグレーションを適用した場合）、`Build.ID` の行が入り直し、アプリ更新後に **同じ端末に対して古い行と新しい行の 2 行が並ぶ**。FCM トークンはアプリインストール単位で一意なので **両方の行が同じトークンを持ち、`pushNotify` が同じ端末へ通知を 2 回送ってしまう。**
+!!! note "`user_id` 単独のインデックスは不要"
+    複合主キー `(user_id, device_id)` の btree が先頭列で効くため、`pushNotify` の `user_id` 絞り込みはそのまま機能する。
 
-   手動 SQL での再掃除に頼ると忘れたときに気づけないため、`UserFcmTokenRepository.upsertFcmToken()` が登録直後に「同一ユーザー・同一 `fcm_token`・別 `device_id`」の行を削除するようにした。この条件に当てはまる行は、同じインストールが過去に別の `device_id` で登録した残骸に限られる（別端末なら必ず別のトークンになる）ため、安全に削除できる。
+#### 3. 古い device_id 行の自己修復
 
-   これにより、今後 `device_id` の生成方式を変更しても行が自動的に収束する。掃除の失敗は upsert 自体の成否に影響させない。
+- **起きうる問題:** 上記の実行順序を守れず、アプリ側のリリース前にマイグレーションを適用した場合。
+    - `Build.ID` の行が入り直す。
+    - アプリ更新後に、**同じ端末に対して古い行と新しい行の 2 行が並ぶ**。
+    - FCM トークンはアプリインストール単位で一意なので、**両方の行が同じトークンを持ち、`pushNotify` が同じ端末へ通知を 2 回送ってしまう。**
+- **対策:** 手動 SQL での再掃除に頼ると、忘れたときに気づけない。そのため、`UserFcmTokenRepository.upsertFcmToken()` が、登録直後に「同一ユーザー・同一 `fcm_token`・別 `device_id`」の行を削除するようにした。
+- **安全な理由:** この条件に当てはまる行は、同じインストールが過去に別の `device_id` で登録した残骸に限られる（別端末なら必ず別のトークンになる）。
+- **効果:**
+    - 今後 `device_id` の生成方式を変更しても、行が自動的に収束する。
+    - 掃除の失敗は、upsert 自体の成否に影響させない。
 
 ### 5.5 FCM の回帰検証項目
 
-実装後、以下を実機で確認する（全項目 pass が完了条件）。
+- 実装後、次を実機で確認する。
+- **全項目 pass が完了条件。**
 
 | # | シナリオ | 期待結果 |
 |---|---|---|
@@ -357,16 +391,16 @@ DELETE FROM public.user_fcm_tokens
 | 6 | アプリ再起動（セッション保持） | `initialSession` で再登録され、通知が届く |
 | 7 | ログアウト → パスキーで再ログイン | 行が復活し、通知が届く |
 | 8 | 通知設定 OFF → パスキーで再ログイン | `is_notify` が意図せず 1 に戻らないこと（※現行実装は再ログインで 1 に戻る。既存挙動として維持するか要判断） |
-| 9 | 同一OSビルドの Android 端末 2 台で同一ユーザーがログイン | `device_id` が別々になり、2 行が並ぶこと（マルチデバイス対応の回帰確認） |
-| 10 | 同一OSビルドの Android 端末で別ユーザーがログイン | 一意制約違反が発生せず、それぞれの行が登録されること |
+| 9 | 同一 OS ビルドの Android 端末 2 台で同一ユーザーがログイン | `device_id` が別々になり、2 行が並ぶこと（マルチデバイス対応の回帰確認） |
+| 10 | 同一 OS ビルドの Android 端末で別ユーザーがログイン | 一意制約違反が発生せず、それぞれの行が登録されること |
 | 11 | アプリ再起動後も `device_id` が変わらない | セキュアストレージから同じ UUID が読み出されること（起動のたびに行が増えない） |
 | 12 | `Build.ID` 時代の行が残った状態でログイン | 同一ユーザー・同一トークンの古い行が自動削除され、1 端末につき 1 行になること（通知が重複しない） |
 
----
-
 ## 6. プラットフォーム設定
 
-パスキーは RP ID（ドメイン）とアプリの紐づけが必須。本リポジトリは既に Firebase Hosting のドメイン（`FIREBASE_HOSTING_DOMAIN`）で App Links / Universal Links を運用しているため、**同じドメインを RP ID に流用する。**
+- パスキーは、RP ID（ドメイン）とアプリの紐づけが必須。
+- 本リポジトリは、すでに Firebase Hosting のドメイン（`FIREBASE_HOSTING_DOMAIN`）で App Links / Universal Links を運用している。
+- そのため、**同じドメインを RP ID に流用する。**
 
 ### 6.1 Supabase ダッシュボード（Authentication → Passkeys）
 
@@ -379,37 +413,41 @@ DELETE FROM public.user_fcm_tokens
 
 #### 6.1.1 前提: Auth サーバのバージョン（**最重要**）
 
-パスキーのエンドポイントは **Auth（GoTrue）v2.188.0 以降**でしか提供されない。それより古いプロジェクトでは
-`/auth/v1/passkeys/*` が **プレーンテキストの `404 page not found`** を返し、パスキーは一切動作しない。
+!!! danger "Auth（GoTrue）v2.188.0 以降が必要"
+    - パスキーのエンドポイントは、v2.188.0 以降でしか提供されない。
+    - それより古いプロジェクトでは、`/auth/v1/passkeys/*` が **プレーンテキストの `404 page not found`** を返し、パスキーは一切動作しない。
 
-**ダッシュボードに設定 UI が表示されることは、サーバが対応していることを意味しない。** 設定画面はプラットフォーム側から配信されており、実際に動いている Auth コンテナとは別物。
-
-実際に動いているバージョンは `/auth/v1/health` を叩いて確認する（ダッシュボードの表示より確実）。
-
-Supabase Cloud では Auth / PostgREST / Postgres がプラットフォームのイメージとして一体で更新されるため、Auth を上げるには **Postgres のアップグレード**を行う（Settings → Infrastructure → Service versions）。未サポート拡張が残っているとアップグレードがブロックされる。
-
-本リポジトリでの実績: Auth 2.176.1 → 2.195.0（`pgjwt` の削除が事前条件だった。マイグレーション 20260819000002 参照）
+- **ダッシュボードに設定 UI が表示されることは、サーバが対応していることを意味しない。**
+    - 設定画面はプラットフォーム側から配信されており、実際に動いている Auth コンテナとは別物。
+- 実際に動いているバージョンは、`/auth/v1/health` を叩いて確認する（ダッシュボードの表示より確実）。
+- Auth を上げる方法:
+    - Supabase Cloud では、Auth / PostgREST / Postgres がプラットフォームのイメージとして一体で更新される。
+    - そのため、**Postgres のアップグレード**を行う（Settings → Infrastructure → Service versions）。
+    - 未サポート拡張が残っていると、アップグレードがブロックされる。
+- 本リポジトリでの実績: Auth 2.176.1 → 2.195.0。`pgjwt` の削除が事前条件だった（マイグレーション 20260819000002 を参照）。
 
 #### 6.1.2 Android アプリのオリジンを登録する（**必須**）
 
-Android のネイティブアプリは WebAuthn のオリジンが `android:apk-key-hash:<署名証明書のSHA-256をbase64url化した値>` になる。`https://` のオリジンしか登録していないと、**OS のセレモニーは成功するのにサーバ検証で 400 `webauthn_verification_failed` になる。**
-
-`assetlinks.json` に登録済みの16進フィンガープリントから、次の変換で求める。
+- Android のネイティブアプリは、WebAuthn のオリジンが `android:apk-key-hash:<署名証明書の SHA-256 を base64url 化した値>` になる。
+- `https://` のオリジンしか登録していないと、**OS のセレモニーは成功するのに、サーバ検証で 400 `webauthn_verification_failed` になる。**
+- `assetlinks.json` に登録済みの 16 進フィンガープリントから、次の変換で求める。
 
 ```python
 raw = binascii.unhexlify(fingerprint.replace(':', ''))
 origin = 'android:apk-key-hash:' + base64.urlsafe_b64encode(raw).decode().rstrip('=')
 ```
 
-Origins は **上限5つ**。`https://` で1つ使うため、Android のオリジンは最大4つまで。
+- Origins は **上限 5 つ**。`https://` で 1 つ使うため、Android のオリジンは最大 4 つまで。
 
-この変換と Supabase への反映は `scripts/sync-rp-origins.sh` が行う。`assetlinks.json` が `main` に入ると
-`deploy-firebase-hosting.yml` が Hosting への反映と同時に自動で同期するため、手作業は不要。
-署名鍵の管理方針・手動での確認方法は [Android 署名鍵の管理](../../project/android-signing-keys.md) を参照。
+!!! tip "手作業は不要"
+    - この変換と Supabase への反映は、`scripts/sync-rp-origins.sh` が行う。
+    - `assetlinks.json` が `main` に入ると、`deploy-firebase-hosting.yml` が Hosting への反映と同時に自動で同期する。
+    - 署名鍵の管理方針と、手動での確認方法は [Android 署名鍵の管理](../../project/android-signing-keys.md) を参照。
 
 ### 6.2 Android: Digital Asset Links
 
-`public/.well-known/assetlinks.json` に **`delegate_permission/common.get_login_creds` のエントリを追加**する。既存の `handle_all_urls` エントリはそのまま残す（App Links が壊れる）。
+- `public/.well-known/assetlinks.json` に、**`delegate_permission/common.get_login_creds` のエントリを追加**する。
+- 既存の `handle_all_urls` エントリは、そのまま残す（消すと App Links が壊れる）。
 
 ```json
 [
@@ -425,56 +463,55 @@ Origins は **上限5つ**。`https://` で1つ使うため、Android のオリ�
 ]
 ```
 
-- `firebase deploy --only hosting` で反映
-- `minSdk 29` は Credential Manager の要件を満たす。ただし **API 34 未満では Google Play services 経由**になるため、実機検証は API 33 と API 34+ の両方で行う
-- 端末に画面ロック（PIN / 指紋 / 顔）が設定されていないとパスキーは作成できない
+- `firebase deploy --only hosting` で反映する。
+- `minSdk 29` は、Credential Manager の要件を満たす。
+- **API 34 未満では、Google Play services 経由**になる。実機検証は、API 33 と API 34+ の両方で行う。
+- 端末に画面ロック（PIN / 指紋 / 顔）が設定されていないと、パスキーは作成できない。
 
 ### 6.3 iOS: Associated Domains（**当面対象外**）
 
-**iOS のパスキー対応は現時点で予定していないため、本設計では実施しない。**
+!!! warning "iOS のパスキー対応は、現時点で予定していない"
+    - Apple Team ID がリポジトリ内（`DEVELOPMENT_TEAM` など）に存在せず、値を特定できない。
+    - Team ID を確定しないまま `apple-app-site-association` を配置すると、**iOS のパスキーが「エラーも出ずに動かない」状態**になる。かえって切り分けが難しい。
+    - そのため、プレースホルダを含むファイルは配置しない方針とした。
+    - 6.1 の Relying Party Display Name（現在は Android に合わせて `すたば`）は、iOS 対応時に再検討する。
 
-Apple Team ID がリポジトリ内（`DEVELOPMENT_TEAM` 等）に存在せず値を特定できないこと、また Team ID を確定しないまま
-`apple-app-site-association` を配置すると **iOS のパスキーが「エラーも出ずに動かない」状態**になり、
-かえって切り分けが難しくなるため、プレースホルダを含むファイルは配置しない方針とした。
+??? info "将来 iOS に対応する場合の 3 手順（どれか 1 つでも欠けると動作しない）"
+    1. `ios/Runner/Runner.entitlements` に `webcredentials` を追加する（既存の `applinks` は残す）。
 
-将来 iOS に対応する場合は、以下の 3 点をまとめて実施する（どれか 1 つでも欠けると動作しない）。
+        ```xml
+        <key>com.apple.developer.associated-domains</key>
+        <array>
+            <string>applinks:$(FIREBASE_HOSTING_DOMAIN)</string>
+            <string>webcredentials:$(FIREBASE_HOSTING_DOMAIN)</string>
+        </array>
+        ```
 
-1. `ios/Runner/Runner.entitlements` に `webcredentials` を追加する（既存の `applinks` は残す）
+    2. `public/.well-known/apple-app-site-association` を新規作成する（拡張子なしファイル）。`<TEAM_ID>` は、Apple Developer アカウントの実値に置き換える。
 
-```xml
-<key>com.apple.developer.associated-domains</key>
-<array>
-    <string>applinks:$(FIREBASE_HOSTING_DOMAIN)</string>
-    <string>webcredentials:$(FIREBASE_HOSTING_DOMAIN)</string>
-</array>
-```
+        ```json
+        {
+          "webcredentials": {
+            "apps": ["<TEAM_ID>.com.enoconan.testingappv2"]
+          }
+        }
+        ```
 
-2. `public/.well-known/apple-app-site-association` を新規作成する（拡張子なしファイル）。`<TEAM_ID>` は Apple Developer アカウントの実値に置き換えること
+    3. `firebase.json` の `headers` に、Content-Type 指定を追加する。
+        - 拡張子がないため、既定では `application/json` にならない。
+        - `rewrites` の `"**" → /index.html` より実ファイルが優先されるため、rewrites の変更は不要。
 
-```json
-{
-  "webcredentials": {
-    "apps": ["<TEAM_ID>.com.enoconan.testingappv2"]
-  }
-}
-```
-
-3. `firebase.json` の `headers` に Content-Type 指定を追加する（拡張子がないため既定では `application/json` にならない）。`rewrites` の `"**" → /index.html` より実ファイルが優先されるため、rewrites の変更は不要
-
-```json
-{
-  "source": "/.well-known/apple-app-site-association",
-  "headers": [{ "key": "Content-Type", "value": "application/json" }]
-}
-```
-
-あわせて 6.1 の Relying Party Display Name（現在は Android に合わせて `すたば`）を再検討すること。
+        ```json
+        {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [{ "key": "Content-Type", "value": "application/json" }]
+        }
+        ```
 
 ### 6.4 CI への影響
 
-`.github/workflows/app.yml` は `FIREBASE_HOSTING_DOMAIN` を Secrets から注入している。RP ID を同ドメインに揃えるため、**CI 側の追加変数は不要。**
-
----
+- `.github/workflows/app.yml` は、`FIREBASE_HOSTING_DOMAIN` を Secrets から注入している。
+- RP ID を同ドメインに揃えるため、**CI 側の追加変数は不要。**
 
 ## 7. コード構成案
 
@@ -482,9 +519,9 @@ Apple Team ID がリポジトリ内（`DEVELOPMENT_TEAM` 等）に存在せず�
 
 | ファイル | 区分 | 内容 |
 |---|---|---|
-| `lib/services/passkey_auth_service.dart` | 新規 | パスキー登録・ログイン・一覧・削除のラッパー。`supabase_flutter` の拡張メソッドを呼ぶのはこのファイルだけに閉じる |
+| `lib/services/passkey_auth_service.dart` | 新規 | パスキー登録・ログイン・一覧・削除のラッパー。`supabase_flutter` の拡張メソッドを呼ぶのは、このファイルだけに閉じる |
 | `lib/provider/service_providers.dart` | 変更 | `passkeyAuthServiceProvider` を追加 |
-| `lib/provider/passkey_state_provider.dart` | 新規 | Riverpod 3.0 `Notifier` でパスキー利用可否・登録済み一覧を保持 |
+| `lib/provider/passkey_state_provider.dart` | 新規 | Riverpod 3.0 `Notifier` で、パスキー利用可否・登録済み一覧を保持 |
 | `lib/screens/starbucks_user_side/signin/login.dart` | 変更 | `local_auth` 依存の削除、パスキーログインボタン・登録提案ダイアログの追加 |
 | `lib/screens/starbucks_user_side/setting/passkey_setting/main.dart` | 新規 | パスキーの一覧・追加・削除（設定画面から遷移） |
 | `lib/services/fcm_token_sync_service.dart` | 新規（実装済） | FCM 登録の `onAuthStateChange` 一元化（5.3） |
@@ -502,38 +539,40 @@ Apple Team ID がリポジトリ内（`DEVELOPMENT_TEAM` 等）に存在せず�
 
 ### 7.2 `PasskeyAuthService` の責務
 
-```dart
-/// パスキー（WebAuthn）認証を扱うサービス
-///
-/// supabase_flutter のパスキー API は experimental のため、
-/// 直接呼び出す箇所をこのクラスに閉じ込める。
-class PasskeyAuthService {
-  PasskeyAuthService(this._supabase, this._authenticator);
+??? example "コード例（25 行）"
+    ```dart
+    /// パスキー（WebAuthn）認証を扱うサービス
+    ///
+    /// supabase_flutter のパスキー API は experimental のため、
+    /// 直接呼び出す箇所をこのクラスに閉じ込める。
+    class PasskeyAuthService {
+      PasskeyAuthService(this._supabase, this._authenticator);
 
-  final SupabaseClient _supabase;
-  final PasskeyAuthenticatorInterface _authenticator;
+      final SupabaseClient _supabase;
+      final PasskeyAuthenticatorInterface _authenticator;
 
-  /// この端末でパスキーが利用可能か
-  Future<bool> isAvailable();
+      /// この端末でパスキーが利用可能か
+      Future<bool> isAvailable();
 
-  /// サインイン済みユーザーにパスキーを登録する
-  Future<void> register({String? friendlyName});
+      /// サインイン済みユーザーにパスキーを登録する
+      Future<void> register({String? friendlyName});
 
-  /// パスキーでサインインする
-  Future<void> signIn();
+      /// パスキーでサインインする
+      Future<void> signIn();
 
-  /// 登録済みパスキーの一覧
-  Future<List<Passkey>> list();
+      /// 登録済みパスキーの一覧
+      Future<List<Passkey>> list();
 
-  /// パスキーを削除する
-  Future<void> delete(String passkeyId);
-}
-```
+      /// パスキーを削除する
+      Future<void> delete(String passkeyId);
+    }
+    ```
 
-- 端末側の利用可否判定には `PasskeyAuthenticator.getAvailability()` を使う（プラットフォームごとに戻り値の型が異なるため、実装時にパッケージのソースで最終確認する）
-- 状態管理は Riverpod 3.0 `Notifier`（`StateNotifierProvider` は使わない）
-- ログは `LoggerService.info` / `LoggerService.warn` を使い、**チャレンジ・credential・passkeyId をログに出さない**
-- 非同期処理後の `context` 利用前に `context.mounted` チェックを入れる
+- 端末側の利用可否判定には、`PasskeyAuthenticator.getAvailability()` を使う。
+    - プラットフォームごとに戻り値の型が異なる。実装時に、パッケージのソースで最終確認する。
+- 状態管理は、Riverpod 3.0 `Notifier`（`StateNotifierProvider` は使わない）。
+- ログは `LoggerService.info` / `LoggerService.warn` を使う。**チャレンジ・credential・passkeyId をログに出さない。**
+- 非同期処理後の `context` 利用前に、`context.mounted` チェックを入れる。
 
 ### 7.3 エラーハンドリング方針
 
@@ -544,8 +583,6 @@ class PasskeyAuthService {
 | `AuthException`（サーバ検証失敗） | 「パスキーでのログインに失敗しました」＋ `LoggerService.warn` |
 | プラットフォーム設定不備（asset links / AASA） | 開発時のみ詳細ログ。ユーザーにはフォールバック導線を提示 |
 
----
-
 ## 8. 実装フェーズ
 
 | フェーズ | 内容 | 完了条件 |
@@ -554,13 +591,13 @@ class PasskeyAuthService {
 | **1. プラットフォーム設定** | assetlinks.json / AASA / entitlements / firebase.json / `firebase deploy` | Android・iOS 実機で OS のパスキー UI が起動する |
 | **2. FCM 一元化（先行実施）** ✅実装済 | `onAuthStateChange` への集約、`onTokenRefresh` 多重購読の修正 | **パスキーを入れる前**に 5.5 の #1・#2・#5・#6 が pass |
 | **3-a. ログアウト時のトークン削除** ✅実装済 | `signOutWithEmailAndPassword()` 内でトークン行を削除 | ログアウト後にその端末へ通知が届かない |
-| **3-b. `device_id` の是正** ✅実装済 | Android の device_id を UUID 永続化方式へ変更＋マイグレーション | 同一OSビルドの別端末・別ユーザーでもトークンが正しく登録される |
+| **3-b. `device_id` の是正** ✅実装済 | Android の device_id を UUID 永続化方式へ変更＋マイグレーション | 同一 OS ビルドの別端末・別ユーザーでもトークンが正しく登録される |
 | **4. パスキー本実装** | `passkeys` 追加、`PasskeyAuthService`、ログイン画面改修、旧ログイン情報のパージ | 5.5 の全項目が pass |
 | **5. パスキー管理 UI** | 設定画面からの一覧・追加・削除 | 複数端末でパスキーを登録・削除できる |
 
-**フェーズ 2 をパスキー実装より先に完了させること。** FCM の一元化を済ませておけば、フェーズ 4 でパスキーログイン経路を足しても FCM 登録は自動的に追随し、「パスキーを入れたら通知が来なくなった」という切り分け困難な事故を構造的に防げる。
-
----
+!!! warning "フェーズ 2 を、パスキー実装より先に完了させる"
+    - FCM の一元化を済ませておけば、フェーズ 4 でパスキーログイン経路を足しても、FCM 登録は自動的に追随する。
+    - 「パスキーを入れたら通知が来なくなった」という、切り分け困難な事故を、構造的に防げる。
 
 ## 9. 要判断事項（実装前にユーザー確認が必要）
 
@@ -574,9 +611,8 @@ class PasskeyAuthService {
 
 ### 実機検証で確定した事項
 
-当初「未確定の調査事項」としていた **「Android ネイティブのオリジンを Relying Party Origins に登録する必要があるか」** は、実機検証の結果 **必要** と確定した（6.1.2）。
-
-失敗の症状ごとに原因が切り分けられるため、記録しておく。
+- 当初「未確定の調査事項」としていた、**「Android ネイティブのオリジンを Relying Party Origins に登録する必要があるか」**は、実機検証の結果、**必要**と確定した（6.1.2）。
+- 失敗の症状ごとに原因が切り分けられるため、記録しておく。
 
 | 症状 | 原因 |
 |---|---|
@@ -584,9 +620,10 @@ class PasskeyAuthService {
 | `DomainNotAssociatedException` | `assetlinks.json` の配信不備、または署名鍵が未登録 |
 | OS のセレモニーは成功するが 400 `webauthn_verification_failed` | RP Origins に Android のオリジンが未登録（6.1.2） |
 
-**OS のセレモニーが成功した時点で、`assetlinks.json` と署名鍵は正しいことが確定する。** 紐づけが失敗していれば認証情報の生成まで到達しないため、この2つを切り分ける指標として使える。
-
----
+!!! tip "切り分けの指標"
+    - **OS のセレモニーが成功した時点で、`assetlinks.json` と署名鍵は正しいことが確定する。**
+    - 紐づけが失敗していれば、認証情報の生成まで到達しないため。
+    - この 2 つを切り分ける指標として使える。
 
 ## 10. 参考
 
