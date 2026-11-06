@@ -81,7 +81,7 @@ integration_test/test_config.dart
 
 # Zensical docs
 docs/zensical-docs/.venv/
-docs/zensical-docs/site/
+docs/site/
 docs/zensical-docs/.cache/
 
 # codegraph

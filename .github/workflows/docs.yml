@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - 'docs/zensical/**'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
@@ -24,11 +24,11 @@ jobs:
         with:
           python-version: 3.x
       - run: pip install zensical
-        working-directory: docs/zensical
+        working-directory: docs
       - run: zensical build --clean
-        working-directory: docs/zensical
+        working-directory: docs
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: docs/zensical/site
+          path: docs/site
       - uses: actions/deploy-pages@v5
         id: deployment
